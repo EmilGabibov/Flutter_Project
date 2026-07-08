@@ -1,0 +1,18 @@
+{
+  "name": "hable-backend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler pages dev public",
+    "deploy": "wrangler pages deploy public --project-name hable",
+    "db:setup": "wrangler d1 execute hable_db --local --file=./schema.sql"
+  },
+  "dependencies": {
+    "hono": "^4.2.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240405.0",
+    "typescript": "^5.4.4",
+    "wrangler": "^3.48.0"
+  }
+}

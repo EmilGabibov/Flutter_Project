@@ -6,7 +6,8 @@
 *.swp
 .buildlog/
 .history
-
+graphify-out/
+node_modules/
 
 
 # Flutter repo-specific

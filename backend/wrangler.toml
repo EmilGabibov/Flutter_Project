@@ -1,0 +1,17 @@
+name = "hable"
+pages_build_output_dir = "public"
+compatibility_date = "2024-04-05"
+compatibility_flags = [ "nodejs_compat" ]
+
+# KV Namespace for ephemeral nudges
+[[kv_namespaces]]
+binding = "NUDGES"
+id = "local-nudge-namespace"
+preview_id = "local-nudge-namespace-preview"
+
+# D1 Database for partnerships
+[[d1_databases]]
+binding = "DB"
+database_name = "hable_db"
+database_id = "local-db-id"
+preview_database_id = "local-db-id-preview"
