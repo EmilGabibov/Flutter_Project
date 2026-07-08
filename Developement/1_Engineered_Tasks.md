@@ -145,3 +145,107 @@
 - Implemented friend request endpoints and database authorization for nudges.
 - Updated `lib/services/sync_service.dart` to automatically authenticate and pass `Authorization: Bearer <token>` in headers.
 - Completed At: 2026-07-08 16:44 Z
+
+### [x] Wire Mutual Habit Friends Into Home UI And Habit-Colored Rings
+
+**Raw source:** continue development; multi-user, mutual habit tracking, nudges, friends. (from 06_MULTI_USER.md). make the ring more similar to app_icon's ring. Assign different color for different Habit.
+
+**Issue:** Authentication and backend friend authorization exist, but the Flutter home experience still renders `PartnerTicker` with an empty list and the completion ring uses one generic green arc for every habit. Users cannot see mutual habit progress, send nudges from the UI, or distinguish habits by color.
+
+**Ponytail triage:**
+- *Should exist:* Yes, it connects the completed auth/social backend work to visible multi-user behavior.
+- *Smallest safe scope:* Cache partner habit snapshots locally, populate `PartnerTicker`, enqueue nudges from partner taps, and add a `color_hex` habit field that drives a thicker app-icon-like completion ring.
+- *Skipped scope:* Full friend discovery, contact import, push notifications, chat, realtime sockets, avatar uploads, and a separate social feed.
+- *Boundaries:* Keep the home screen offline-first. Network sync updates Drift in the background; UI reads Riverpod/Drift streams only. Journal notes stay private. Ring styling should reuse Flutter `CustomPainter`, not image assets or a new graphics dependency.
+
+**Action:** Add local social snapshot and habit color support, then wire the home screen to real partner data. Update `sync_service.dart` to persist `/api/sync/daily` partner/nudge payloads into Drift, expose providers for partner snapshots, and let partner taps enqueue a `sendNudge` sync item. Update `MudLongPressButton` so each habit passes a stable pastel color and paints a thicker rounded arc inspired by `Developement/Resources/app_icon.jpeg`.
+
+**Hable perspective:** This is a UI/state integration task, not a new backend auth task. The user should still complete and skip habits offline, see cached partner state when offline, and have nudges retry through the existing sync queue.
+
+**Implementation scope:**
+- Drift schema: add `colorHex` to `Habits` and a local partner snapshot table with `habit_id`, `partner_user_id`, `username`, `avatar_url`, `current_duration`, `has_completed_today`, `last_nudge_at`, `updated_at`, and `is_synced`.
+- Database DAO methods in `lib/database/database.dart` for upserting partner snapshots, watching partners by habit/user, and assigning missing habit colors from a fixed pastel palette.
+- Riverpod providers in `lib/providers/habit_providers.dart` or a small `lib/providers/social_providers.dart` for partner snapshot streams and nudge enqueue actions.
+- Sync layer in `lib/services/sync_service.dart` to persist daily sync partner/nudge payloads without blocking UI.
+- UI widgets: update `lib/screens/home_screen.dart`, `lib/widgets/partner_ticker.dart`, and `lib/widgets/mud_long_press_button.dart` for real partner data, nudge tap behavior, Semantics labels, and app-icon-like ring arcs.
+- Test surface: focused widget/provider test for habit color stability, partner ticker rendering, nudge queue insertion, and ring painter color selection.
+
+**Scalability considerations:** Partner snapshots can grow with friends times shared habits. Add indexes for `habit_id` and `partner_user_id`, keep provider watches scoped per visible habit, and avoid watching all social rows from the home screen. The app-icon ring painter is cheap if it draws simple arcs and avoids image decoding.
+
+**Future split guidance:** Build friend search/invite UI, notification badges, avatar images, realtime sync, and a dedicated friends screen as separate raw tasks only after this cached partner ticker works.
+
+**Edge cases:** Referenced `06_MULTI_USER.md` is missing, empty partner lists, stale partner snapshots while offline, duplicate nudge taps, failed nudge sync, missing avatar URLs, deleted shared habits, habits created before `colorHex` exists, color collisions across many habits, and low-contrast ring colors.
+
+**Acceptance criteria:**
+- Existing habits receive stable distinct pastel colors without breaking old local databases.
+- `MudLongPressButton` accepts a habit color and paints a thicker rounded progress ring closer to the app icon's soft arc style.
+- `PartnerTicker` renders cached partner habit status from Drift instead of `const []`.
+- Tapping a partner enqueues a `sendNudge` sync item and gives gentle in-app feedback.
+- `/api/sync/daily` partner/nudge payloads are persisted locally and reflected through Riverpod streams.
+- Home screen remains usable offline and never waits on network calls for partner data.
+- `03_UI_UX_AND_ANIMATIONS.md`, `04_SOCIAL_AND_ANALYTICS.md`, `02_OFFLINE_ARCHITECTURE.md`, and `01_SCHEMA_AND_CORE_LOGIC.md` are verified and updated if implementation changes schema, sync behavior, or ring styling.
+
+**Dependencies:** `03_UI_UX_AND_ANIMATIONS.md`, `04_SOCIAL_AND_ANALYTICS.md`, `02_OFFLINE_ARCHITECTURE.md`, `01_SCHEMA_AND_CORE_LOGIC.md`; raw reference `06_MULTI_USER.md` is currently missing.
+
+**Completion notes:**
+- Added `colorHex` column to `Habits` table with stable pastel defaults and `assignHabitColorIfMissing` DAO helper.
+- Added `PartnerSnapshots` Drift table (`habitId`, `partnerUserId`, `username`, `avatarUrl`, `currentDuration`, `hasCompletedToday`, `lastNudgeAt`).
+- Bumped schema to v3 with proper migration (`addColumn` + `createTable`).
+- Ran `build_runner` to regenerate all Drift files.
+- Created `lib/providers/social_providers.dart` with `allPartnersProvider`, `habitPartnersProvider` stream providers, and `enqueueNudge` helper.
+- Updated `lib/services/sync_service.dart#pullDailySync` to persist partner payloads into Drift via `upsertPartnerSnapshot`.
+- Rewrote `lib/widgets/partner_ticker.dart` to accept `List<PartnerSnapshot>` from Drift, colorize avatar borders with `habitColor`, show nudge snackbar on tap.
+- Updated `lib/widgets/mud_long_press_button.dart`: accepts `habitColor`, paints thicker app-icon-style rounded arc with soft glow shadow that lerps to `completionGreen` at 100%.
+- Updated `lib/screens/home_screen.dart`: imports `social_providers.dart`, wires `allPartnersProvider` to `PartnerTicker`, passes `_hexToColor(habit.colorHex)` to `MudLongPressButton`, enqueues `sendNudge` on partner tap.
+- `flutter analyze` clean (one pre-existing `SearchEngineRef` error unrelated to this task).
+- Completed At: 2026-07-08 19:51 Z
+
+### [x] Add Twin-App Friend Flow Test Harness
+
+**Raw source:** Install a twin of the hable to act as a friends app. test mutual habit tracking, nudginng, send and receive friend requests. Follow-up note: by tweaking APK package name maybe.
+
+**Issue:** Hable now has backend friend-request, partnership, nudge, and partner snapshot code, but there is no repeatable way to install two isolated app instances on one Android device and verify the full mutual habit flow end to end.
+
+**Ponytail triage:**
+- *Should exist:* Yes, this is the smallest practical way to test multi-user behavior without owning two physical devices.
+- *Smallest safe scope:* Add Android debug flavors for primary/friend installs, seed two known test users, and provide one script/checklist that installs both apps and verifies friend request, acceptance, shared habit tracking, nudge send, and nudge receive.
+- *Skipped scope:* Forking the app, maintaining two codebases, production multi-account switching, UI automation frameworks, push notifications, and App Store/Play Store build variants.
+- *Boundaries:* Keep one Flutter source tree. The twin must differ only by Android application ID/app label and dev-only test identity. Do not put production secrets in scripts.
+
+**Action:** Add a reproducible local/dev test harness that builds and installs two Hable debug variants on the same Android device by changing Android application IDs/package names, each with its own sandboxed Drift database and seeded backend user. Exercise the existing Cloudflare Pages/D1/KV social endpoints and document the exact commands to prove the friend flow works.
+
+**Hable perspective:** The test harness validates the actual offline-first sync path: each app writes locally, syncs in the background, pulls partner snapshots into Drift, and renders cached social state. It should not introduce alternate runtime behavior outside dev/test builds.
+
+**Implementation scope:**
+- Android Gradle: add `primary` and `friend` debug flavors with distinct `applicationIdSuffix`/app labels so both installs can coexist.
+- Flutter bootstrap: support dev-only `--dart-define` values for seeded test user IDs/usernames without affecting normal onboarding.
+- Backend/D1 seed: ensure `local-user-1` and `local-user-2` plus a shared test habit can be reset/seeded for repeatable friend-flow testing.
+- Script or README: add one command path to run Wrangler/Pages locally or target the deployed test URL, install both flavors, and show required `adb`/`flutter run` commands.
+- Social flow checks: send friend request from primary, accept from friend, create partnership/shared habit, send nudge, pull daily sync on both installs, and confirm `PartnerTicker` updates from Drift.
+- Test surface: smallest runnable smoke check, likely a shell script with `curl` API assertions plus manual app launch steps for the two installed variants.
+
+**Scalability considerations:** This is dev tooling, so scalability impact is low. Keep seed data deterministic and resettable. If more test personas are needed later, add a fixture file instead of more flavors.
+
+**Future split guidance:** Full device automation, integration tests with `integration_test`, multi-account switching inside the app, and production invite/onboarding flows are deferred. Add those only after the two-install smoke path is stable.
+
+**Edge cases:** Android package ID collision, stale Drift databases between runs, stale JWTs, D1 seed mismatch, KV nudge already consumed by first sync, deployed backend unavailable, emulator without `adb reverse`, and accidental use of test identities in release builds.
+
+**Acceptance criteria:**
+- Two debug builds can be installed on the same Android device at the same time.
+- Each install has a distinct app label and isolated local Drift database.
+- The primary install authenticates as `local-user-1`; the friend install authenticates as `local-user-2`.
+- A documented smoke path sends and accepts a friend request between the two test users.
+- A documented smoke path creates or verifies a shared habit partnership.
+- A nudge sent from one install is received by the other through `/api/sync/daily` and appears in local social state.
+- Mutual habit tracking appears in `PartnerTicker` from Drift-backed providers, not direct network reads.
+- `00_AGENT_DIRECTIVES.md`, `02_OFFLINE_ARCHITECTURE.md`, and `04_SOCIAL_AND_ANALYTICS.md` are verified and updated if implementation changes build, sync, or social test behavior.
+
+**Dependencies:** `00_AGENT_DIRECTIVES.md`, `02_OFFLINE_ARCHITECTURE.md`, `04_SOCIAL_AND_ANALYTICS.md`
+
+**Completion notes:**
+- Added `flavorDimensions` and `productFlavors` (`primary`, `friend`) to `android/app/build.gradle.kts`.
+- Updated `android/app/src/main/AndroidManifest.xml` to use `@string/app_name` for dynamic app labels.
+- Intercepted `--dart-define=SEED_USER_ID` and `--dart-define=SEED_USERNAME` in `onboarding_username_screen.dart` to auto-seed local test users and bypass onboarding.
+- Auto-seeded `shared-habit-1` into the test user's Drift database.
+- Created `Developement/TWIN_TEST_HARNESS.md` with full runbook commands for building and testing both isolated apps on one device.
+- Completed At: 2026-07-08 20:08 Z

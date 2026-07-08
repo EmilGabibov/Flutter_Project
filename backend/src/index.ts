@@ -155,6 +155,88 @@ app.post('/api/social/nudge', async (c) => {
   return c.json({ success: true, message: 'Nudge sent successfully' })
 })
 
+// Private Messages
+app.post('/api/social/private-message', async (c) => {
+  const payload = c.get('jwtPayload')
+  const sender_id = payload.id
+  const { target_user_id, message, milestone_type } = await c.req.json()
+
+  if (!target_user_id || !message) {
+    return c.json({ error: 'Missing target_user_id or message' }, 400)
+  }
+
+  const id = crypto.randomUUID()
+  await c.env.DB.prepare(
+    'INSERT INTO private_messages (id, sender_id, recipient_id, message, milestone_type) VALUES (?, ?, ?, ?, ?)'
+  ).bind(id, sender_id, target_user_id, message, milestone_type || null).run()
+
+  return c.json({ success: true, message_id: id })
+})
+
+// Habit Invitations
+app.post('/api/social/habit-invitation', async (c) => {
+  const payload = c.get('jwtPayload')
+  const requester_id = payload.id
+  const { target_user_id, habit_id } = await c.req.json()
+
+  if (!target_user_id || !habit_id) {
+    return c.json({ error: 'Missing target_user_id or habit_id' }, 400)
+  }
+
+  const id = crypto.randomUUID()
+  await c.env.DB.prepare(
+    'INSERT INTO habit_invitations (id, requester_id, recipient_id, habit_id) VALUES (?, ?, ?, ?)'
+  ).bind(id, requester_id, target_user_id, habit_id).run()
+
+  return c.json({ success: true, invitation_id: id })
+})
+
+app.post('/api/social/habit-invitation/accept', async (c) => {
+  const payload = c.get('jwtPayload')
+  const recipient_id = payload.id
+  const { invitation_id } = await c.req.json()
+
+  if (!invitation_id) return c.json({ error: 'Missing invitation_id' }, 400)
+
+  // 1. Fetch invitation
+  const invite = await c.env.DB.prepare(
+    'SELECT requester_id, habit_id FROM habit_invitations WHERE id = ? AND recipient_id = ? AND status = "pending"'
+  ).bind(invitation_id, recipient_id).first()
+
+  if (!invite) return c.json({ error: 'Invitation not found or already processed' }, 404)
+
+  // 2. Update status to accepted
+  await c.env.DB.prepare(
+    'UPDATE habit_invitations SET status = "accepted" WHERE id = ?'
+  ).bind(invitation_id).run()
+
+  // 3. Insert symmetric partnership rows
+  await c.env.DB.prepare(`
+    INSERT OR IGNORE INTO partnerships (user_id, partner_id, habit_id) 
+    VALUES (?, ?, ?), (?, ?, ?)
+  `).bind(invite.requester_id, recipient_id, invite.habit_id, recipient_id, invite.requester_id, invite.habit_id).run()
+
+  return c.json({ success: true })
+})
+
+app.post('/api/social/habit-invitation/decline', async (c) => {
+  const payload = c.get('jwtPayload')
+  const recipient_id = payload.id
+  const { invitation_id } = await c.req.json()
+
+  if (!invitation_id) return c.json({ error: 'Missing invitation_id' }, 400)
+
+  const result = await c.env.DB.prepare(
+    'UPDATE habit_invitations SET status = "declined" WHERE id = ? AND recipient_id = ? AND status = "pending"'
+  ).bind(invitation_id, recipient_id).run()
+
+  if (result.meta.changes === 0) {
+    return c.json({ error: 'Invitation not found or already processed' }, 404)
+  }
+
+  return c.json({ success: true })
+})
+
 // Sync Daily
 app.get('/api/sync/daily', async (c) => {
   const payload = c.get('jwtPayload')
@@ -188,9 +270,25 @@ app.get('/api/sync/daily', async (c) => {
     await c.env.NUDGES.delete(key.name)
   }
 
+  // 3. Fetch Private Messages
+  const { results: messages } = await c.env.DB.prepare(`
+    SELECT id, sender_id, message, milestone_type, created_at
+    FROM private_messages
+    WHERE recipient_id = ?
+  `).bind(userId).all()
+
+  // 4. Fetch Habit Invitations
+  const { results: invitations } = await c.env.DB.prepare(`
+    SELECT id, requester_id, habit_id, status, created_at
+    FROM habit_invitations
+    WHERE recipient_id = ? AND status = 'pending'
+  `).bind(userId).all()
+
   return c.json({
     partners: results,
-    nudges: nudges
+    nudges: nudges,
+    messages: messages,
+    invitations: invitations
   })
 })
 

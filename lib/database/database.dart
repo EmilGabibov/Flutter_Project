@@ -9,13 +9,25 @@ import 'tables.dart';
 
 part 'database.g.dart';
 
-@DriftDatabase(tables: [Users, Habits, Logs, Partnerships, SyncQueue, CachedQuotes, SearchDocuments])
+@DriftDatabase(tables: [
+  Users,
+  Habits,
+  Logs,
+  Partnerships,
+  SyncQueue,
+  CachedQuotes,
+  SearchDocuments,
+  PartnerSnapshots,
+  PrivateMessages,
+  HabitInvitations,
+  MilestoneEvents
+])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   /// Bump this when the schema changes.
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -25,6 +37,15 @@ class AppDatabase extends _$AppDatabase {
         onUpgrade: (Migrator m, int from, int to) async {
           if (from < 2) {
             await m.createTable(searchDocuments);
+          }
+          if (from < 3) {
+            await m.createTable(partnerSnapshots);
+            await m.addColumn(habits, habits.colorHex);
+          }
+          if (from < 4) {
+            await m.createTable(privateMessages);
+            await m.createTable(habitInvitations);
+            await m.createTable(milestoneEvents);
           }
         },
       );
@@ -264,11 +285,46 @@ class AppDatabase extends _$AppDatabase {
       (select(logs)..where((l) => l.isSynced.equals(false))).get();
 
   // ---------------------------------------------------------------------------
-  // Search Document metadata operations
+  // Search operations
   // ---------------------------------------------------------------------------
 
-  Future<void> insertSearchDocument(SearchDocumentsCompanion document) =>
-      into(searchDocuments).insert(document, mode: InsertMode.insertOrReplace);
+  Future<void> insertSearchDocument(SearchDocumentsCompanion doc) =>
+      into(searchDocuments).insert(doc, mode: InsertMode.insertOrReplace);
+
+  Future<List<SearchDocument>> getAllSearchDocuments() =>
+      select(searchDocuments).get();
+
+  // ---------------------------------------------------------------------------
+  // Social Social & 3D operations (Phase 1)
+  // ---------------------------------------------------------------------------
+
+  Future<void> insertPrivateMessage(PrivateMessagesCompanion msg) =>
+      into(privateMessages).insert(msg, mode: InsertMode.insertOrReplace);
+      
+  Future<List<PrivateMessage>> getPrivateMessages() =>
+      select(privateMessages).get();
+
+  Future<void> insertHabitInvitation(HabitInvitationsCompanion invite) =>
+      into(habitInvitations).insert(invite, mode: InsertMode.insertOrReplace);
+
+  Future<void> updateHabitInvitationStatus(String id, String newStatus) =>
+      (update(habitInvitations)..where((i) => i.invitationId.equals(id)))
+          .write(HabitInvitationsCompanion(status: Value(newStatus)));
+
+  Future<List<HabitInvitation>> getPendingInvitations() =>
+      (select(habitInvitations)..where((i) => i.status.equals('pending'))).get();
+
+  Stream<List<HabitInvitation>> watchPendingInvitations() =>
+      (select(habitInvitations)..where((i) => i.status.equals('pending'))).watch();
+
+  Future<void> insertMilestoneEvent(MilestoneEventsCompanion event) =>
+      into(milestoneEvents).insert(event, mode: InsertMode.insertOrReplace);
+
+  Stream<List<MilestoneEvent>> watchMilestoneEvents() =>
+      select(milestoneEvents).watch();
+
+  Future<void> deleteMilestoneEvent(String eventId) =>
+      (delete(milestoneEvents)..where((e) => e.eventId.equals(eventId))).go();
 
   Future<SearchDocument?> getSearchDocumentById(String documentId) =>
       (select(searchDocuments)..where((d) => d.documentId.equals(documentId)))
@@ -276,6 +332,53 @@ class AppDatabase extends _$AppDatabase {
 
   Future<List<SearchDocument>> getSearchDocumentsByIds(List<String> documentIds) =>
       (select(searchDocuments)..where((d) => d.documentId.isIn(documentIds))).get();
+
+  // ---------------------------------------------------------------------------
+  // Partner Snapshot operations
+  // ---------------------------------------------------------------------------
+
+  /// Upsert a partner's habit snapshot pulled from the daily sync.
+  Future<void> upsertPartnerSnapshot(PartnerSnapshotsCompanion snapshot) =>
+      into(partnerSnapshots).insertOnConflictUpdate(snapshot);
+
+  /// Watch all partner snapshots for a given habit — drives PartnerTicker.
+  Stream<List<PartnerSnapshot>> watchPartnersByHabit(String habitId) =>
+      (select(partnerSnapshots)
+            ..where((s) => s.habitId.equals(habitId))
+            ..orderBy([(s) => OrderingTerm.desc(s.updatedAt)]))
+          .watch();
+
+  /// Watch all distinct partners across all habits for home screen ticker.
+  Stream<List<PartnerSnapshot>> watchAllPartners() =>
+      select(partnerSnapshots).watch();
+
+  // ---------------------------------------------------------------------------
+  // Habit color palette assignment
+  // ---------------------------------------------------------------------------
+
+  static const List<String> _pastelPalette = [
+    'FF9CAF88', // sage green
+    'FFC4B5D4', // muted lavender
+    'FFFBBF24', // warm amber
+    'FFFB7185', // soft rose
+    'FF67E8F9', // sky teal
+    'FFFDBA74', // peach
+    'FFA5B4FC', // periwinkle
+    'FF86EFAC', // mint
+  ];
+
+  /// Assigns a stable pastel color to a habit that has none yet.
+  /// Call after inserting a new habit.
+  Future<void> assignHabitColorIfMissing(String habitId, int habitIndex) async {
+    final habit = await (select(habits)
+          ..where((h) => h.habitId.equals(habitId)))
+        .getSingleOrNull();
+    if (habit == null) return;
+    if (habit.colorHex != 'FF9CAF88') return; // already set
+    final color = _pastelPalette[habitIndex % _pastelPalette.length];
+    await (update(habits)..where((h) => h.habitId.equals(habitId)))
+        .write(HabitsCompanion(colorHex: Value(color)));
+  }
 }
 
 LazyDatabase _openConnection() {

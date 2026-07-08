@@ -14,6 +14,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    buildFeatures {
+        resValues = true
+    }
+
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.flutter_project"
@@ -23,6 +27,21 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+    }
+
+    flavorDimensions += "version"
+
+    productFlavors {
+        create("primary") {
+            dimension = "version"
+            applicationIdSuffix = ".primary"
+            resValue("string", "app_name", "Hable Primary")
+        }
+        create("friend") {
+            dimension = "version"
+            applicationIdSuffix = ".friend"
+            resValue("string", "app_name", "Hable Friend")
+        }
     }
 
     buildTypes {

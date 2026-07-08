@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../database/database.dart';
+import '../database/tables.dart';
 import 'connectivity_service.dart';
 
 /// Background sync service that processes the outbound queue
@@ -84,14 +86,13 @@ class SyncService {
 
   /// Send a mutation payload to the Cloudflare Worker.
   Future<void> _sendToCloudflare(SyncQueueData item) async {
-    if (item.action == 'NUDGE') {
+    if (item.action == SyncAction.sendNudge) {
       try {
         final response = await http.post(
           Uri.parse('$_baseUrl/api/social/nudge'),
           headers: _getAuthHeaders(),
           body: item.payload,
         );
-
         if (response.statusCode != 200) {
           throw Exception('Failed to send nudge: ${response.statusCode} - ${response.body}');
         }
@@ -100,12 +101,57 @@ class SyncService {
         debugPrint('[SyncService] Nudge sync failed: $e');
         rethrow;
       }
+    } else if (item.action == SyncAction.sendPrivateMessage) {
+      try {
+        final response = await http.post(
+          Uri.parse('$_baseUrl/api/social/private-message'),
+          headers: _getAuthHeaders(),
+          body: item.payload,
+        );
+        if (response.statusCode != 200) {
+          throw Exception('Failed to send private message: ${response.statusCode} - ${response.body}');
+        }
+        debugPrint('[SyncService] POST PRIVATE_MESSAGE successful');
+      } catch (e) {
+        debugPrint('[SyncService] Private message sync failed: $e');
+        rethrow;
+      }
+    } else if (item.action == SyncAction.acceptInvitation) {
+      try {
+        final response = await http.post(
+          Uri.parse('$_baseUrl/api/social/habit-invitation/accept'),
+          headers: _getAuthHeaders(),
+          body: item.payload,
+        );
+        if (response.statusCode != 200) {
+          throw Exception('Failed to accept invitation: ${response.statusCode} - ${response.body}');
+        }
+        debugPrint('[SyncService] POST ACCEPT_INVITATION successful');
+      } catch (e) {
+        debugPrint('[SyncService] Accept invitation sync failed: $e');
+        rethrow;
+      }
+    } else if (item.action == SyncAction.declineInvitation) {
+      try {
+        final response = await http.post(
+          Uri.parse('$_baseUrl/api/social/habit-invitation/decline'),
+          headers: _getAuthHeaders(),
+          body: item.payload,
+        );
+        if (response.statusCode != 200) {
+          throw Exception('Failed to decline invitation: ${response.statusCode} - ${response.body}');
+        }
+        debugPrint('[SyncService] POST DECLINE_INVITATION successful');
+      } catch (e) {
+        debugPrint('[SyncService] Decline invitation sync failed: $e');
+        rethrow;
+      }
     } else {
       debugPrint('[SyncService] Unsupported action for sync: ${item.action}');
     }
   }
 
-  /// Pull inbound social data and quotes from the daily sync endpoint.
+  /// Pull inbound social data and persist into Drift for offline-first access.
   Future<void> pullDailySync(String userId) async {
     if (!_connectivity.isOnline) return;
 
@@ -123,16 +169,60 @@ class SyncService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        debugPrint('[SyncService] GET /api/sync/daily successful: $data');
-        
-        final List<dynamic> nudges = data['nudges'] ?? [];
-        for (final nudge in nudges) {
-          debugPrint('Received Nudge from ${nudge['senderId']} at ${nudge['timestamp']}');
-        }
+        debugPrint('[SyncService] GET /api/sync/daily successful');
 
+        // Persist partner snapshots → Drift (offline-first)
         final List<dynamic> partners = data['partners'] ?? [];
         for (final partner in partners) {
-          debugPrint('Partner Progress: ${partner['username']} -> ${partner['current_duration']} days');
+          final habitId = partner['habit_id']?.toString() ?? '';
+          final partnerUserId = partner['partner_id']?.toString() ?? '';
+          if (habitId.isEmpty || partnerUserId.isEmpty) continue;
+
+          await _db.upsertPartnerSnapshot(PartnerSnapshotsCompanion(
+            habitId: Value(habitId),
+            partnerUserId: Value(partnerUserId),
+            username: Value(partner['username']?.toString() ?? 'Friend'),
+            avatarUrl: Value(partner['avatar_url']?.toString()),
+            currentDuration: Value((partner['current_duration'] as num?)?.toInt() ?? 0),
+            updatedAt: Value(DateTime.now()),
+          ));
+          debugPrint('[SyncService] Upserted partner ${partner['username']} for habit $habitId');
+        }
+
+        // Log nudges (will be surfaced in UI in future task)
+        final List<dynamic> nudges = data['nudges'] ?? [];
+        for (final nudge in nudges) {
+          debugPrint('[SyncService] Received Nudge from ${nudge['senderId']}');
+        }
+
+        // Persist private messages
+        final List<dynamic> messages = data['messages'] ?? [];
+        for (final msg in messages) {
+          await _db.insertPrivateMessage(PrivateMessagesCompanion(
+            messageId: Value(msg['id'].toString()),
+            senderId: Value(msg['sender_id'].toString()),
+            recipientId: Value(userId),
+            message: Value(msg['message'].toString()),
+            milestoneType: Value(msg['milestone_type']?.toString()),
+            createdAt: Value(DateTime.parse(msg['created_at'].toString())),
+            updatedAt: Value(DateTime.now()),
+            isSynced: const Value(true),
+          ));
+        }
+
+        // Persist habit invitations
+        final List<dynamic> invitations = data['invitations'] ?? [];
+        for (final inv in invitations) {
+          await _db.insertHabitInvitation(HabitInvitationsCompanion(
+            invitationId: Value(inv['id'].toString()),
+            requesterId: Value(inv['requester_id'].toString()),
+            recipientId: Value(userId),
+            habitId: Value(inv['habit_id'].toString()),
+            status: Value(inv['status'].toString()),
+            createdAt: Value(DateTime.parse(inv['created_at'].toString())),
+            updatedAt: Value(DateTime.now()),
+            isSynced: const Value(true),
+          ));
         }
       } else {
         debugPrint('[SyncService] Failed to pull daily sync: ${response.statusCode} - ${response.body}');

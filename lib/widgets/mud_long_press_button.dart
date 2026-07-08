@@ -11,6 +11,8 @@ class MudLongPressButton extends StatefulWidget {
   final int calculatedDurationMs;
   final VoidCallback onCompletion;
   final bool isCompleted;
+  /// Per-habit accent color for the ring arc. Defaults to sage green.
+  final Color habitColor;
 
   const MudLongPressButton({
     super.key,
@@ -18,6 +20,7 @@ class MudLongPressButton extends StatefulWidget {
     required this.calculatedDurationMs,
     required this.onCompletion,
     this.isCompleted = false,
+    this.habitColor = AppTheme.sageGreen,
   });
 
   @override
@@ -116,6 +119,7 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
             painter: _MudButtonPainter(
               progress: _curveAnimation.value,
               resistance: widget.resistanceCoefficient,
+              habitColor: widget.habitColor,
             ),
             child: child,
           );
@@ -155,7 +159,11 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
       width: 180,
       height: 180,
       child: CustomPaint(
-        painter: _MudButtonPainter(progress: 1.0, resistance: 0.0),
+        painter: _MudButtonPainter(
+          progress: 1.0,
+          resistance: 0.0,
+          habitColor: widget.habitColor,
+        ),
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -163,7 +171,7 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
               Icon(
                 Icons.check_circle_rounded,
                 size: 48,
-                color: AppTheme.completionGreen,
+                color: widget.habitColor,
               ),
               const SizedBox(height: 8),
               Text(
@@ -171,7 +179,7 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 16,
-                  color: AppTheme.completionGreen,
+                  color: widget.habitColor,
                 ),
               ),
             ],
@@ -185,48 +193,65 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
 class _MudButtonPainter extends CustomPainter {
   final double progress;
   final double resistance;
+  final Color habitColor;
 
-  _MudButtonPainter({required this.progress, required this.resistance});
+  _MudButtonPainter({
+    required this.progress,
+    required this.resistance,
+    this.habitColor = AppTheme.sageGreen,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
 
-    // Background track
+    // ── Background track (thin, muted) ──────────────────────────────────────
     final bgPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 8.0
+      ..strokeWidth = 6.0
       ..strokeCap = StrokeCap.round
-      ..color = AppTheme.surfaceVariant;
-    canvas.drawCircle(center, radius - 6, bgPaint);
+      ..color = habitColor.withValues(alpha: 0.12);
+    canvas.drawCircle(center, radius - 10, bgPaint);
 
-    // Dynamic progress arc
+    if (progress <= 0) return;
+
+    // ── Dynamic progress arc — app-icon-inspired thick rounded ring ──────────
+    // Ring starts thin and grows thicker under high resistance ("mud" feel).
+    final arcThickness = 12.0 + (resistance * 6.0 * (1.0 - progress));
+
+    // Color: lerps from habit pastel → vivid completion green at 100%
     final progressColor = Color.lerp(
-      AppTheme.sageGreen,
+      habitColor,
       AppTheme.completionGreen,
       progress,
     )!;
 
+    // Soft glow shadow beneath the arc
+    final glowPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = arcThickness + 8
+      ..strokeCap = StrokeCap.round
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8)
+      ..color = progressColor.withValues(alpha: 0.25);
+
     final progressPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 8.0 + (resistance * 4.0 * (1.0 - progress))
+      ..strokeWidth = arcThickness
       ..strokeCap = StrokeCap.round
       ..color = progressColor;
 
     final double sweepAngle = 2 * pi * progress;
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius - 6),
-      -pi / 2,
-      sweepAngle,
-      false,
-      progressPaint,
-    );
+    final arcRect = Rect.fromCircle(center: center, radius: radius - 10);
+
+    canvas.drawArc(arcRect, -pi / 2, sweepAngle, false, glowPaint);
+    canvas.drawArc(arcRect, -pi / 2, sweepAngle, false, progressPaint);
   }
 
   @override
   bool shouldRepaint(covariant _MudButtonPainter oldDelegate) {
     return oldDelegate.progress != progress ||
-        oldDelegate.resistance != resistance;
+        oldDelegate.resistance != resistance ||
+        oldDelegate.habitColor != habitColor;
   }
 }

@@ -26,6 +26,32 @@ CREATE TABLE IF NOT EXISTS friend_requests (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS private_messages (
+    id TEXT PRIMARY KEY,
+    sender_id TEXT NOT NULL,
+    recipient_id TEXT NOT NULL,
+    message TEXT NOT NULL,
+    milestone_type TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS habit_invitations (
+    id TEXT PRIMARY KEY,
+    requester_id TEXT NOT NULL,
+    recipient_id TEXT NOT NULL,
+    habit_id TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending', -- 'pending', 'accepted', 'rejected'
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS milestone_events (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    habit_id TEXT NOT NULL,
+    milestone_type TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Insert some dummy data for local testing
 INSERT OR IGNORE INTO users (id, username, avatar_url) VALUES 
 ('local-user-1', 'Alice', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alice'),

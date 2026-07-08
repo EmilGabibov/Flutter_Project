@@ -9,10 +9,13 @@ import '../providers/habit_providers.dart';
 import '../providers/resistance_provider.dart';
 import '../providers/scoring_provider.dart';
 import '../providers/quote_provider.dart';
+import '../providers/social_providers.dart';
 import '../theme/app_theme.dart';
 import '../widgets/mud_long_press_button.dart';
 import '../widgets/skip_bottom_sheet.dart';
 import '../widgets/partner_ticker.dart';
+import '../widgets/invitation_banner.dart';
+import '../widgets/milestone_wish_carousel.dart';
 import 'profile_screen.dart';
 
 /// Home Screen — focuses ONLY on today's action.
@@ -133,6 +136,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
 
+        // Phase 2: Pending Invitations
+        const SliverToBoxAdapter(
+          child: InvitationBanner(),
+        ),
+
+        // Phase 2: Milestone Wishes
+        const SliverToBoxAdapter(
+          child: MilestoneWishCarousel(),
+        ),
+
         // Habit cards
         if (habits.isEmpty)
           SliverFillRemaining(
@@ -155,13 +168,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
 
-        // Partner ticker area
+        // Partner ticker — reads Drift, never network
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 16),
-            child: PartnerTicker(
-              partners: const [], // Populated once sync pulls partner data
-            ),
+            child: Consumer(builder: (context, ref, _) {
+              final partnersAsync = ref.watch(allPartnersProvider);
+              return partnersAsync.when(
+                data: (partners) => PartnerTicker(
+                  partners: partners,
+                  onNudgeTap: (targetUserId) async {
+                    final db = ref.read(databaseProvider);
+                    await enqueueNudge(
+                      db: db,
+                      senderUserId: widget.userId,
+                      targetUserId: targetUserId,
+                    );
+                  },
+                ),
+                loading: () => const SizedBox.shrink(),
+                error: (_, _) => const SizedBox.shrink(),
+              );
+            }),
           ),
         ),
       ],
@@ -181,6 +209,15 @@ class _HabitCard extends ConsumerWidget {
   final String userId;
 
   const _HabitCard({required this.habit, required this.userId});
+
+  /// Convert a stored hex string like 'FF9CAF88' to a Flutter [Color].
+  Color _hexToColor(String hex) {
+    try {
+      return Color(int.parse(hex, radix: 16));
+    } catch (_) {
+      return AppTheme.sageGreen;
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -251,6 +288,7 @@ class _HabitCard extends ConsumerWidget {
                 resistanceCoefficient: resistance.resistanceCoefficient,
                 calculatedDurationMs: resistance.calculatedDurationMs,
                 isCompleted: isCompletedToday,
+                habitColor: _hexToColor(habit.colorHex),
                 onCompletion: () =>
                     _handleCompletion(context, ref, habit, currentDay),
               ),

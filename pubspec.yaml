@@ -41,6 +41,12 @@ dev_dependencies:
   build_runner: ^2.4.14
   riverpod_generator: ^4.0.4
   drift_dev: ^2.22.1
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "Developement/Resources/app_icon.jpeg"

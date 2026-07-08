@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import 'package:drift/drift.dart' hide Column;
 import '../../database/database.dart';
+import '../../database/tables.dart' show HabitStatus;
 import '../../providers/database_provider.dart';
+import '../home_screen.dart';
 import 'onboarding_habit_screen.dart';
 
 /// Step 1: Profile Initialization — username input, UUID generation.
@@ -21,9 +23,59 @@ class _OnboardingUsernameScreenState
   bool _isValid = false;
 
   @override
+  void initState() {
+    super.initState();
+    // ── Twin-App Test Harness Auto-Seeding ──
+    const seedUserId = String.fromEnvironment('SEED_USER_ID');
+    const seedUsername = String.fromEnvironment('SEED_USERNAME');
+    if (seedUserId.isNotEmpty && seedUsername.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _proceedWithSeed(seedUserId, seedUsername);
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  /// Bypasses normal onboarding and injects test user + test habit directly.
+  Future<void> _proceedWithSeed(String userId, String username) async {
+    final db = ref.read(databaseProvider);
+    
+    // Seed User
+    await db.insertUser(UsersCompanion(
+      userId: Value(userId),
+      username: Value(username),
+      createdAt: Value(DateTime.now()),
+      updatedAt: Value(DateTime.now()),
+      totalScore: const Value(0),
+      isSynced: const Value(false),
+    ));
+
+    // Seed Shared Habit
+    const habitId = 'shared-habit-1';
+    await db.into(db.habits).insert(HabitsCompanion(
+      habitId: const Value(habitId),
+      userId: Value(userId),
+      title: const Value('Shared Dev Habit'),
+      targetDuration: const Value(60),
+      currentDuration: const Value(0),
+      status: const Value(HabitStatus.active),
+      isCustom: const Value(true),
+    ));
+    await db.assignHabitColorIfMissing(habitId, 0);
+
+    if (mounted) {
+      // Skip the rest of onboarding, go straight to Home
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => HomeScreen(userId: userId),
+        ),
+      );
+    }
   }
 
   Future<void> _proceed() async {

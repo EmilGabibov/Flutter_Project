@@ -7,7 +7,7 @@ enum HabitStatus { active, completed, abandoned }
 enum LogStatus { completed, skipped }
 
 /// Sync queue action types for outbound mutations.
-enum SyncAction { createHabit, logHabit, sendNudge }
+enum SyncAction { createHabit, logHabit, sendNudge, sendPrivateMessage, acceptInvitation, declineInvitation }
 
 // ---------------------------------------------------------------------------
 // Table Definitions — Mirror the Cloudflare D1 schema (spec 01)
@@ -37,6 +37,9 @@ class Habits extends Table {
   IntColumn get targetDuration => integer()();
   IntColumn get currentDuration => integer()();
   TextColumn get status => textEnum<HabitStatus>()();
+  /// Hex color string (e.g. 'FF9CAF88') for ring/avatar tinting. Assigned on
+  /// creation from a fixed pastel palette; never null after migration.
+  TextColumn get colorHex => text().withDefault(const Constant('FF9CAF88'))();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
   BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
 
@@ -99,4 +102,66 @@ class SearchDocuments extends Table {
 
   @override
   Set<Column> get primaryKey => {documentId};
+}
+
+/// Local cache of partner habit snapshots pulled from /api/sync/daily.
+/// Offline-first: UI reads ONLY from this table, never directly from network.
+class PartnerSnapshots extends Table {
+  TextColumn get habitId => text()();
+  TextColumn get partnerUserId => text()();
+  TextColumn get username => text()();
+  TextColumn get avatarUrl => text().nullable()();
+  IntColumn get currentDuration => integer().withDefault(const Constant(0))();
+  BoolColumn get hasCompletedToday =>
+      boolean().withDefault(const Constant(false))();
+  DateTimeColumn get lastNudgeAt => dateTime().nullable()();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+  BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
+
+  @override
+  Set<Column> get primaryKey => {habitId, partnerUserId};
+}
+
+/// Private messages and wishes sent between users based on milestones.
+class PrivateMessages extends Table {
+  TextColumn get messageId => text()();
+  TextColumn get senderId => text()();
+  TextColumn get recipientId => text()();
+  TextColumn get message => text()();
+  TextColumn get milestoneType => text().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+  BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
+
+  @override
+  Set<Column> get primaryKey => {messageId};
+}
+
+/// Invitations to become a habit partner.
+class HabitInvitations extends Table {
+  TextColumn get invitationId => text()();
+  TextColumn get requesterId => text()();
+  TextColumn get recipientId => text()();
+  TextColumn get habitId => text()();
+  TextColumn get status => text().withDefault(const Constant('pending'))();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+  BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
+
+  @override
+  Set<Column> get primaryKey => {invitationId};
+}
+
+/// Milestone events used to trigger wish suggestions.
+class MilestoneEvents extends Table {
+  TextColumn get eventId => text()();
+  TextColumn get userId => text()();
+  TextColumn get habitId => text()();
+  TextColumn get milestoneType => text()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+  BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
+
+  @override
+  Set<Column> get primaryKey => {eventId};
 }
