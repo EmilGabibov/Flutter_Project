@@ -6,12 +6,12 @@ compatibility_flags = [ "nodejs_compat" ]
 # KV Namespace for ephemeral nudges
 [[kv_namespaces]]
 binding = "NUDGES"
-id = "local-nudge-namespace"
+id = "f70b34bdf2e3447d9194eb9c856006c6"
 preview_id = "local-nudge-namespace-preview"
 
 # D1 Database for partnerships
 [[d1_databases]]
 binding = "DB"
 database_name = "hable_db"
-database_id = "local-db-id"
+database_id = "63e137a2-f22f-4f28-98b9-5e52e90d1c03"
 preview_database_id = "local-db-id-preview"

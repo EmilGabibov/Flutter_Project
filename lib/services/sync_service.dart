@@ -9,7 +9,7 @@ import 'connectivity_service.dart';
 class SyncService {
   final AppDatabase _db;
   final ConnectivityService _connectivity;
-  final String _baseUrl = 'http://127.0.0.1:8787'; // Relies on adb reverse tcp:8787 tcp:8787
+  final String _baseUrl = 'https://hable.pages.dev';
   
   String? _jwtToken;
 

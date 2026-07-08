@@ -97,7 +97,7 @@
 - Wrote and passed focused tests in `test/search_engine_test.dart` verifying positional postings and ranking behavior.
 - Completed At: 2026-07-08 16:08 Z
 
-### [ ] Add JWT Authentication And Friend-Request Authorization For Sync APIs
+### [x] Add JWT Authentication And Friend-Request Authorization For Sync APIs
 
 **Raw source:** Implement secure user authentication for sync APIs (e.g., JWTs and friend-request acceptance flows).
 
@@ -137,5 +137,11 @@
 
 **Dependencies:** `04_SOCIAL_AND_ANALYTICS.md`, `01_SCHEMA_AND_CORE_LOGIC.md`, `02_OFFLINE_ARCHITECTURE.md`
 
-**Completion-note placeholder:** `[Placeholder for completion notes, touched files, behavior verified, and completion timestamp]`
-
+**Completion notes:**
+- Migrated backend project to Cloudflare Pages (`functions/api/[[route]].ts`, `public/index.html`).
+- Added `friend_requests` table to D1 schema.
+- Implemented `/api/auth/login` to sign 30-day JWTs using `hono/jwt`.
+- Wrapped `/api/social/nudge` and `/api/sync/daily` with JWT middleware.
+- Implemented friend request endpoints and database authorization for nudges.
+- Updated `lib/services/sync_service.dart` to automatically authenticate and pass `Authorization: Bearer <token>` in headers.
+- Completed At: 2026-07-08 16:44 Z

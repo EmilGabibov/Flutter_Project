@@ -46,13 +46,13 @@ app.post('/api/auth/login', async (c) => {
 // Apply JWT middleware to all protected routes
 app.use('/api/social/*', async (c, next) => {
   const secret = c.env.JWT_SECRET || 'fallback_local_secret'
-  const jwtMiddleware = jwt({ secret })
+  const jwtMiddleware = jwt({ secret, alg: 'HS256' })
   return jwtMiddleware(c, next)
 })
 
 app.use('/api/sync/*', async (c, next) => {
   const secret = c.env.JWT_SECRET || 'fallback_local_secret'
-  const jwtMiddleware = jwt({ secret })
+  const jwtMiddleware = jwt({ secret, alg: 'HS256' })
   return jwtMiddleware(c, next)
 })
 
@@ -87,6 +87,36 @@ app.post('/api/social/friend-request/accept', async (c) => {
   if (result.meta.changes === 0) {
     return c.json({ error: 'Request not found or unauthorized' }, 404)
   }
+
+  return c.json({ success: true })
+})
+
+// Mutual Habit Tracking (Partnerships)
+app.post('/api/social/partnerships', async (c) => {
+  const payload = c.get('jwtPayload')
+  const sender_id = payload.id
+  const { target_user_id, habit_id } = await c.req.json()
+
+  if (!target_user_id || !habit_id) {
+    return c.json({ error: 'Missing target_user_id or habit_id' }, 400)
+  }
+
+  // Authorize: Must be accepted friends
+  const isFriend = await c.env.DB.prepare(`
+    SELECT id FROM friend_requests 
+    WHERE status = 'accepted' 
+    AND ((requester_id = ? AND recipient_id = ?) OR (requester_id = ? AND recipient_id = ?))
+  `).bind(sender_id, target_user_id, target_user_id, sender_id).first()
+
+  if (!isFriend) {
+    return c.json({ error: 'Unauthorized: Not accepted friends' }, 403)
+  }
+
+  // Insert symmetric partnership rows
+  await c.env.DB.prepare(`
+    INSERT OR IGNORE INTO partnerships (user_id, partner_id, habit_id) 
+    VALUES (?, ?, ?), (?, ?, ?)
+  `).bind(sender_id, target_user_id, habit_id, target_user_id, sender_id, habit_id).run()
 
   return c.json({ success: true })
 })

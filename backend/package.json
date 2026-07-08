@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "wrangler pages dev public",
+    "dev": "wrangler pages dev public --port 8787",
     "deploy": "wrangler pages deploy public --project-name hable",
     "db:setup": "wrangler d1 execute hable_db --local --file=./schema.sql"
   },
