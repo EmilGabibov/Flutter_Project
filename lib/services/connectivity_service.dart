@@ -21,9 +21,14 @@ class ConnectivityService {
       }
     });
 
-    // Check initial state
+    // Check initial state and process any queue that was created while online.
     _connectivity.checkConnectivity().then((results) {
+      final wasOffline = !_isOnline;
       _isOnline = results.any((r) => r != ConnectivityResult.none);
+
+      if (_isOnline && wasOffline) {
+        onOnline();
+      }
     });
   }
 

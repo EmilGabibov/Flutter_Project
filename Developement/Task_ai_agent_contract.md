@@ -1,7 +1,7 @@
 # AI Agent Operating Contract — Project Hable
 
 > Canonical source of truth for all AI agent behavioral rules governing the Project Hable task pipeline.  
-> Referenced by: [`0_Raw_Tasks.md`](0_Raw_Tasks.md), [`1_Engineered_Tasks.md`](1_Engineered_Tasks.md), [`2_Archived_Tasks.md`](2_Archived_Tasks.md).
+> Referenced by: [`Task0_Raw.md`](Task0_Raw.md), [`Task1_Engineered.md`](Task1_Engineered.md), [`Task2_Archived.md`](Task2_Archived.md).
 
 ---
 
@@ -9,9 +9,9 @@
 
 | File | Role | What lives here |
 |---|---|---|
-| [`0_Raw_Tasks.md`](0_Raw_Tasks.md) | **Raw intake queue** | Rough, user-written, or partially specified tasks. Never implement directly from here. |
-| [`1_Engineered_Tasks.md`](1_Engineered_Tasks.md) | **Engineered implementation queue** | Actionable tasks with full scope, edge cases, and acceptance criteria. Also hosts the compact completed-task index under `# Completed Tasks`. |
-| [`2_Archived_Tasks.md`](2_Archived_Tasks.md) | **Full-body archive** | Preserves the complete markdown bodies of completed engineered tasks after they are compacted out of the active queue. |
+| [`Task0_Raw.md`](Task0_Raw.md) | **Raw intake queue** | Rough, user-written, or partially specified tasks. Never implement directly from here. |
+| [`Task1_Engineered.md`](Task1_Engineered.md) | **Engineered implementation queue** | Actionable tasks with full scope, edge cases, and acceptance criteria. Also hosts the compact completed-task index under `# Completed Tasks`. |
+| [`Task2_Archived.md`](Task2_Archived.md) | **Full-body archive** | Preserves the complete markdown bodies of completed engineered tasks after they are compacted out of the active queue. |
 
 ---
 
@@ -19,24 +19,24 @@
 
 ### 2.1 Intake → Engineering Flow
 
-1. **Select exactly one** pending raw item from `0_Raw_Tasks.md`.
+1. **Select exactly one** pending raw item from `Task0_Raw.md`.
 2. **Query the knowledge graph** using `/graphify query "your question"` (or `mcp_graphify_query_graph`) to gather context on existing files, Flutter widgets, Riverpod providers, and Drift tables.
-3. **Read related domain documentation** in the `Developement/` folder depending on the prompt's subject (e.g., `03_UI_UX_AND_ANIMATIONS.md` for widgets, `02_OFFLINE_ARCHITECTURE.md` for background sync) to maintain architectural standards.
+3. **Read related domain documentation** in the `Developement/` folder depending on the prompt's subject (e.g., `03_UI_UX_and_Animations.md` for widgets, `02_Offline_Architecture.md` for background sync) to maintain architectural standards.
 4. Run a **Ponytail triage** before expanding the raw item.
    - Use the active Ponytail binding for the host: `@ponytail` / `/ponytail` when exposed, or the installed Ponytail skill/instructions/hooks.
    - Treat Ponytail as an instruction bond, not an MCP/tool dependency. Let it evaluate scope safety, non-negotiable architectural boundaries (e.g., Offline-First), and what to skip.
 5. If the raw prompt is **not clear** after plugin triage, write the required triage questions for the user to answer before proceeding.
 6. **Preserve the user's intent**, expand it from the Hable web/mobile app perspective using gathered context, and keep the engineered scope to the smallest safe version determined by the Ponytail triage.
-7. **Append** the engineered version to `1_Engineered_Tasks.md`, explicitly listing the related development document in the "Dependencies" section so subsequent tasks will read and update it.
-8. **Verify** that the appended task exists in `1_Engineered_Tasks.md`, capture its starting line number.
-9. **Only then** remove the raw item or mark it as transferred with the engineered task title, date, and `1_Engineered_Tasks.md` line number.
+7. **Append** the engineered version to `Task1_Engineered.md`, explicitly listing the related development document in the "Dependencies" section so subsequent tasks will read and update it.
+8. **Verify** that the appended task exists in `Task1_Engineered.md`, capture its starting line number.
+9. **Only then** remove the raw item or mark it as transferred with the engineered task title, date, and `Task1_Engineered.md` line number.
 
 > [!IMPORTANT]
 > Engineering a task and implementing/proceeding with a task must be completed **separately**, not one after another in the same response.
 
 ### 2.2 Required Shape for Engineered Entries
 
-Every new entry in `1_Engineered_Tasks.md` must include:
+Every new entry in `Task1_Engineered.md` must include:
 
 - **Title** (Must be descriptive and specific. Do NOT use single-word titles)
 - **Raw source** (the original user prompt)
@@ -68,19 +68,19 @@ If your implementation changes the underlying Drift schema, Riverpod logic, or U
 1. Change `[ ]` to `[x]` and replace the completion-note placeholder with files changed, behavior verified, confirmation of doc updates, and a **completion timestamp** (e.g., `Completed At: YYYY-MM-DD HH:MM Z`).
    - **Strict Rule:** Do not mark a task as complete (`[x]`) if its completion notes still contain the `[Placeholder for completion notes...]` string.
 2. Run the archive validation script (if available) to ensure there are no hygiene defects before archiving.
-3. Execute the archive script (if available) to automatically move the full completed task body into `2_Archived_Tasks.md`.
-4. Do **not** manually copy the task to `2_Archived_Tasks.md`. The archive script handles this to reduce token usage.
-5. **STRICT RULE ON INCOMPLETE TASKS:** Agents must NEVER manually move uncompleted (`[ ]`) tasks from `1_Engineered_Tasks.md` or `0_Raw_Tasks.md` into `2_Archived_Tasks.md`.
+3. Execute the archive script (if available) to automatically move the full completed task body into `Task2_Archived.md`.
+4. Do **not** manually copy the task to `Task2_Archived.md`. The archive script handles this to reduce token usage.
+5. **STRICT RULE ON INCOMPLETE TASKS:** Agents must NEVER manually move uncompleted (`[ ]`) tasks from `Task1_Engineered.md` or `Task0_Raw.md` into `Task2_Archived.md`.
 
 ### 3.2 Completion Behavior
 
 - Do **not** mark a task complete just because it was engineered.
-- **Mandatory Archive Update:** When a task is archived, any related `0_Raw_Tasks.md` transfer notes MUST use the stable HTML anchor (`2_Archived_Tasks.md#task-slug`) as the authoritative lookup key.
+- **Mandatory Archive Update:** When a task is archived, any related `Task0_Raw.md` transfer notes MUST use the stable HTML anchor (`Task2_Archived.md#task-slug`) as the authoritative lookup key.
 - Archived prompt links must not use `#Lx-Ly` line anchors.
 
 ### 3.3 Task Selection
 
-- When instructed to work on the remaining tasks, automatically select the oldest (first) remaining uncompleted task from the `# Remaining Tasks` queue in `1_Engineered_Tasks.md` and begin implementing it without asking for confirmation.
+- When instructed to work on the remaining tasks, automatically select the oldest (first) remaining uncompleted task from the `# Remaining Tasks` queue in `Task1_Engineered.md` and begin implementing it without asking for confirmation.
 
 ### 3.4 Handling Anomalies and Concurrent Changes
 
@@ -109,18 +109,18 @@ If a professional long-term approach is clearly useful but would turn a small ta
 
 ## 5. Ordering & File Structure Contracts
 
-### `0_Raw_Tasks.md`
+### `Task0_Raw.md`
 - If empty, do **not** invent a raw backlog item unless the user supplied new context in the same prompt. 
 
-### `1_Engineered_Tasks.md`
+### `Task1_Engineered.md`
 - Keep only **compact completed-task index notes** under `# Completed Tasks`.
 - Keep all still-open work in a dedicated `# Remaining Tasks` section at the end of the file.
 
-### `2_Archived_Tasks.md`
+### `Task2_Archived.md`
 - Keep archived task bodies as close to their original engineered form as possible.
 
 ### Lookup Contract
-Use `1_Engineered_Tasks.md` for the fast completed-task index and open queue, then open the archive only when the compact index indicates deeper historical context is needed.
+Use `Task1_Engineered.md` for the fast completed-task index and open queue, then open the archive only when the compact index indicates deeper historical context is needed.
 
 ---
 
@@ -141,5 +141,5 @@ Keep implementation guidance **concrete**. Name the likely:
 ## 7. Known Script Limits and Boundaries
 
 - **Validation Gaps**: Scripts (if ported to Hable) check for broken links and placeholders, but do NOT enforce the presence of Ponytail triage fields. The agent must enforce these manually.
-- **Manual Repair Boundaries**: If a formatting error breaks a script, the agent must fix the formatting in `1_Engineered_Tasks.md` (e.g., ensuring `# Remaining Tasks` exists exactly once).
-- **Follow-up Raw Tasks**: Append separate raw tasks to `0_Raw_Tasks.md` for any concrete tool/process gaps discovered during an audit.
+- **Manual Repair Boundaries**: If a formatting error breaks a script, the agent must fix the formatting in `Task1_Engineered.md` (e.g., ensuring `# Remaining Tasks` exists exactly once).
+- **Follow-up Raw Tasks**: Append separate raw tasks to `Task0_Raw.md` for any concrete tool/process gaps discovered during an audit.

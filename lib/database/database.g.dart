@@ -32,6 +32,17 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _avatarUrlMeta = const VerificationMeta(
+    'avatarUrl',
+  );
+  @override
+  late final GeneratedColumn<String> avatarUrl = GeneratedColumn<String>(
+    'avatar_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -87,6 +98,7 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
   List<GeneratedColumn> get $columns => [
     userId,
     username,
+    avatarUrl,
     createdAt,
     updatedAt,
     totalScore,
@@ -119,6 +131,12 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
       );
     } else if (isInserting) {
       context.missing(_usernameMeta);
+    }
+    if (data.containsKey('avatar_url')) {
+      context.handle(
+        _avatarUrlMeta,
+        avatarUrl.isAcceptableOrUnknown(data['avatar_url']!, _avatarUrlMeta),
+      );
     }
     if (data.containsKey('created_at')) {
       context.handle(
@@ -161,6 +179,10 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
         DriftSqlType.string,
         data['${effectivePrefix}username'],
       )!,
+      avatarUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}avatar_url'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -189,6 +211,7 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
 class User extends DataClass implements Insertable<User> {
   final String userId;
   final String username;
+  final String? avatarUrl;
   final DateTime createdAt;
   final DateTime updatedAt;
   final int totalScore;
@@ -196,6 +219,7 @@ class User extends DataClass implements Insertable<User> {
   const User({
     required this.userId,
     required this.username,
+    this.avatarUrl,
     required this.createdAt,
     required this.updatedAt,
     required this.totalScore,
@@ -206,6 +230,9 @@ class User extends DataClass implements Insertable<User> {
     final map = <String, Expression>{};
     map['user_id'] = Variable<String>(userId);
     map['username'] = Variable<String>(username);
+    if (!nullToAbsent || avatarUrl != null) {
+      map['avatar_url'] = Variable<String>(avatarUrl);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     map['total_score'] = Variable<int>(totalScore);
@@ -217,6 +244,9 @@ class User extends DataClass implements Insertable<User> {
     return UsersCompanion(
       userId: Value(userId),
       username: Value(username),
+      avatarUrl: avatarUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(avatarUrl),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
       totalScore: Value(totalScore),
@@ -232,6 +262,7 @@ class User extends DataClass implements Insertable<User> {
     return User(
       userId: serializer.fromJson<String>(json['userId']),
       username: serializer.fromJson<String>(json['username']),
+      avatarUrl: serializer.fromJson<String?>(json['avatarUrl']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       totalScore: serializer.fromJson<int>(json['totalScore']),
@@ -244,6 +275,7 @@ class User extends DataClass implements Insertable<User> {
     return <String, dynamic>{
       'userId': serializer.toJson<String>(userId),
       'username': serializer.toJson<String>(username),
+      'avatarUrl': serializer.toJson<String?>(avatarUrl),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'totalScore': serializer.toJson<int>(totalScore),
@@ -254,6 +286,7 @@ class User extends DataClass implements Insertable<User> {
   User copyWith({
     String? userId,
     String? username,
+    Value<String?> avatarUrl = const Value.absent(),
     DateTime? createdAt,
     DateTime? updatedAt,
     int? totalScore,
@@ -261,6 +294,7 @@ class User extends DataClass implements Insertable<User> {
   }) => User(
     userId: userId ?? this.userId,
     username: username ?? this.username,
+    avatarUrl: avatarUrl.present ? avatarUrl.value : this.avatarUrl,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
     totalScore: totalScore ?? this.totalScore,
@@ -270,6 +304,7 @@ class User extends DataClass implements Insertable<User> {
     return User(
       userId: data.userId.present ? data.userId.value : this.userId,
       username: data.username.present ? data.username.value : this.username,
+      avatarUrl: data.avatarUrl.present ? data.avatarUrl.value : this.avatarUrl,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       totalScore: data.totalScore.present
@@ -284,6 +319,7 @@ class User extends DataClass implements Insertable<User> {
     return (StringBuffer('User(')
           ..write('userId: $userId, ')
           ..write('username: $username, ')
+          ..write('avatarUrl: $avatarUrl, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('totalScore: $totalScore, ')
@@ -293,14 +329,22 @@ class User extends DataClass implements Insertable<User> {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(userId, username, createdAt, updatedAt, totalScore, isSynced);
+  int get hashCode => Object.hash(
+    userId,
+    username,
+    avatarUrl,
+    createdAt,
+    updatedAt,
+    totalScore,
+    isSynced,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is User &&
           other.userId == this.userId &&
           other.username == this.username &&
+          other.avatarUrl == this.avatarUrl &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
           other.totalScore == this.totalScore &&
@@ -310,6 +354,7 @@ class User extends DataClass implements Insertable<User> {
 class UsersCompanion extends UpdateCompanion<User> {
   final Value<String> userId;
   final Value<String> username;
+  final Value<String?> avatarUrl;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> totalScore;
@@ -318,6 +363,7 @@ class UsersCompanion extends UpdateCompanion<User> {
   const UsersCompanion({
     this.userId = const Value.absent(),
     this.username = const Value.absent(),
+    this.avatarUrl = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.totalScore = const Value.absent(),
@@ -327,6 +373,7 @@ class UsersCompanion extends UpdateCompanion<User> {
   UsersCompanion.insert({
     required String userId,
     required String username,
+    this.avatarUrl = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.totalScore = const Value.absent(),
@@ -337,6 +384,7 @@ class UsersCompanion extends UpdateCompanion<User> {
   static Insertable<User> custom({
     Expression<String>? userId,
     Expression<String>? username,
+    Expression<String>? avatarUrl,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? totalScore,
@@ -346,6 +394,7 @@ class UsersCompanion extends UpdateCompanion<User> {
     return RawValuesInsertable({
       if (userId != null) 'user_id': userId,
       if (username != null) 'username': username,
+      if (avatarUrl != null) 'avatar_url': avatarUrl,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (totalScore != null) 'total_score': totalScore,
@@ -357,6 +406,7 @@ class UsersCompanion extends UpdateCompanion<User> {
   UsersCompanion copyWith({
     Value<String>? userId,
     Value<String>? username,
+    Value<String?>? avatarUrl,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<int>? totalScore,
@@ -366,6 +416,7 @@ class UsersCompanion extends UpdateCompanion<User> {
     return UsersCompanion(
       userId: userId ?? this.userId,
       username: username ?? this.username,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       totalScore: totalScore ?? this.totalScore,
@@ -382,6 +433,9 @@ class UsersCompanion extends UpdateCompanion<User> {
     }
     if (username.present) {
       map['username'] = Variable<String>(username.value);
+    }
+    if (avatarUrl.present) {
+      map['avatar_url'] = Variable<String>(avatarUrl.value);
     }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
@@ -406,6 +460,7 @@ class UsersCompanion extends UpdateCompanion<User> {
     return (StringBuffer('UsersCompanion(')
           ..write('userId: $userId, ')
           ..write('username: $username, ')
+          ..write('avatarUrl: $avatarUrl, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('totalScore: $totalScore, ')
@@ -5103,6 +5158,379 @@ class MilestoneEventsCompanion extends UpdateCompanion<MilestoneEvent> {
   }
 }
 
+class $AcceptedFriendsTable extends AcceptedFriends
+    with TableInfo<$AcceptedFriendsTable, AcceptedFriend> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AcceptedFriendsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _friendUserIdMeta = const VerificationMeta(
+    'friendUserId',
+  );
+  @override
+  late final GeneratedColumn<String> friendUserId = GeneratedColumn<String>(
+    'friend_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _usernameMeta = const VerificationMeta(
+    'username',
+  );
+  @override
+  late final GeneratedColumn<String> username = GeneratedColumn<String>(
+    'username',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _avatarUrlMeta = const VerificationMeta(
+    'avatarUrl',
+  );
+  @override
+  late final GeneratedColumn<String> avatarUrl = GeneratedColumn<String>(
+    'avatar_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _isSyncedMeta = const VerificationMeta(
+    'isSynced',
+  );
+  @override
+  late final GeneratedColumn<bool> isSynced = GeneratedColumn<bool>(
+    'is_synced',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_synced" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    friendUserId,
+    username,
+    avatarUrl,
+    updatedAt,
+    isSynced,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'accepted_friends';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AcceptedFriend> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('friend_user_id')) {
+      context.handle(
+        _friendUserIdMeta,
+        friendUserId.isAcceptableOrUnknown(
+          data['friend_user_id']!,
+          _friendUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_friendUserIdMeta);
+    }
+    if (data.containsKey('username')) {
+      context.handle(
+        _usernameMeta,
+        username.isAcceptableOrUnknown(data['username']!, _usernameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_usernameMeta);
+    }
+    if (data.containsKey('avatar_url')) {
+      context.handle(
+        _avatarUrlMeta,
+        avatarUrl.isAcceptableOrUnknown(data['avatar_url']!, _avatarUrlMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    if (data.containsKey('is_synced')) {
+      context.handle(
+        _isSyncedMeta,
+        isSynced.isAcceptableOrUnknown(data['is_synced']!, _isSyncedMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {friendUserId};
+  @override
+  AcceptedFriend map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AcceptedFriend(
+      friendUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}friend_user_id'],
+      )!,
+      username: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}username'],
+      )!,
+      avatarUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}avatar_url'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      isSynced: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_synced'],
+      )!,
+    );
+  }
+
+  @override
+  $AcceptedFriendsTable createAlias(String alias) {
+    return $AcceptedFriendsTable(attachedDatabase, alias);
+  }
+}
+
+class AcceptedFriend extends DataClass implements Insertable<AcceptedFriend> {
+  final String friendUserId;
+  final String username;
+  final String? avatarUrl;
+  final DateTime updatedAt;
+  final bool isSynced;
+  const AcceptedFriend({
+    required this.friendUserId,
+    required this.username,
+    this.avatarUrl,
+    required this.updatedAt,
+    required this.isSynced,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['friend_user_id'] = Variable<String>(friendUserId);
+    map['username'] = Variable<String>(username);
+    if (!nullToAbsent || avatarUrl != null) {
+      map['avatar_url'] = Variable<String>(avatarUrl);
+    }
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['is_synced'] = Variable<bool>(isSynced);
+    return map;
+  }
+
+  AcceptedFriendsCompanion toCompanion(bool nullToAbsent) {
+    return AcceptedFriendsCompanion(
+      friendUserId: Value(friendUserId),
+      username: Value(username),
+      avatarUrl: avatarUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(avatarUrl),
+      updatedAt: Value(updatedAt),
+      isSynced: Value(isSynced),
+    );
+  }
+
+  factory AcceptedFriend.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AcceptedFriend(
+      friendUserId: serializer.fromJson<String>(json['friendUserId']),
+      username: serializer.fromJson<String>(json['username']),
+      avatarUrl: serializer.fromJson<String?>(json['avatarUrl']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      isSynced: serializer.fromJson<bool>(json['isSynced']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'friendUserId': serializer.toJson<String>(friendUserId),
+      'username': serializer.toJson<String>(username),
+      'avatarUrl': serializer.toJson<String?>(avatarUrl),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'isSynced': serializer.toJson<bool>(isSynced),
+    };
+  }
+
+  AcceptedFriend copyWith({
+    String? friendUserId,
+    String? username,
+    Value<String?> avatarUrl = const Value.absent(),
+    DateTime? updatedAt,
+    bool? isSynced,
+  }) => AcceptedFriend(
+    friendUserId: friendUserId ?? this.friendUserId,
+    username: username ?? this.username,
+    avatarUrl: avatarUrl.present ? avatarUrl.value : this.avatarUrl,
+    updatedAt: updatedAt ?? this.updatedAt,
+    isSynced: isSynced ?? this.isSynced,
+  );
+  AcceptedFriend copyWithCompanion(AcceptedFriendsCompanion data) {
+    return AcceptedFriend(
+      friendUserId: data.friendUserId.present
+          ? data.friendUserId.value
+          : this.friendUserId,
+      username: data.username.present ? data.username.value : this.username,
+      avatarUrl: data.avatarUrl.present ? data.avatarUrl.value : this.avatarUrl,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      isSynced: data.isSynced.present ? data.isSynced.value : this.isSynced,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AcceptedFriend(')
+          ..write('friendUserId: $friendUserId, ')
+          ..write('username: $username, ')
+          ..write('avatarUrl: $avatarUrl, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('isSynced: $isSynced')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(friendUserId, username, avatarUrl, updatedAt, isSynced);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AcceptedFriend &&
+          other.friendUserId == this.friendUserId &&
+          other.username == this.username &&
+          other.avatarUrl == this.avatarUrl &&
+          other.updatedAt == this.updatedAt &&
+          other.isSynced == this.isSynced);
+}
+
+class AcceptedFriendsCompanion extends UpdateCompanion<AcceptedFriend> {
+  final Value<String> friendUserId;
+  final Value<String> username;
+  final Value<String?> avatarUrl;
+  final Value<DateTime> updatedAt;
+  final Value<bool> isSynced;
+  final Value<int> rowid;
+  const AcceptedFriendsCompanion({
+    this.friendUserId = const Value.absent(),
+    this.username = const Value.absent(),
+    this.avatarUrl = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.isSynced = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AcceptedFriendsCompanion.insert({
+    required String friendUserId,
+    required String username,
+    this.avatarUrl = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.isSynced = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : friendUserId = Value(friendUserId),
+       username = Value(username);
+  static Insertable<AcceptedFriend> custom({
+    Expression<String>? friendUserId,
+    Expression<String>? username,
+    Expression<String>? avatarUrl,
+    Expression<DateTime>? updatedAt,
+    Expression<bool>? isSynced,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (friendUserId != null) 'friend_user_id': friendUserId,
+      if (username != null) 'username': username,
+      if (avatarUrl != null) 'avatar_url': avatarUrl,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (isSynced != null) 'is_synced': isSynced,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AcceptedFriendsCompanion copyWith({
+    Value<String>? friendUserId,
+    Value<String>? username,
+    Value<String?>? avatarUrl,
+    Value<DateTime>? updatedAt,
+    Value<bool>? isSynced,
+    Value<int>? rowid,
+  }) {
+    return AcceptedFriendsCompanion(
+      friendUserId: friendUserId ?? this.friendUserId,
+      username: username ?? this.username,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      updatedAt: updatedAt ?? this.updatedAt,
+      isSynced: isSynced ?? this.isSynced,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (friendUserId.present) {
+      map['friend_user_id'] = Variable<String>(friendUserId.value);
+    }
+    if (username.present) {
+      map['username'] = Variable<String>(username.value);
+    }
+    if (avatarUrl.present) {
+      map['avatar_url'] = Variable<String>(avatarUrl.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (isSynced.present) {
+      map['is_synced'] = Variable<bool>(isSynced.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AcceptedFriendsCompanion(')
+          ..write('friendUserId: $friendUserId, ')
+          ..write('username: $username, ')
+          ..write('avatarUrl: $avatarUrl, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('isSynced: $isSynced, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -5127,6 +5555,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $MilestoneEventsTable milestoneEvents = $MilestoneEventsTable(
     this,
   );
+  late final $AcceptedFriendsTable acceptedFriends = $AcceptedFriendsTable(
+    this,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -5143,6 +5574,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     privateMessages,
     habitInvitations,
     milestoneEvents,
+    acceptedFriends,
   ];
 }
 
@@ -5150,6 +5582,7 @@ typedef $$UsersTableCreateCompanionBuilder =
     UsersCompanion Function({
       required String userId,
       required String username,
+      Value<String?> avatarUrl,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<int> totalScore,
@@ -5160,6 +5593,7 @@ typedef $$UsersTableUpdateCompanionBuilder =
     UsersCompanion Function({
       Value<String> userId,
       Value<String> username,
+      Value<String?> avatarUrl,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<int> totalScore,
@@ -5205,6 +5639,11 @@ class $$UsersTableFilterComposer extends Composer<_$AppDatabase, $UsersTable> {
 
   ColumnFilters<String> get username => $composableBuilder(
     column: $table.username,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get avatarUrl => $composableBuilder(
+    column: $table.avatarUrl,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5273,6 +5712,11 @@ class $$UsersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get avatarUrl => $composableBuilder(
+    column: $table.avatarUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -5308,6 +5752,9 @@ class $$UsersTableAnnotationComposer
 
   GeneratedColumn<String> get username =>
       $composableBuilder(column: $table.username, builder: (column) => column);
+
+  GeneratedColumn<String> get avatarUrl =>
+      $composableBuilder(column: $table.avatarUrl, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -5379,6 +5826,7 @@ class $$UsersTableTableManager
               ({
                 Value<String> userId = const Value.absent(),
                 Value<String> username = const Value.absent(),
+                Value<String?> avatarUrl = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> totalScore = const Value.absent(),
@@ -5387,6 +5835,7 @@ class $$UsersTableTableManager
               }) => UsersCompanion(
                 userId: userId,
                 username: username,
+                avatarUrl: avatarUrl,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 totalScore: totalScore,
@@ -5397,6 +5846,7 @@ class $$UsersTableTableManager
               ({
                 required String userId,
                 required String username,
+                Value<String?> avatarUrl = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> totalScore = const Value.absent(),
@@ -5405,6 +5855,7 @@ class $$UsersTableTableManager
               }) => UsersCompanion.insert(
                 userId: userId,
                 username: username,
+                avatarUrl: avatarUrl,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 totalScore: totalScore,
@@ -8406,6 +8857,214 @@ typedef $$MilestoneEventsTableProcessedTableManager =
       MilestoneEvent,
       PrefetchHooks Function()
     >;
+typedef $$AcceptedFriendsTableCreateCompanionBuilder =
+    AcceptedFriendsCompanion Function({
+      required String friendUserId,
+      required String username,
+      Value<String?> avatarUrl,
+      Value<DateTime> updatedAt,
+      Value<bool> isSynced,
+      Value<int> rowid,
+    });
+typedef $$AcceptedFriendsTableUpdateCompanionBuilder =
+    AcceptedFriendsCompanion Function({
+      Value<String> friendUserId,
+      Value<String> username,
+      Value<String?> avatarUrl,
+      Value<DateTime> updatedAt,
+      Value<bool> isSynced,
+      Value<int> rowid,
+    });
+
+class $$AcceptedFriendsTableFilterComposer
+    extends Composer<_$AppDatabase, $AcceptedFriendsTable> {
+  $$AcceptedFriendsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get friendUserId => $composableBuilder(
+    column: $table.friendUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get username => $composableBuilder(
+    column: $table.username,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get avatarUrl => $composableBuilder(
+    column: $table.avatarUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isSynced => $composableBuilder(
+    column: $table.isSynced,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AcceptedFriendsTableOrderingComposer
+    extends Composer<_$AppDatabase, $AcceptedFriendsTable> {
+  $$AcceptedFriendsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get friendUserId => $composableBuilder(
+    column: $table.friendUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get username => $composableBuilder(
+    column: $table.username,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get avatarUrl => $composableBuilder(
+    column: $table.avatarUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isSynced => $composableBuilder(
+    column: $table.isSynced,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AcceptedFriendsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AcceptedFriendsTable> {
+  $$AcceptedFriendsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get friendUserId => $composableBuilder(
+    column: $table.friendUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get username =>
+      $composableBuilder(column: $table.username, builder: (column) => column);
+
+  GeneratedColumn<String> get avatarUrl =>
+      $composableBuilder(column: $table.avatarUrl, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get isSynced =>
+      $composableBuilder(column: $table.isSynced, builder: (column) => column);
+}
+
+class $$AcceptedFriendsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AcceptedFriendsTable,
+          AcceptedFriend,
+          $$AcceptedFriendsTableFilterComposer,
+          $$AcceptedFriendsTableOrderingComposer,
+          $$AcceptedFriendsTableAnnotationComposer,
+          $$AcceptedFriendsTableCreateCompanionBuilder,
+          $$AcceptedFriendsTableUpdateCompanionBuilder,
+          (
+            AcceptedFriend,
+            BaseReferences<
+              _$AppDatabase,
+              $AcceptedFriendsTable,
+              AcceptedFriend
+            >,
+          ),
+          AcceptedFriend,
+          PrefetchHooks Function()
+        > {
+  $$AcceptedFriendsTableTableManager(
+    _$AppDatabase db,
+    $AcceptedFriendsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AcceptedFriendsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AcceptedFriendsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AcceptedFriendsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> friendUserId = const Value.absent(),
+                Value<String> username = const Value.absent(),
+                Value<String?> avatarUrl = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> isSynced = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AcceptedFriendsCompanion(
+                friendUserId: friendUserId,
+                username: username,
+                avatarUrl: avatarUrl,
+                updatedAt: updatedAt,
+                isSynced: isSynced,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String friendUserId,
+                required String username,
+                Value<String?> avatarUrl = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> isSynced = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AcceptedFriendsCompanion.insert(
+                friendUserId: friendUserId,
+                username: username,
+                avatarUrl: avatarUrl,
+                updatedAt: updatedAt,
+                isSynced: isSynced,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AcceptedFriendsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AcceptedFriendsTable,
+      AcceptedFriend,
+      $$AcceptedFriendsTableFilterComposer,
+      $$AcceptedFriendsTableOrderingComposer,
+      $$AcceptedFriendsTableAnnotationComposer,
+      $$AcceptedFriendsTableCreateCompanionBuilder,
+      $$AcceptedFriendsTableUpdateCompanionBuilder,
+      (
+        AcceptedFriend,
+        BaseReferences<_$AppDatabase, $AcceptedFriendsTable, AcceptedFriend>,
+      ),
+      AcceptedFriend,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -8431,4 +9090,6 @@ class $AppDatabaseManager {
       $$HabitInvitationsTableTableManager(_db, _db.habitInvitations);
   $$MilestoneEventsTableTableManager get milestoneEvents =>
       $$MilestoneEventsTableTableManager(_db, _db.milestoneEvents);
+  $$AcceptedFriendsTableTableManager get acceptedFriends =>
+      $$AcceptedFriendsTableTableManager(_db, _db.acceptedFriends);
 }

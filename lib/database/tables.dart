@@ -7,7 +7,7 @@ enum HabitStatus { active, completed, abandoned }
 enum LogStatus { completed, skipped }
 
 /// Sync queue action types for outbound mutations.
-enum SyncAction { createHabit, logHabit, sendNudge, sendPrivateMessage, acceptInvitation, declineInvitation }
+enum SyncAction { createHabit, logHabit, updateHabit, sendNudge, sendPrivateMessage, acceptInvitation, declineInvitation, syncScore, sendHabitInvitation }
 
 // ---------------------------------------------------------------------------
 // Table Definitions — Mirror the Cloudflare D1 schema (spec 01)
@@ -19,6 +19,7 @@ enum SyncAction { createHabit, logHabit, sendNudge, sendPrivateMessage, acceptIn
 class Users extends Table {
   TextColumn get userId => text()();
   TextColumn get username => text().withLength(min: 1, max: 50)();
+  TextColumn get avatarUrl => text().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
   IntColumn get totalScore => integer().withDefault(const Constant(0))();
@@ -164,4 +165,16 @@ class MilestoneEvents extends Table {
 
   @override
   Set<Column> get primaryKey => {eventId};
+}
+
+/// Local cache of accepted friends.
+class AcceptedFriends extends Table {
+  TextColumn get friendUserId => text()();
+  TextColumn get username => text()();
+  TextColumn get avatarUrl => text().nullable()();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+  BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
+
+  @override
+  Set<Column> get primaryKey => {friendUserId};
 }

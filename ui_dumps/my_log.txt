@@ -1,0 +1,6 @@
+--------- beginning of main
+07-09 09:21:33.938 I/flutter (15061): [IMPORTANT:flutter/shell/platform/android/android_context_vk_impeller.cc(62)] Using the Impeller rendering backend (Vulkan).
+07-09 09:21:34.052 I/flutter (15061): The Dart VM service is listening on http://127.0.0.1:41133/trsKe76R9YY=/
+07-09 09:21:42.835 I/flutter (15061): SEARCHING FOR: "Bob"
+07-09 09:21:42.836 I/flutter (15061): GET http://127.0.0.1:8787/api/social/search?q=Bob
+07-09 09:21:42.884 I/flutter (15061): RESPONSE 200: {"results":[{"id":"local-user-2","username":"Bob","avatar_url":"https://api.dicebear.com/7.x/avataaars/svg?seed=Bob","total_score":0}]}

@@ -48,7 +48,7 @@ final class SearchEngineProvider
   }
 }
 
-String _$searchEngineHash() => r'0a7e8731e313b2172a89ff6b22349f1dd1d49d93';
+String _$searchEngineHash() => r'b3975a93cc67290714478532e341195f2eff6632';
 
 @ProviderFor(SearchQuery)
 final searchQueryProvider = SearchQueryFamily._();

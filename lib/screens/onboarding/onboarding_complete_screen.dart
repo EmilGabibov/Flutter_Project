@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uuid/uuid.dart';
-import 'package:drift/drift.dart' hide Column;
-import '../../database/database.dart';
-import '../../database/tables.dart';
 import '../../providers/database_provider.dart';
 import '../../theme/app_theme.dart';
 import '../home_screen.dart';
@@ -59,27 +55,13 @@ class _OnboardingCompleteScreenState
     setState(() => _isCommitting = true);
 
     final db = ref.read(databaseProvider);
-    final habitId = const Uuid().v4();
-
-    // Write habit to Drift
-    await db.insertHabit(HabitsCompanion(
-      habitId: Value(habitId),
-      userId: Value(widget.userId),
-      title: Value(widget.habitTitle),
-      isCustom: Value(widget.isCustomHabit),
-      targetDuration: Value(widget.duration),
-      currentDuration: Value(widget.duration),
-      status: Value(HabitStatus.active),
-      updatedAt: Value(DateTime.now()),
-      isSynced: const Value(false),
-    ));
-
-    // Enqueue background sync
-    await db.enqueueSync(SyncQueueCompanion(
-      action: Value(SyncAction.createHabit),
-      payload: Value('{"habit_id":"$habitId","title":"${widget.habitTitle}","duration":${widget.duration}}'),
-      createdAt: Value(DateTime.now()),
-    ));
+    await db.createHabitWithSync(
+      widget.habitTitle,
+      widget.duration,
+      widget.isCustomHabit,
+      'FF9CAF88',
+      widget.userId,
+    );
 
     // Play success animation
     await _animController.forward();
@@ -87,9 +69,7 @@ class _OnboardingCompleteScreenState
 
     if (mounted) {
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(
-          builder: (_) => HomeScreen(userId: widget.userId),
-        ),
+        MaterialPageRoute(builder: (_) => HomeScreen(userId: widget.userId)),
         (_) => false,
       );
     }

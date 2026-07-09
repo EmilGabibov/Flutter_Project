@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'providers/habit_providers.dart';
-import 'screens/onboarding/onboarding_username_screen.dart';
+import 'screens/auth_screen.dart';
 import 'screens/home_screen.dart';
 import 'theme/app_theme.dart';
 
@@ -25,7 +25,7 @@ class HableApp extends ConsumerWidget {
   }
 }
 
-/// Routes to onboarding if no user exists, otherwise to Home.
+/// Routes to AuthScreen if no user exists, otherwise to Home.
 class _AppGate extends ConsumerWidget {
   const _AppGate();
 
@@ -36,7 +36,7 @@ class _AppGate extends ConsumerWidget {
     return userAsync.when(
       data: (user) {
         if (user == null) {
-          return const OnboardingUsernameScreen();
+          return const AuthScreen();
         }
         return HomeScreen(userId: user.userId);
       },

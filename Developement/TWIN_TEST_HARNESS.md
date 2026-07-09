@@ -14,6 +14,7 @@ If not already running, start the Cloudflare backend in the `backend` directory:
 
 ```bash
 cd backend
+npm run db:setup
 npm run dev
 ```
 
@@ -63,9 +64,12 @@ With both apps installed, you can now test the social features:
 4. **Sync**: Wait for the background sync to process the queue and send the nudge to the backend.
 5. **Receive Nudge**: Open the friend app (Bob). During the next daily sync pull, the nudge should be received and processed.
 6. **Habit Completion**: Complete the habit in one app. After sync, the other app should reflect the completed status (e.g., the partner avatar will have a glowing border).
+7. **Preset Habit Invite**: In Alice's app, create a new habit from a preset and select Bob in the partner picker. Let the sync queue send the habit and invite.
+8. **Invite Acceptance**: In Bob's app, run/open daily sync, verify the invitation banner appears, accept it, then verify the partnership appears only after acceptance.
 
 ## Troubleshooting
 
 - **Android package collision**: Ensure you are using the `--flavor` flag so that the `applicationIdSuffix` applies correctly.
 - **Connection refused**: Run `adb reverse tcp:8787 tcp:8787` again if the emulator loses the port mapping.
 - **Stale data**: To reset, uninstall both apps from the device to wipe the local Drift databases, and restart the Cloudflare local worker to reset the in-memory D1 data.
+- **No partner chips**: Confirm `npm run db:setup` has applied `schema.sql`, run `adb reverse tcp:8787 tcp:8787`, and check logcat for `[SyncService] GET /api/sync/daily successful`. Open Alice after the accepted friendship exists so `/api/sync/daily` can populate the local accepted-friends cache before testing habit invites.

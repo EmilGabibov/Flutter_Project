@@ -1,7 +1,20 @@
 CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
     username TEXT NOT NULL,
-    avatar_url TEXT
+    email TEXT UNIQUE,
+    password_hash TEXT,
+    avatar_url TEXT,
+    total_score INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_score ON users(total_score DESC);
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+
+CREATE TABLE IF NOT EXISTS auth_pins (
+    email TEXT PRIMARY KEY,
+    pin_hash TEXT NOT NULL,
+    expires_at INTEGER NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS habit_progress (
@@ -44,12 +57,34 @@ CREATE TABLE IF NOT EXISTS habit_invitations (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE INDEX IF NOT EXISTS idx_habit_invitations_pending_pair
+ON habit_invitations(requester_id, recipient_id, habit_id, status);
+
 CREATE TABLE IF NOT EXISTS milestone_events (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     habit_id TEXT NOT NULL,
     milestone_type TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS habits (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    target_duration INTEGER NOT NULL,
+    color_hex TEXT,
+    status TEXT NOT NULL DEFAULT 'active',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS habit_logs (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    habit_id TEXT NOT NULL,
+    status TEXT NOT NULL,
+    logged_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Insert some dummy data for local testing

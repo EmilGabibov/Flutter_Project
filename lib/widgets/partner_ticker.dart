@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../database/database.dart';
 import '../theme/app_theme.dart';
+import '../screens/profile_screen.dart';
 
 /// Horizontal partner ticker at the bottom of the Home Screen.
 /// Subtle \"Partner Whisper\" UI per spec 04 §3.
@@ -129,13 +130,24 @@ class _PartnerAvatar extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            partner.username.length > 6
-                ? '${partner.username.substring(0, 6)}…'
-                : partner.username,
-            style: TextStyle(
-              fontSize: 11,
-              color: AppTheme.warmGray,
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ProfileScreen(userId: partner.partnerUserId),
+                ),
+              );
+            },
+            child: Text(
+              partner.username.length > 6
+                  ? '${partner.username.substring(0, 6)}…'
+                  : partner.username,
+              style: TextStyle(
+                fontSize: 11,
+                color: AppTheme.warmGray,
+                decoration: TextDecoration.underline,
+              ),
             ),
           ),
         ],

@@ -1,7 +1,10 @@
+// ignore_for_file: prefer_initializing_formals
+
 import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../database/database.dart';
 import '../database/tables.dart';
 import 'connectivity_service.dart';
@@ -11,16 +14,18 @@ import 'connectivity_service.dart';
 class SyncService {
   final AppDatabase _db;
   final ConnectivityService _connectivity;
-  final String _baseUrl = 'https://hable.pages.dev';
-  
-  String? _jwtToken;
+  final FlutterSecureStorage _storage;
+  final String _baseUrl = kDebugMode
+      ? 'http://127.0.0.1:8787'
+      : 'https://hable.pages.dev';
 
-  // ignore: prefer_initializing_formals
   SyncService({
     required AppDatabase db,
     required ConnectivityService connectivity,
-  })  : _db = db,
-        _connectivity = connectivity;
+    required FlutterSecureStorage storage,
+  }) : _db = db,
+       _connectivity = connectivity,
+       _storage = storage;
 
   /// Initialize the sync engine.
   void init() {
@@ -30,45 +35,21 @@ class SyncService {
     _processQueue();
   }
 
-  /// Authenticate with the Cloudflare Worker and store the JWT.
-  Future<bool> authenticate(String userId) async {
-    if (!_connectivity.isOnline) return false;
-    
-    try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/api/auth/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'user_id': userId}),
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        _jwtToken = data['token'];
-        debugPrint('[SyncService] Authenticated successfully');
-        return true;
-      } else {
-        debugPrint('[SyncService] Auth failed: ${response.statusCode}');
-        return false;
-      }
-    } catch (e) {
-      debugPrint('[SyncService] Auth error: $e');
-      return false;
-    }
-  }
-
   /// Get the standard auth headers
-  Map<String, String> _getAuthHeaders() {
+  Future<Map<String, String>> _getAuthHeaders() async {
     final headers = {'Content-Type': 'application/json'};
-    if (_jwtToken != null) {
-      headers['Authorization'] = 'Bearer $_jwtToken';
+    final token = await _storage.read(key: 'jwt_token');
+    if (token != null) {
+      headers['Authorization'] = 'Bearer $token';
     }
     return headers;
   }
 
   /// Process all pending outbound mutations from the sync queue.
-  Future<void> _processQueue() async {
-    if (!_connectivity.isOnline) return;
+  Future<void> flushPending() => _processQueue();
 
+  /// Process all pending outbound mutations from the sync queue.
+  Future<void> _processQueue() async {
     final pending = await _db.getPendingSyncItems();
     if (pending.isEmpty) return;
 
@@ -86,15 +67,18 @@ class SyncService {
 
   /// Send a mutation payload to the Cloudflare Worker.
   Future<void> _sendToCloudflare(SyncQueueData item) async {
+    final headers = await _getAuthHeaders();
     if (item.action == SyncAction.sendNudge) {
       try {
         final response = await http.post(
           Uri.parse('$_baseUrl/api/social/nudge'),
-          headers: _getAuthHeaders(),
+          headers: headers,
           body: item.payload,
         );
         if (response.statusCode != 200) {
-          throw Exception('Failed to send nudge: ${response.statusCode} - ${response.body}');
+          throw Exception(
+            'Failed to send nudge: ${response.statusCode} - ${response.body}',
+          );
         }
         debugPrint('[SyncService] POST NUDGE successful');
       } catch (e) {
@@ -105,11 +89,13 @@ class SyncService {
       try {
         final response = await http.post(
           Uri.parse('$_baseUrl/api/social/private-message'),
-          headers: _getAuthHeaders(),
+          headers: headers,
           body: item.payload,
         );
         if (response.statusCode != 200) {
-          throw Exception('Failed to send private message: ${response.statusCode} - ${response.body}');
+          throw Exception(
+            'Failed to send private message: ${response.statusCode} - ${response.body}',
+          );
         }
         debugPrint('[SyncService] POST PRIVATE_MESSAGE successful');
       } catch (e) {
@@ -120,11 +106,13 @@ class SyncService {
       try {
         final response = await http.post(
           Uri.parse('$_baseUrl/api/social/habit-invitation/accept'),
-          headers: _getAuthHeaders(),
+          headers: headers,
           body: item.payload,
         );
         if (response.statusCode != 200) {
-          throw Exception('Failed to accept invitation: ${response.statusCode} - ${response.body}');
+          throw Exception(
+            'Failed to accept invitation: ${response.statusCode} - ${response.body}',
+          );
         }
         debugPrint('[SyncService] POST ACCEPT_INVITATION successful');
       } catch (e) {
@@ -135,15 +123,86 @@ class SyncService {
       try {
         final response = await http.post(
           Uri.parse('$_baseUrl/api/social/habit-invitation/decline'),
-          headers: _getAuthHeaders(),
+          headers: headers,
           body: item.payload,
         );
         if (response.statusCode != 200) {
-          throw Exception('Failed to decline invitation: ${response.statusCode} - ${response.body}');
+          throw Exception(
+            'Failed to decline invitation: ${response.statusCode} - ${response.body}',
+          );
         }
         debugPrint('[SyncService] POST DECLINE_INVITATION successful');
       } catch (e) {
         debugPrint('[SyncService] Decline invitation sync failed: $e');
+        rethrow;
+      }
+    } else if (item.action == SyncAction.syncScore) {
+      try {
+        final response = await http.post(
+          Uri.parse('$_baseUrl/api/sync/score'),
+          headers: headers,
+          body: item.payload,
+        );
+        if (response.statusCode != 200) {
+          throw Exception(
+            'Failed to sync score: ${response.statusCode} - ${response.body}',
+          );
+        }
+        debugPrint('[SyncService] POST SYNC_SCORE successful');
+      } catch (e) {
+        debugPrint('[SyncService] Sync score failed: $e');
+        rethrow;
+      }
+    } else if (item.action == SyncAction.createHabit ||
+        item.action == SyncAction.updateHabit) {
+      try {
+        final response = await http.post(
+          Uri.parse('$_baseUrl/api/sync/habit'),
+          headers: headers,
+          body: item.payload,
+        );
+        if (response.statusCode != 200) {
+          throw Exception(
+            'Failed to sync habit: ${response.statusCode} - ${response.body}',
+          );
+        }
+        debugPrint('[SyncService] POST SYNC_HABIT successful');
+      } catch (e) {
+        debugPrint('[SyncService] Habit sync failed: $e');
+        rethrow;
+      }
+    } else if (item.action == SyncAction.logHabit) {
+      try {
+        final response = await http.post(
+          Uri.parse('$_baseUrl/api/sync/log'),
+          headers: headers,
+          body: item.payload,
+        );
+        if (response.statusCode != 200) {
+          throw Exception(
+            'Failed to log habit: ${response.statusCode} - ${response.body}',
+          );
+        }
+        debugPrint('[SyncService] POST SYNC_LOG successful');
+      } catch (e) {
+        debugPrint('[SyncService] Log sync failed: $e');
+        rethrow;
+      }
+    } else if (item.action == SyncAction.sendHabitInvitation) {
+      try {
+        final response = await http.post(
+          Uri.parse('$_baseUrl/api/social/habit-invitation'),
+          headers: headers,
+          body: item.payload,
+        );
+        if (response.statusCode != 200) {
+          throw Exception(
+            'Failed to send habit invitation: ${response.statusCode} - ${response.body}',
+          );
+        }
+        debugPrint('[SyncService] POST HABIT_INVITATION successful');
+      } catch (e) {
+        debugPrint('[SyncService] Habit invitation sync failed: $e');
         rethrow;
       }
     } else {
@@ -153,18 +212,16 @@ class SyncService {
 
   /// Pull inbound social data and persist into Drift for offline-first access.
   Future<void> pullDailySync(String userId) async {
-    if (!_connectivity.isOnline) return;
-
-    // Auto-authenticate if we don't have a token yet
-    if (_jwtToken == null) {
-      final success = await authenticate(userId);
-      if (!success) return;
+    final headers = await _getAuthHeaders();
+    if (!headers.containsKey('Authorization')) {
+      debugPrint('[SyncService] Cannot pull daily sync: missing auth token');
+      return;
     }
 
     try {
       final response = await http.get(
         Uri.parse('$_baseUrl/api/sync/daily'),
-        headers: _getAuthHeaders(),
+        headers: headers,
       );
 
       if (response.statusCode == 200) {
@@ -178,15 +235,39 @@ class SyncService {
           final partnerUserId = partner['partner_id']?.toString() ?? '';
           if (habitId.isEmpty || partnerUserId.isEmpty) continue;
 
-          await _db.upsertPartnerSnapshot(PartnerSnapshotsCompanion(
-            habitId: Value(habitId),
-            partnerUserId: Value(partnerUserId),
-            username: Value(partner['username']?.toString() ?? 'Friend'),
-            avatarUrl: Value(partner['avatar_url']?.toString()),
-            currentDuration: Value((partner['current_duration'] as num?)?.toInt() ?? 0),
-            updatedAt: Value(DateTime.now()),
-          ));
-          debugPrint('[SyncService] Upserted partner ${partner['username']} for habit $habitId');
+          await _db.upsertPartnerSnapshot(
+            PartnerSnapshotsCompanion(
+              habitId: Value(habitId),
+              partnerUserId: Value(partnerUserId),
+              username: Value(partner['username']?.toString() ?? 'Friend'),
+              avatarUrl: Value(partner['avatar_url']?.toString()),
+              currentDuration: Value(
+                (partner['current_duration'] as num?)?.toInt() ?? 0,
+              ),
+              updatedAt: Value(DateTime.now()),
+            ),
+          );
+          
+          // UX Fix: Upsert the shared habit into the local habits table 
+          // so it shows up on the recipient's home screen.
+          await _db.into(_db.habits).insertOnConflictUpdate(
+            HabitsCompanion(
+              habitId: Value(habitId),
+              userId: Value(userId),
+              title: Value(partner['title']?.toString() ?? 'Shared Habit'),
+              isCustom: const Value(false),
+              targetDuration: Value((partner['target_duration'] as num?)?.toInt() ?? 30),
+              currentDuration: const Value(0), // user's own current duration is fetched elsewhere or starts at 0
+              status: const Value(HabitStatus.active),
+              colorHex: Value(partner['color_hex']?.toString() ?? 'FF9CAF88'),
+              updatedAt: Value(DateTime.now()),
+              isSynced: const Value(true),
+            ),
+          );
+
+          debugPrint(
+            '[SyncService] Upserted partner ${partner['username']} for habit $habitId',
+          );
         }
 
         // Log nudges (will be surfaced in UI in future task)
@@ -198,34 +279,54 @@ class SyncService {
         // Persist private messages
         final List<dynamic> messages = data['messages'] ?? [];
         for (final msg in messages) {
-          await _db.insertPrivateMessage(PrivateMessagesCompanion(
-            messageId: Value(msg['id'].toString()),
-            senderId: Value(msg['sender_id'].toString()),
-            recipientId: Value(userId),
-            message: Value(msg['message'].toString()),
-            milestoneType: Value(msg['milestone_type']?.toString()),
-            createdAt: Value(DateTime.parse(msg['created_at'].toString())),
-            updatedAt: Value(DateTime.now()),
-            isSynced: const Value(true),
-          ));
+          await _db.insertPrivateMessage(
+            PrivateMessagesCompanion(
+              messageId: Value(msg['id'].toString()),
+              senderId: Value(msg['sender_id'].toString()),
+              recipientId: Value(userId),
+              message: Value(msg['message'].toString()),
+              milestoneType: Value(msg['milestone_type']?.toString()),
+              createdAt: Value(DateTime.parse(msg['created_at'].toString())),
+              updatedAt: Value(DateTime.now()),
+              isSynced: const Value(true),
+            ),
+          );
         }
 
         // Persist habit invitations
         final List<dynamic> invitations = data['invitations'] ?? [];
         for (final inv in invitations) {
-          await _db.insertHabitInvitation(HabitInvitationsCompanion(
-            invitationId: Value(inv['id'].toString()),
-            requesterId: Value(inv['requester_id'].toString()),
-            recipientId: Value(userId),
-            habitId: Value(inv['habit_id'].toString()),
-            status: Value(inv['status'].toString()),
-            createdAt: Value(DateTime.parse(inv['created_at'].toString())),
-            updatedAt: Value(DateTime.now()),
-            isSynced: const Value(true),
-          ));
+          await _db.insertHabitInvitation(
+            HabitInvitationsCompanion(
+              invitationId: Value(inv['id'].toString()),
+              requesterId: Value(inv['requester_id'].toString()),
+              recipientId: Value(userId),
+              habitId: Value(inv['habit_id'].toString()),
+              status: Value(inv['status'].toString()),
+              createdAt: Value(DateTime.parse(inv['created_at'].toString())),
+              updatedAt: Value(DateTime.now()),
+              isSynced: const Value(true),
+            ),
+          );
+        }
+
+        // Persist accepted friends
+        final List<dynamic> acceptedFriends = data['accepted_friends'] ?? [];
+        for (final friend in acceptedFriends) {
+          await _db.upsertAcceptedFriend(
+            AcceptedFriendsCompanion(
+              friendUserId: Value(friend['friend_id'].toString()),
+              username: Value(friend['username'].toString()),
+              avatarUrl: Value(friend['avatar_url']?.toString()),
+              updatedAt: Value(DateTime.now()),
+              isSynced: const Value(true),
+            ),
+          );
         }
       } else {
-        debugPrint('[SyncService] Failed to pull daily sync: ${response.statusCode} - ${response.body}');
+        debugPrint(
+          '[SyncService] Failed to pull daily sync: ${response.statusCode} - ${response.body}',
+        );
       }
     } catch (e) {
       debugPrint('[SyncService] Pull Daily Sync Failed: $e');

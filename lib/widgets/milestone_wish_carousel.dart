@@ -30,7 +30,7 @@ class MilestoneWishCarousel extends ConsumerWidget {
         );
       },
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
     );
   }
 }
@@ -60,9 +60,9 @@ class _MilestoneCard extends ConsumerWidget {
               Expanded(
                 child: Text(
                   'User ${event.userId} reached a milestone!',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -119,9 +119,7 @@ class _WishButton extends StatelessWidget {
         foregroundColor: AppTheme.sageGreen,
         elevation: 0,
         padding: const EdgeInsets.symmetric(vertical: 8),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       child: Text(
         label,

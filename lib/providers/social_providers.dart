@@ -1,9 +1,12 @@
 import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
 import '../database/database.dart';
 import '../database/tables.dart';
 import 'database_provider.dart';
+import 'auth_provider.dart';
 
 // ---------------------------------------------------------------------------
 // Partner Snapshots Provider
@@ -21,6 +24,42 @@ final habitPartnersProvider =
     StreamProvider.family<List<PartnerSnapshot>, String>((ref, habitId) {
   final db = ref.watch(databaseProvider);
   return db.watchPartnersByHabit(habitId);
+});
+
+// --- Friend Profile Network Provider ---
+
+class FriendProfileData {
+  final Map<String, dynamic> user;
+  final List<dynamic> habits;
+  FriendProfileData({required this.user, required this.habits});
+}
+
+final friendProfileProvider = FutureProvider.family<FriendProfileData, String>((ref, friendId) async {
+  final baseUrl = kDebugMode ? 'http://127.0.0.1:8787' : 'https://hable.pages.dev';
+  final token = ref.watch(authProvider).token;
+  if (token == null) throw Exception('Not authenticated');
+
+  final res = await http.get(
+    Uri.parse('$baseUrl/api/social/user/$friendId/profile'),
+    headers: {'Authorization': 'Bearer $token'},
+  );
+  if (res.statusCode == 200) {
+    final data = jsonDecode(res.body);
+    return FriendProfileData(user: data['user'], habits: data['habits']);
+  }
+  throw Exception('Failed to load profile');
+});
+
+/// Watches private messages for the current user.
+final privateMessagesProvider = StreamProvider<List<PrivateMessage>>((ref) {
+  final db = ref.watch(databaseProvider);
+  return db.watchPrivateMessages();
+});
+
+/// Watches accepted friends (users we are friends with, regardless of shared habits).
+final acceptedFriendsProvider = StreamProvider<List<AcceptedFriend>>((ref) {
+  final db = ref.watch(databaseProvider);
+  return db.watchAcceptedFriends();
 });
 
 // ---------------------------------------------------------------------------

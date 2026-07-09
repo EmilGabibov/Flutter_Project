@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
+import '../../data/standard_habits.dart';
 import 'onboarding_duration_screen.dart';
 
 /// Step 2: Core Selection — pick a standard habit or enter a custom one.
@@ -16,15 +17,6 @@ class _OnboardingHabitScreenState extends State<OnboardingHabitScreen> {
   String? _selectedHabit;
   final _customController = TextEditingController();
   bool _isCustom = false;
-
-  static const _standardHabits = [
-    ('💧', 'Hydration', 'Drink 8 glasses of water daily'),
-    ('📖', 'Reading', 'Read for 20 minutes every day'),
-    ('🧘', 'Meditation', '10 minutes of mindfulness'),
-    ('🏃', 'Exercise', '30 minutes of movement'),
-    ('😴', 'Sleep Routine', 'In bed by 10:30 PM'),
-    ('📝', 'Journaling', 'Write 3 things you\'re grateful for'),
-  ];
 
   @override
   void dispose() {
@@ -75,14 +67,14 @@ class _OnboardingHabitScreenState extends State<OnboardingHabitScreen> {
               Expanded(
                 child: ListView(
                   children: [
-                    ..._standardHabits.map((h) => _HabitTile(
-                          emoji: h.$1,
-                          title: h.$2,
-                          subtitle: h.$3,
-                          isSelected: !_isCustom && _selectedHabit == h.$2,
+                    ...standardHabits.map((h) => _HabitTile(
+                          emoji: h.emoji,
+                          title: h.title,
+                          subtitle: h.subtitle,
+                          isSelected: !_isCustom && _selectedHabit == h.title,
                           onTap: () {
                             setState(() {
-                              _selectedHabit = h.$2;
+                              _selectedHabit = h.title;
                               _isCustom = false;
                             });
                           },

@@ -8,8 +8,9 @@
 The core logic governs how habits are calculated and penalized.
 
 * **Duration Math:** 
-  * Default habits must inherit a `base_duration` of either 21 or 66 days.
-  * Custom habits must accept an integer `custom_duration`.
+  * Habit `target_duration` and `current_duration` are stored as days.
+  * Default/preset habits use shared Flutter preset metadata and default to 21 days unless the user changes the duration.
+  * Custom habits must accept an integer day duration.
 * **The "Mud" Coefficient:** The backend does not calculate resistance; it only tracks the current day. The Flutter client will compute the `resistance_coefficient` locally.
 
 * **The Penalty Engine:**
@@ -24,18 +25,26 @@ Both the local Drift (SQLite) database and the remote Cloudflare D1 (SQL) databa
 
 ### A. Core Tables (D1 & Drift)
 
-* **`users` table:** `user_id` (UUID, Primary Key), `username` (String), `created_at` (Timestamp), `updated_at` (Timestamp), `total_score` (Int).
-* **`habits` table:** `habit_id` (UUID, PK), `user_id` (FK), `title` (String), `is_custom` (Boolean), `target_duration` (Int), `current_duration` (Int - dynamic, updates on penalties), `status` (Enum: ACTIVE, COMPLETED, ABANDONED), `updated_at` (Timestamp).
-* **`logs` table:** `log_id` (UUID, PK), `habit_id` (FK), `action_date` (Timestamp), `status` (Enum: COMPLETED, SKIPPED), `journal_note` (Text, nullable), `updated_at` (Timestamp).
-* **`partnerships` table:** `partnership_id` (UUID, PK), `habit_id` (FK), `partner_user_id` (FK), `updated_at` (Timestamp).
+* **`users` table:** `user_id` (UUID, Primary Key), `username` (String), `password_hash` (String), `avatar_url` (String), `total_score` (Int).
+* **`habits` table:** `id` (UUID, PK), `user_id` (FK), `title` (String), `target_duration` (Int), `color_hex` (String), `status` (Enum: active, abandoned), `created_at` (Timestamp), `updated_at` (Timestamp).
+* **`habit_logs` table:** `id` (UUID, PK), `user_id` (FK), `habit_id` (FK), `status` (Enum), `logged_at` (Timestamp).
+* **`habit_progress` table:** `user_id` (FK), `habit_id` (FK), `current_duration` (Int).
+* **`partnerships` table:** `user_id` (FK), `partner_id` (FK), `habit_id` (FK) (Junction mapping friends to shared habits).
+* **`friend_requests` table:** `id` (PK), `requester_id` (FK), `recipient_id` (FK), `status` (Enum), `created_at` (Timestamp).
+* **`habit_invitations` table:** `id` (PK), `requester_id`, `recipient_id`, `habit_id`, `status`, `created_at`. Pending duplicates for the same requester/recipient/habit are idempotent.
+* **`accepted_friends` table:** Drift-only cache of accepted friends (`friend_user_id`, `username`, `avatar_url`) populated from daily sync for offline habit-invite pickers.
+* **`SearchDocuments` table:** Local Drift-only metadata for offline search (id, title, author, source, etc).
 
 ### B. Cloudflare KV (Key-Value) - High-Speed Transient Data
 
-* **Partner Nudges:** Keys structured as `nudge:{user_id}:{partner_id}`. TTL (Time to Live) set to 24 hours. 
-* **Daily Streaks Cache:** Keys structured as `streak:{user_id}:{habit_id}` to serve the home screen instantly upon app launch.
+* **Partner Nudges:** Keys structured as `nudge:{target_user_id}:{sender_id}`. TTL (Time to Live) set to 24 hours.
 
 ## 3. API Endpoints (Cloudflare Workers - TypeScript/Hono)
 
-* `POST /api/habits/create` - Initializes a new habit and optional partnership.
-* `POST /api/habits/log` - Submits a daily completion or a skip (with mandatory journal payload). Updates D1 and increments/resets the KV streak cache.
-* `GET /api/sync/daily` - A single payload fetched on app launch to populate the user's current day, partner statuses, and daily encouraging quote.
+* `POST /api/auth/register` & `/api/auth/login` - Authenticates users and issues JWTs.
+* `POST /api/sync/habit` - Initializes or updates habit metadata and color.
+* `POST /api/sync/log` - Submits a daily completion or a skip.
+* `GET /api/sync/daily` - A single payload fetched silently in background to populate partner snapshots, nudges, and friend invitations.
+* `GET /api/social/search` & `GET /api/social/leaderboard` - Used by the Social Hub UI.
+* `POST /api/social/friend-request` & `/accept` & `GET /api/social/friend-request` - Friend request lifecycle.
+* `POST /api/social/habit-invitation`, `/accept`, and `/decline` - Habit partner invitation lifecycle. Creating an invitation requires an accepted friendship and requester ownership of the habit.

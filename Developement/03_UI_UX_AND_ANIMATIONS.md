@@ -6,6 +6,9 @@ This document provides the complete technical specification and native Flutter c
 * **Colors:** Muted tones (pastels, sage greens, warm grays). Reserve vibrant/neon colors strictly for the exact moment of a habit completion.
 * **Typography:** Clean, rounded sans-serif. Generous line height and negative space.
 * **Layout:** Protect the user from "dashboard fatigue." The Home Screen focuses ONLY on today's action. All historical data and charts belong exclusively on the Profile Screen. Ensure mobile viewports are dynamic and stable.
+* **Habit Creation:** The shared `HabitFormSheet` is the single post-onboarding creation/edit surface. Home exposes a labeled add button in the header and an empty-state Add habit button; Profile remains the management/editing surface. The sheet offers quick-select chips from `standard_habits.dart`, a day-duration field, color selection, and an accepted-friend partner picker for new habits.
+* **Home Suggestions:** Suggested preset cards are quick-start shortcuts for the empty Home state only. Once active habits exist, Home should prioritize today's habit cards and keep the add action compact.
+* **Home Progress Labels:** Home habit cards should distinguish challenge progress (`Challenge: Day X of N`) from consecutive-completion streaks. Avoid duplicating day count and fire-streak language around the ring.
 
 ### 2. Mandatory Friction (Skipping)
 If a user skips a habit, open a glassmorphic bottom sheet requiring a text input (Journal Entry). The UI must visually reflect the penalty (extending the journey map).
