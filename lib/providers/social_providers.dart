@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter/foundation.dart';
+import '../config/api_config.dart';
 import '../database/database.dart';
 import '../database/tables.dart';
 import 'database_provider.dart';
@@ -35,12 +35,11 @@ class FriendProfileData {
 }
 
 final friendProfileProvider = FutureProvider.family<FriendProfileData, String>((ref, friendId) async {
-  final baseUrl = kDebugMode ? 'http://127.0.0.1:8787' : 'https://hable.pages.dev';
   final token = ref.watch(authProvider).token;
   if (token == null) throw Exception('Not authenticated');
 
   final res = await http.get(
-    Uri.parse('$baseUrl/api/social/user/$friendId/profile'),
+    Uri.parse('$apiBaseUrl/api/social/user/$friendId/profile'),
     headers: {'Authorization': 'Bearer $token'},
   );
   if (res.statusCode == 200) {

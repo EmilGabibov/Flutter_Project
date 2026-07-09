@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:drift/drift.dart' hide Column;
+import '../config/api_config.dart';
 import '../database/database.dart';
 import 'database_provider.dart';
 import 'package:flutter/foundation.dart';
@@ -13,6 +15,7 @@ final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
 
 class AuthState {
   final bool isLoading;
+  final bool isInitialized;
   final String? error;
   final String? token;
   final String? userId;
@@ -20,6 +23,7 @@ class AuthState {
 
   AuthState({
     this.isLoading = false,
+    this.isInitialized = false,
     this.error,
     this.token,
     this.userId,
@@ -30,18 +34,21 @@ class AuthState {
 
   AuthState copyWith({
     bool? isLoading,
+    bool? isInitialized,
     String? error,
     String? token,
     String? userId,
     String? username,
     bool clearError = false,
+    bool clearCredentials = false,
   }) {
     return AuthState(
       isLoading: isLoading ?? this.isLoading,
+      isInitialized: isInitialized ?? this.isInitialized,
       error: clearError ? null : (error ?? this.error),
-      token: token ?? this.token,
-      userId: userId ?? this.userId,
-      username: username ?? this.username,
+      token: clearCredentials ? null : (token ?? this.token),
+      userId: clearCredentials ? null : (userId ?? this.userId),
+      username: clearCredentials ? null : (username ?? this.username),
     );
   }
 }
@@ -49,22 +56,12 @@ class AuthState {
 class AuthNotifier extends Notifier<AuthState> {
   FlutterSecureStorage get _storage => ref.read(secureStorageProvider);
   AppDatabase get _db => ref.read(databaseProvider);
-  static String get _localhostUrl {
-    if (kIsWeb) return 'http://127.0.0.1:8787';
-    if (defaultTargetPlatform == TargetPlatform.android) return 'http://10.0.2.2:8787';
-    return 'http://127.0.0.1:8787';
-  }
-  static final String _baseUrl = kDebugMode ? _localhostUrl : 'https://hable.pages.dev';
   static const String _tokenKey = 'jwt_token';
   static const String _userIdKey = 'user_id';
   static const String _usernameKey = 'username';
 
   @override
   AuthState build() {
-    if (kDebugMode) {
-      _storage.deleteAll();
-      _db.delete(_db.users).go();
-    }
     _loadStoredAuth();
     return AuthState();
   }
@@ -79,21 +76,25 @@ class AuthNotifier extends Notifier<AuthState> {
         token: token,
         userId: userId,
         username: username,
+        isInitialized: true,
       );
+      return;
     }
+
+    state = state.copyWith(isInitialized: true);
   }
 
   Future<bool> login(String username, String password) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/api/auth/login'),
+        Uri.parse('$apiBaseUrl/api/auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'username': username,
           'password': password,
         }),
-      );
+      ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -109,6 +110,9 @@ class AuthNotifier extends Notifier<AuthState> {
         );
         return false;
       }
+    } on TimeoutException {
+      state = state.copyWith(isLoading: false, error: 'Request timed out');
+      return false;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: 'Network error');
       return false;
@@ -119,10 +123,10 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/api/auth/login'),
+        Uri.parse('$apiBaseUrl/api/auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'user_id': userId}),
-      );
+      ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -132,6 +136,9 @@ class AuthNotifier extends Notifier<AuthState> {
         return true;
       }
       state = state.copyWith(isLoading: false, error: 'Test login failed');
+      return false;
+    } on TimeoutException {
+      state = state.copyWith(isLoading: false, error: 'Request timed out');
       return false;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: 'Network error');
@@ -143,14 +150,14 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/api/auth/register'),
+        Uri.parse('$apiBaseUrl/api/auth/register'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'username': username,
           'email': email,
           'password': password,
         }),
-      );
+      ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -166,6 +173,9 @@ class AuthNotifier extends Notifier<AuthState> {
         );
         return false;
       }
+    } on TimeoutException {
+      state = state.copyWith(isLoading: false, error: 'Request timed out');
+      return false;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: 'Network error');
       return false;
@@ -176,16 +186,19 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/api/auth/request-pin'),
+        Uri.parse('$apiBaseUrl/api/auth/request-pin'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email}),
-      );
+      ).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         state = state.copyWith(isLoading: false);
         return true;
       }
       final data = jsonDecode(response.body);
       state = state.copyWith(isLoading: false, error: data['error'] ?? 'Failed to request PIN');
+      return false;
+    } on TimeoutException {
+      state = state.copyWith(isLoading: false, error: 'Request timed out');
       return false;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: 'Network error');
@@ -197,20 +210,23 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/api/auth/reset-password'),
+        Uri.parse('$apiBaseUrl/api/auth/reset-password'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': email,
           'pin': pin,
           'new_password': newPassword,
         }),
-      );
+      ).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         state = state.copyWith(isLoading: false);
         return true;
       }
       final data = jsonDecode(response.body);
       state = state.copyWith(isLoading: false, error: data['error'] ?? 'Reset failed');
+      return false;
+    } on TimeoutException {
+      state = state.copyWith(isLoading: false, error: 'Request timed out');
       return false;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: 'Network error');
@@ -225,13 +241,13 @@ class AuthNotifier extends Notifier<AuthState> {
 
     try {
       final response = await http.put(
-        Uri.parse('$_baseUrl/api/user/avatar'),
+        Uri.parse('$apiBaseUrl/api/user/avatar'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
         body: jsonEncode({'avatar_url': avatarUrl}),
-      );
+      ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         // Update local database
@@ -254,6 +270,16 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(clearError: true);
   }
 
+  Future<void> logout() async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    await _storage.deleteAll();
+    state = state.copyWith(
+      isLoading: false,
+      isInitialized: true,
+      clearCredentials: true,
+    );
+  }
+
   Future<void> _saveAuth(String token, String userId, String username) async {
     await _storage.write(key: _tokenKey, value: token);
     await _storage.write(key: _userIdKey, value: userId);
@@ -262,6 +288,7 @@ class AuthNotifier extends Notifier<AuthState> {
       token: token,
       userId: userId,
       username: username,
+      isInitialized: true,
     );
   }
 

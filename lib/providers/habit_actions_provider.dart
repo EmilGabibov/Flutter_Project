@@ -46,9 +46,11 @@ class HabitActionsController {
 
   Future<void> archiveHabit(String habitId) async {
     await _db.archiveHabit(habitId);
+    await _ref.read(syncServiceProvider).flushPending();
   }
 
   Future<void> restoreHabit(String habitId) async {
     await _db.restoreHabit(habitId);
+    await _ref.read(syncServiceProvider).flushPending();
   }
 }

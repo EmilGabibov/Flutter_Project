@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'providers/auth_provider.dart';
 import 'providers/habit_providers.dart';
 import 'screens/auth_screen.dart';
 import 'screens/home_screen.dart';
@@ -31,15 +32,21 @@ class _AppGate extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final userAsync = ref.watch(currentUserProvider);
+    final authState = ref.watch(authProvider);
 
+    if (!authState.isInitialized) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (!authState.isAuthenticated || authState.userId == null) {
+      return const AuthScreen();
+    }
+
+    final userAsync = ref.watch(currentUserProvider);
     return userAsync.when(
-      data: (user) {
-        if (user == null) {
-          return const AuthScreen();
-        }
-        return HomeScreen(userId: user.userId);
-      },
+      data: (_) => HomeScreen(userId: authState.userId!),
       loading: () => const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       ),

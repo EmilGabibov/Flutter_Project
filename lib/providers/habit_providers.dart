@@ -1,11 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../database/database.dart';
+import 'auth_provider.dart';
 import 'database_provider.dart';
 
 /// Watches the current user profile from Drift.
 final currentUserProvider = StreamProvider<User?>((ref) {
   final db = ref.watch(databaseProvider);
-  return db.watchCurrentUser();
+  final userId = ref.watch(authProvider.select((auth) => auth.userId));
+  if (userId == null) {
+    return Stream.value(null);
+  }
+  return db.watchUser(userId);
 });
 
 /// Watches all ACTIVE habits for the current user.

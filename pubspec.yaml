@@ -45,6 +45,7 @@ dev_dependencies:
   riverpod_generator: ^4.0.4
   drift_dev: ^2.22.1
   flutter_launcher_icons: ^0.14.4
+  flutter_secure_storage_platform_interface: ^2.0.1
 
 flutter:
   uses-material-design: true

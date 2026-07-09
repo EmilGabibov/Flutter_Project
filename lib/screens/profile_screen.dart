@@ -55,6 +55,19 @@ class ProfileScreen extends ConsumerWidget {
                       'Profile',
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
+                    const Spacer(),
+                    IconButton(
+                      tooltip: 'Sign out',
+                      onPressed: () async {
+                        await ref.read(authProvider.notifier).logout();
+                        if (!context.mounted) return;
+                        Navigator.of(context).popUntil((route) => route.isFirst);
+                      },
+                      icon: Icon(
+                        Icons.logout_rounded,
+                        color: AppTheme.deepCharcoal,
+                      ),
+                    ),
                   ],
                 ),
               ),

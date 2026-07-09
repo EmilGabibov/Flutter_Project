@@ -11,6 +11,7 @@ Because Hable involves mutual habit tracking and a offline-first sync engine, it
 2. Cloudflare Worker backend running locally (`npm run dev` in `backend/`).
 3. Local D1 schema applied: `npm run db:setup` in `backend/`.
 4. Port forwarding active: `adb reverse tcp:8787 tcp:8787`.
+5. Normal debug auth now uses `http://127.0.0.1:8787` by default; use `--dart-define=HABLE_API_BASE_URL=...` only when targeting a non-default host such as `10.0.2.2` on an emulator.
 
 ### Execution
 1. Install the primary app (Alice):

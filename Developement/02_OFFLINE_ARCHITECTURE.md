@@ -20,7 +20,8 @@ Implement a reliable synchronization queue using packages like `connectivity_plu
   1. Write the mutation (e.g., the `COMPLETED` log, or a queued `NUDGE` intent) to the local Drift database/queue.
   2. Immediately update the UI locally.
   3. Push a sync task to the background queue.
-  4. For habit partner invites, create the local habit first, enqueue the full habit sync payload, then enqueue one `sendHabitInvitation` item per accepted friend.
+  4. Habit edit/archive/restore actions should also enqueue the full habit payload, including `status`, so the backend can persist the same lifecycle state that Drift shows locally.
+  5. For habit partner invites, create the local habit first, enqueue the full habit sync payload, then enqueue one `sendHabitInvitation` item per accepted friend.
 * **The Background Queue:** 
   * If the device is online, trigger the queue immediately to push data to Cloudflare Workers.
   * If offline, store the tasks. The queue must automatically begin processing when `connectivity_plus` detects a restored internet connection.

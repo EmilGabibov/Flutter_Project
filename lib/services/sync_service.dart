@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../config/api_config.dart';
 import '../database/database.dart';
 import '../database/tables.dart';
 import 'connectivity_service.dart';
@@ -15,9 +16,6 @@ class SyncService {
   final AppDatabase _db;
   final ConnectivityService _connectivity;
   final FlutterSecureStorage _storage;
-  final String _baseUrl = kDebugMode
-      ? 'http://127.0.0.1:8787'
-      : 'https://hable.pages.dev';
 
   SyncService({
     required AppDatabase db,
@@ -71,7 +69,7 @@ class SyncService {
     if (item.action == SyncAction.sendNudge) {
       try {
         final response = await http.post(
-          Uri.parse('$_baseUrl/api/social/nudge'),
+          Uri.parse('$apiBaseUrl/api/social/nudge'),
           headers: headers,
           body: item.payload,
         );
@@ -88,7 +86,7 @@ class SyncService {
     } else if (item.action == SyncAction.sendPrivateMessage) {
       try {
         final response = await http.post(
-          Uri.parse('$_baseUrl/api/social/private-message'),
+          Uri.parse('$apiBaseUrl/api/social/private-message'),
           headers: headers,
           body: item.payload,
         );
@@ -105,7 +103,7 @@ class SyncService {
     } else if (item.action == SyncAction.acceptInvitation) {
       try {
         final response = await http.post(
-          Uri.parse('$_baseUrl/api/social/habit-invitation/accept'),
+          Uri.parse('$apiBaseUrl/api/social/habit-invitation/accept'),
           headers: headers,
           body: item.payload,
         );
@@ -122,7 +120,7 @@ class SyncService {
     } else if (item.action == SyncAction.declineInvitation) {
       try {
         final response = await http.post(
-          Uri.parse('$_baseUrl/api/social/habit-invitation/decline'),
+          Uri.parse('$apiBaseUrl/api/social/habit-invitation/decline'),
           headers: headers,
           body: item.payload,
         );
@@ -139,7 +137,7 @@ class SyncService {
     } else if (item.action == SyncAction.syncScore) {
       try {
         final response = await http.post(
-          Uri.parse('$_baseUrl/api/sync/score'),
+          Uri.parse('$apiBaseUrl/api/sync/score'),
           headers: headers,
           body: item.payload,
         );
@@ -157,7 +155,7 @@ class SyncService {
         item.action == SyncAction.updateHabit) {
       try {
         final response = await http.post(
-          Uri.parse('$_baseUrl/api/sync/habit'),
+          Uri.parse('$apiBaseUrl/api/sync/habit'),
           headers: headers,
           body: item.payload,
         );
@@ -174,7 +172,7 @@ class SyncService {
     } else if (item.action == SyncAction.logHabit) {
       try {
         final response = await http.post(
-          Uri.parse('$_baseUrl/api/sync/log'),
+          Uri.parse('$apiBaseUrl/api/sync/log'),
           headers: headers,
           body: item.payload,
         );
@@ -191,7 +189,7 @@ class SyncService {
     } else if (item.action == SyncAction.sendHabitInvitation) {
       try {
         final response = await http.post(
-          Uri.parse('$_baseUrl/api/social/habit-invitation'),
+          Uri.parse('$apiBaseUrl/api/social/habit-invitation'),
           headers: headers,
           body: item.payload,
         );
@@ -220,7 +218,7 @@ class SyncService {
 
     try {
       final response = await http.get(
-        Uri.parse('$_baseUrl/api/sync/daily'),
+        Uri.parse('$apiBaseUrl/api/sync/daily'),
         headers: headers,
       );
 

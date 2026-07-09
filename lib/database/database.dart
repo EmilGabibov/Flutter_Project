@@ -25,7 +25,7 @@ part 'database.g.dart';
   ],
 )
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection());
+  AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   /// Bump this when the schema changes.
   @override
@@ -64,6 +64,9 @@ class AppDatabase extends _$AppDatabase {
 
   Future<User?> getUser(String userId) =>
       (select(users)..where((u) => u.userId.equals(userId))).getSingleOrNull();
+
+  Stream<User?> watchUser(String userId) =>
+      (select(users)..where((u) => u.userId.equals(userId))).watchSingleOrNull();
 
   Stream<User?> watchCurrentUser() =>
       (select(users)..limit(1)).watchSingleOrNull();
@@ -181,13 +184,14 @@ class AppDatabase extends _$AppDatabase {
     int targetDuration,
     String colorHex,
   ) async {
+    final now = DateTime.now();
     await transaction(() async {
       await (update(habits)..where((h) => h.habitId.equals(habitId))).write(
         HabitsCompanion(
           title: Value(title),
           targetDuration: Value(targetDuration),
           colorHex: Value(colorHex),
-          updatedAt: Value(DateTime.now()),
+          updatedAt: Value(now),
           isSynced: const Value(false),
         ),
       );
@@ -199,7 +203,8 @@ class AppDatabase extends _$AppDatabase {
             'title': title,
             'target_duration': targetDuration,
             'color_hex': colorHex,
-            'updated_at': DateTime.now().toIso8601String(),
+            'status': 'active',
+            'updated_at': now.toIso8601String(),
           }),
         ),
       );
@@ -207,36 +212,56 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<void> archiveHabit(String habitId) async {
+    final habit = await getHabit(habitId);
+    if (habit == null) return;
+    final now = DateTime.now();
     await transaction(() async {
       await (update(habits)..where((h) => h.habitId.equals(habitId))).write(
         HabitsCompanion(
           status: const Value(HabitStatus.abandoned),
-          updatedAt: Value(DateTime.now()),
+          updatedAt: Value(now),
           isSynced: const Value(false),
         ),
       );
       await enqueueSync(
         SyncQueueCompanion.insert(
           action: SyncAction.updateHabit,
-          payload: jsonEncode({'habitId': habitId}),
+          payload: jsonEncode({
+            'habit_id': habitId,
+            'title': habit.title,
+            'target_duration': habit.targetDuration,
+            'color_hex': habit.colorHex,
+            'status': 'abandoned',
+            'updated_at': now.toIso8601String(),
+          }),
         ),
       );
     });
   }
 
   Future<void> restoreHabit(String habitId) async {
+    final habit = await getHabit(habitId);
+    if (habit == null) return;
+    final now = DateTime.now();
     await transaction(() async {
       await (update(habits)..where((h) => h.habitId.equals(habitId))).write(
         HabitsCompanion(
           status: const Value(HabitStatus.active),
-          updatedAt: Value(DateTime.now()),
+          updatedAt: Value(now),
           isSynced: const Value(false),
         ),
       );
       await enqueueSync(
         SyncQueueCompanion.insert(
           action: SyncAction.updateHabit,
-          payload: jsonEncode({'habitId': habitId}),
+          payload: jsonEncode({
+            'habit_id': habitId,
+            'title': habit.title,
+            'target_duration': habit.targetDuration,
+            'color_hex': habit.colorHex,
+            'status': 'active',
+            'updated_at': now.toIso8601String(),
+          }),
         ),
       );
     });

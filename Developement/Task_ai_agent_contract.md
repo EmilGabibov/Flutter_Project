@@ -28,8 +28,8 @@
 5. If the raw prompt is **not clear** after plugin triage, write the required triage questions for the user to answer before proceeding.
 6. **Preserve the user's intent**, expand it from the Hable web/mobile app perspective using gathered context, and keep the engineered scope to the smallest safe version determined by the Ponytail triage.
 7. **Append** the engineered version to `Task1_Engineered.md`, explicitly listing the related development document in the "Dependencies" section so subsequent tasks will read and update it.
-8. **Verify** that the appended task exists in `Task1_Engineered.md`, capture its starting line number.
-9. **Only then** remove the raw item or mark it as transferred with the engineered task title, date, and `Task1_Engineered.md` line number.
+8. **Verify** that the appended task exists in `Task1_Engineered.md`, add a stable HTML anchor (`<a id="task-slug"></a>`) immediately before the task heading, and capture that anchor.
+9. **Only then** remove the raw item or mark it as transferred with the engineered task title, date, and `Task1_Engineered.md#task-slug` anchor.
 
 > [!IMPORTANT]
 > Engineering a task and implementing/proceeding with a task must be completed **separately**, not one after another in the same response.
@@ -76,7 +76,8 @@ If your implementation changes the underlying Drift schema, Riverpod logic, or U
 
 - Do **not** mark a task complete just because it was engineered.
 - **Mandatory Archive Update:** When a task is archived, any related `Task0_Raw.md` transfer notes MUST use the stable HTML anchor (`Task2_Archived.md#task-slug`) as the authoritative lookup key.
-- Archived prompt links must not use `#Lx-Ly` line anchors.
+- Active engineered-task links should also prefer stable HTML anchors (`Task1_Engineered.md#task-slug`) instead of line-number anchors.
+- Prompt links must not use `#Lx-Ly` line anchors.
 
 ### 3.3 Task Selection
 

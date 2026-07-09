@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import '../theme/app_theme.dart';
-import 'home_screen.dart';
 
 enum AuthView { login, register, forgotPasswordRequest, forgotPasswordVerify }
 
@@ -30,13 +29,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       _isAutoLoggingIn = true;
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         final success = await ref.read(authProvider.notifier).testLogin(seedUserId);
-        if (success && mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (_) => HomeScreen(userId: seedUserId),
-            ),
-          );
-        } else {
+        if (!success && mounted) {
           if (mounted) setState(() => _isAutoLoggingIn = false);
         }
       });
@@ -61,7 +54,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       if (username.isEmpty || password.isEmpty) return;
       
       final success = await notifier.login(username, password);
-      _handleSuccess(success);
+      if (!success && mounted) {
+        setState(() {});
+      }
     } 
     else if (_currentView == AuthView.register) {
       final username = _usernameController.text.trim();
@@ -70,7 +65,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       if (username.isEmpty || email.isEmpty || password.isEmpty) return;
       
       final success = await notifier.register(username, email, password);
-      _handleSuccess(success);
+      if (!success && mounted) {
+        setState(() {});
+      }
     }
     else if (_currentView == AuthView.forgotPasswordRequest) {
       final email = _emailController.text.trim();
@@ -92,19 +89,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         setState(() => _currentView = AuthView.login);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Password reset successful. Please log in.')),
-        );
-      }
-    }
-  }
-
-  void _handleSuccess(bool success) {
-    if (success && mounted) {
-      final authState = ref.read(authProvider);
-      if (authState.userId != null) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (_) => HomeScreen(userId: authState.userId!),
-          ),
         );
       }
     }

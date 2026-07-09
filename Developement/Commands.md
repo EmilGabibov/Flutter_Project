@@ -18,6 +18,15 @@ Build the **partner/friend** Android APK:
 flutter build apk --flavor friend -t lib/main.dart
 ```
 
+For local backend testing, debug builds now default to `http://127.0.0.1:8787`.
+Use `adb reverse tcp:8787 tcp:8787` on a physical Android device.
+If you need to target a different backend host, pass:
+```bash
+flutter build apk --debug --flavor primary -t lib/main.dart \
+  --dart-define=HABLE_API_BASE_URL=http://10.0.2.2:8787
+```
+The override above is the usual emulator case; replace the URL as needed.
+
 ### Install APKs via ADB
 Install the **primary** APK on a connected USB device:
 ```bash

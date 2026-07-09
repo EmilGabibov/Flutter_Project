@@ -1,21 +1,17 @@
 import 'dart:convert';
+import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
-import '../../providers/auth_provider.dart';
-import '../../theme/app_theme.dart';
-import 'package:flutter/foundation.dart';
-import '../../widgets/3d/habit_environment_visualizer.dart';
-import '../../providers/social_providers.dart';
+import '../../config/api_config.dart';
 import '../../database/database.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/database_provider.dart';
-import 'package:drift/drift.dart' hide Column;
+import '../../providers/social_providers.dart';
+import '../../theme/app_theme.dart';
+import '../../widgets/3d/habit_environment_visualizer.dart';
 import '../../widgets/user_avatar.dart';
-
-// --- API Providers ---
-const _baseUrl = kDebugMode
-    ? 'http://127.0.0.1:8787'
-    : 'https://hable.pages.dev';
+import '../../widgets/leaderboard_card.dart';
 
 final leaderboardProvider = FutureProvider.autoDispose<List<dynamic>>((
   ref,
@@ -24,7 +20,7 @@ final leaderboardProvider = FutureProvider.autoDispose<List<dynamic>>((
   if (auth.token == null) return [];
 
   final response = await http.get(
-    Uri.parse('$_baseUrl/api/social/leaderboard'),
+    Uri.parse('$apiBaseUrl/api/social/leaderboard'),
     headers: {'Authorization': 'Bearer ${auth.token}'},
   );
 
@@ -43,7 +39,7 @@ final userSearchProvider = FutureProvider.family
       final auth = ref.watch(authProvider);
       if (auth.token == null) return [];
 
-      final url = '$_baseUrl/api/social/search?q=$query';
+      final url = '$apiBaseUrl/api/social/search?q=$query';
       debugPrint('GET $url');
       final response = await http.get(
         Uri.parse(url),
@@ -64,7 +60,7 @@ final pendingFriendRequestsProvider = FutureProvider.autoDispose<List<dynamic>>(
     if (auth.token == null) return [];
 
     final response = await http.get(
-      Uri.parse('$_baseUrl/api/social/friend-request'),
+      Uri.parse('$apiBaseUrl/api/social/friend-request'),
       headers: {'Authorization': 'Bearer ${auth.token}'},
     );
 
@@ -109,7 +105,7 @@ class _SocialHubScreenState extends ConsumerState<SocialHubScreen>
 
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/api/social/friend-request'),
+        Uri.parse('$apiBaseUrl/api/social/friend-request'),
         headers: {
           'Authorization': 'Bearer ${auth.token}',
           'Content-Type': 'application/json',
@@ -147,7 +143,7 @@ class _SocialHubScreenState extends ConsumerState<SocialHubScreen>
 
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/api/social/friend-request/accept'),
+        Uri.parse('$apiBaseUrl/api/social/friend-request/accept'),
         headers: {
           'Authorization': 'Bearer ${auth.token}',
           'Content-Type': 'application/json',
@@ -233,7 +229,9 @@ class _SocialHubScreenState extends ConsumerState<SocialHubScreen>
     return friendsAsync.when(
       data: (friends) {
         if (friends.isEmpty) {
-          return const Center(child: Text('No friends yet. Search and add some!'));
+          return const Center(
+            child: Text('No friends yet. Search and add some!'),
+          );
         }
         return ListView.builder(
           padding: const EdgeInsets.all(16),
@@ -347,48 +345,125 @@ class _SocialHubScreenState extends ConsumerState<SocialHubScreen>
 
   Widget _buildLeaderboardTab() {
     final leaderboardAsync = ref.watch(leaderboardProvider);
+    final currentUserId = ref.watch(authProvider.select((auth) => auth.userId));
 
     return leaderboardAsync.when(
       data: (users) {
         if (users.isEmpty) {
-          return const Center(child: Text('No users found.'));
+          return RefreshIndicator(
+            onRefresh: () => ref.refresh(leaderboardProvider.future),
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: const [
+                SizedBox(height: 120),
+                Center(child: Text('No leaderboard scores yet.')),
+              ],
+            ),
+          );
         }
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: users.length,
-          itemBuilder: (context, index) {
-            final user = users[index];
-            final rank = index + 1;
-            return Card(
-              margin: const EdgeInsets.only(bottom: 8),
-              child: ListTile(
-                leading: UserAvatar(
-                  avatarUrl: user['avatar_url']?.toString(),
-                  username: user['username']?.toString() ?? '$rank',
-                  radius: 20,
-                ),
-                title: Text(
-                  user['username'] ?? 'Unknown',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: Text('Score: ${user['total_score'] ?? 0}'),
-                trailing: rank <= 3
-                    ? Icon(
-                        Icons.star_rounded,
-                        color: rank == 1
-                            ? Colors.amber
-                            : rank == 2
-                            ? Colors.grey[400]
-                            : Colors.brown,
-                      )
-                    : Text('#$rank'),
-              ),
+
+        final rankings = <LeaderboardEntry>[];
+        for (var i = 0; i < users.length; i++) {
+          final user = users[i];
+          if (user is Map<String, dynamic>) {
+            rankings.add(LeaderboardEntry.fromJson(user, i + 1));
+          } else if (user is Map) {
+            rankings.add(
+              LeaderboardEntry.fromJson(Map<String, dynamic>.from(user), i + 1),
             );
-          },
+          }
+        }
+
+        if (rankings.isEmpty) {
+          return RefreshIndicator(
+            onRefresh: () => ref.refresh(leaderboardProvider.future),
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: const [
+                SizedBox(height: 120),
+                Center(child: Text('No valid leaderboard scores found.')),
+              ],
+            ),
+          );
+        }
+
+        return RefreshIndicator(
+          onRefresh: () => ref.refresh(leaderboardProvider.future),
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            children: [
+              LeaderboardCard(
+                title: 'Points Leaderboard',
+                subtitle: 'All-time points from synced habit progress',
+                rankings: rankings,
+                currentUserId: currentUserId,
+              ),
+            ],
+          ),
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, st) => Center(child: Text('Error: $e')),
+      loading: () => ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        children: [
+          Container(
+            height: 360,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: AppTheme.warmGray.withValues(alpha: 0.18),
+              ),
+            ),
+            child: const Center(child: CircularProgressIndicator()),
+          ),
+        ],
+      ),
+      error: (e, st) => RefreshIndicator(
+        onRefresh: () => ref.refresh(leaderboardProvider.future),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: AppTheme.overdueRose.withValues(alpha: 0.24),
+                ),
+              ),
+              child: Column(
+                children: [
+                  const Icon(
+                    Icons.error_outline_rounded,
+                    color: AppTheme.overdueRose,
+                    size: 32,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Could not load leaderboard',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.deepCharcoal,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '$e',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
