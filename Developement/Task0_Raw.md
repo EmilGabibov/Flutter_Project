@@ -231,3 +231,5 @@
 - [x] Transferred 2026-07-09 -> **Verify Normal Android Account Creation Login And Logout Flow** (`Task1_Engineered.md#verify-normal-android-account-creation-login-and-logout-flow`). Raw source: work creating, logging in , logging out on android ADB
 
 - [x] Transferred 2026-07-09 -> **Build Notification Center And Local Reminder MVP** (`Task1_Engineered.md#build-notification-center-and-local-reminder-mvp`). Raw source: work on notification system for reminding tasks, getting friends interactions (requests acceptance/denial, nudges, etc), sync between devices, cross platform (android and web/ios), etc.
+
+- [ ] series of documenting system architecture (1): Document current database structure and schema, showing what each table does, relevant services, etc. Provide a small summary of all services, what they do, etc. 
