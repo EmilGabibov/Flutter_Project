@@ -205,38 +205,57 @@ class _SocialHubScreenState extends ConsumerState<SocialHubScreen>
     return UsageTrackedScreen(
       screenName: 'social_hub',
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Social Hub'),
-          bottom: TabBar(
-            controller: _tabController,
-            isScrollable: true,
-            tabs: const [
-              Tab(icon: Icon(Icons.favorite_rounded), text: 'Friends'),
-              Tab(icon: Icon(Icons.people_alt_rounded), text: 'Requests'),
-              Tab(icon: Icon(Icons.leaderboard_rounded), text: 'Leaderboard'),
-              Tab(icon: Icon(Icons.search_rounded), text: 'Find Friends'),
-              Tab(icon: Icon(Icons.mail_rounded), text: 'Inbox'),
-            ],
-            labelColor: AppTheme.sageGreen,
-            indicatorColor: AppTheme.sageGreen,
-          ),
-        ),
-        body: Column(
-          children: [
-            const HabitEnvironmentVisualizer(height: 250),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildFriendsTab(),
-                  _buildRequestsTab(),
-                  _buildLeaderboardTab(),
-                  _buildSearchTab(),
-                  _buildInboxTab(),
-                ],
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Lightweight header instead of AppBar to avoid double-header
+              // when embedded as a tab in MainNavigationShell.
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                child: Row(
+                  children: [
+                    Text(
+                      'Social',
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              TabBar(
+                controller: _tabController,
+                isScrollable: true,
+                tabs: const [
+                  Tab(icon: Icon(Icons.favorite_rounded), text: 'Friends'),
+                  Tab(
+                      icon: Icon(Icons.people_alt_rounded),
+                      text: 'Requests'),
+                  Tab(
+                      icon: Icon(Icons.leaderboard_rounded),
+                      text: 'Leaderboard'),
+                  Tab(
+                      icon: Icon(Icons.search_rounded),
+                      text: 'Find Friends'),
+                  Tab(icon: Icon(Icons.mail_rounded), text: 'Inbox'),
+                ],
+                labelColor: AppTheme.sageGreen,
+                indicatorColor: AppTheme.sageGreen,
+              ),
+              const HabitEnvironmentVisualizer(height: 250),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildFriendsTab(),
+                    _buildRequestsTab(),
+                    _buildLeaderboardTab(),
+                    _buildSearchTab(),
+                    _buildInboxTab(),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

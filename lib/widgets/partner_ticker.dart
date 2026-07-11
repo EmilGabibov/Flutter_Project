@@ -10,14 +10,10 @@ class PartnerTicker extends StatelessWidget {
   final List<PartnerSnapshot> partners;
   final Color habitColor;
 
-  /// Called with the partner's userId when an avatar is tapped (enqueues nudge).
-  final void Function(String partnerUserId)? onNudgeTap;
-
   const PartnerTicker({
     super.key,
     required this.partners,
     this.habitColor = AppTheme.sageGreen,
-    this.onNudgeTap,
   });
 
   @override
@@ -50,16 +46,11 @@ class PartnerTicker extends StatelessWidget {
               final partner = partners[index];
               return GestureDetector(
                 onTap: () {
-                  onNudgeTap?.call(partner.partnerUserId);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Nudge sent to ${partner.username}! 👋'),
-                      behavior: SnackBarBehavior.floating,
-                      backgroundColor: habitColor.withValues(alpha: 0.9),
-                      duration: const Duration(seconds: 2),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          ProfileScreen(userId: partner.partnerUserId),
                     ),
                   );
                 },
@@ -87,7 +78,7 @@ class _PartnerAvatar extends StatelessWidget {
 
     return Semantics(
       label:
-          '${partner.username}, ${partner.hasCompletedToday ? "completed today" : "not completed yet"}. Tap to nudge.',
+          '${partner.username}, ${partner.hasCompletedToday ? "completed today" : "not completed yet"}. Opens profile.',
       button: true,
       child: Column(
         mainAxisSize: MainAxisSize.min,

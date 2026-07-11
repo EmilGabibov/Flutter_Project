@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -16,14 +18,21 @@ import '../providers/auth_provider.dart';
 import '../providers/notification_providers.dart';
 import '../providers/social_providers.dart';
 import '../providers/calendar_provider.dart';
+import '../providers/database_provider.dart';
+import '../providers/sync_provider.dart';
 import '../widgets/usage_tracked_screen.dart';
 
 /// Profile Screen — heavy data layer.
 /// All historical data and charts belong here exclusively.
 class ProfileScreen extends ConsumerWidget {
   final String userId;
+  final bool showBackButton;
 
-  const ProfileScreen({super.key, required this.userId});
+  const ProfileScreen({
+    super.key,
+    required this.userId,
+    this.showBackButton = false,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -52,30 +61,33 @@ class ProfileScreen extends ConsumerWidget {
                   padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
                   child: Row(
                     children: [
-                      IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: Icon(
-                          Icons.arrow_back_rounded,
-                          color: AppTheme.deepCharcoal,
+                      if (showBackButton) ...[
+                        IconButton(
+                          tooltip: 'Back',
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: Icon(
+                            Icons.arrow_back_rounded,
+                            color: AppTheme.deepCharcoal,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
+                        const SizedBox(width: 8),
+                      ],
                       Text(
                         'Profile',
                         style: Theme.of(context).textTheme.headlineMedium,
                       ),
                       const Spacer(),
                       IconButton(
-                        tooltip: 'Sign out',
-                        onPressed: () async {
-                          await ref.read(authProvider.notifier).logout();
-                          if (!context.mounted) return;
-                          Navigator.of(
-                            context,
-                          ).popUntil((route) => route.isFirst);
+                        tooltip: 'Open settings',
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => SettingsScreen(userId: userId),
+                            ),
+                          );
                         },
                         icon: Icon(
-                          Icons.logout_rounded,
+                          Icons.settings_rounded,
                           color: AppTheme.deepCharcoal,
                         ),
                       ),
@@ -97,37 +109,10 @@ class ProfileScreen extends ConsumerWidget {
                           children: [
                             Stack(
                               children: [
-                                InkWell(
-                                  borderRadius: BorderRadius.circular(28),
-                                  onTap: () {
-                                    showModalBottomSheet(
-                                      context: context,
-                                      isScrollControlled: true,
-                                      builder: (ctx) =>
-                                          const AvatarPickerSheet(),
-                                    );
-                                  },
-                                  child: UserAvatar(
-                                    avatarUrl: user?.avatarUrl,
-                                    username: user?.username,
-                                    radius: 28,
-                                  ),
-                                ),
-                                Positioned(
-                                  right: 0,
-                                  bottom: 0,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(4),
-                                    decoration: const BoxDecoration(
-                                      color: AppTheme.sageGreen,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.edit,
-                                      size: 12,
-                                      color: Colors.white,
-                                    ),
-                                  ),
+                                UserAvatar(
+                                  avatarUrl: user?.avatarUrl,
+                                  username: user?.username,
+                                  radius: 28,
                                 ),
                               ],
                             ),
@@ -188,24 +173,6 @@ class ProfileScreen extends ConsumerWidget {
                       color: AppTheme.warmGray.withValues(alpha: 0.9),
                     ),
                   ),
-                ),
-              ),
-
-              SliverToBoxAdapter(
-                child: userAsync.when(
-                  data: (user) => Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                    child: _CloudSyncActivationCard(user: user),
-                  ),
-                  loading: () => const SizedBox.shrink(),
-                  error: (_, _) => const SizedBox.shrink(),
-                ),
-              ),
-
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                  child: _DailyReminderCard(userId: userId),
                 ),
               ),
 
@@ -647,7 +614,12 @@ class ProfileScreen extends ConsumerWidget {
                         child: Text('No active habits.'),
                       )
                     else
-                      ...habits.map((h) => _FriendHabitListTile(habitData: h)),
+                      ...habits.map(
+                        (h) => _FriendHabitListTile(
+                          habitData: h,
+                          friendUserId: userId,
+                        ),
+                      ),
                   ]),
                 );
               },
@@ -665,6 +637,195 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class SettingsScreen extends ConsumerWidget {
+  final String userId;
+
+  const SettingsScreen({super.key, required this.userId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userAsync = ref.watch(currentUserProvider);
+
+    return UsageTrackedScreen(
+      screenName: 'settings',
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Settings')),
+        body: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+            children: [
+              userAsync.when(
+                data: (user) => _SettingsAccountCard(user: user),
+                loading: () => const SizedBox.shrink(),
+                error: (_, _) => const SizedBox.shrink(),
+              ),
+              const SizedBox(height: 12),
+              userAsync.when(
+                data: (user) => _CloudSyncActivationCard(user: user),
+                loading: () => const SizedBox.shrink(),
+                error: (_, _) => const SizedBox.shrink(),
+              ),
+              const SizedBox(height: 12),
+              _DailyReminderCard(userId: userId),
+              const SizedBox(height: 12),
+              const _SettingsPlaceholderCard(
+                icon: Icons.accessibility_new_rounded,
+                title: 'Accessibility',
+                description:
+                    'Foundation placeholder for reduced motion, larger text, and contrast preferences.',
+              ),
+              const SizedBox(height: 12),
+              const _SettingsPlaceholderCard(
+                icon: Icons.language_rounded,
+                title: 'Language',
+                description:
+                    'Foundation placeholder for future app language selection.',
+              ),
+              const SizedBox(height: 12),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Session',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Sign out of this device. Local reminder scheduling is canceled for this user.',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 16),
+                      FilledButton.icon(
+                        onPressed: () async {
+                          await ref.read(authProvider.notifier).logout();
+                          if (!context.mounted) return;
+                          Navigator.of(
+                            context,
+                          ).popUntil((route) => route.isFirst);
+                        },
+                        icon: const Icon(Icons.logout_rounded),
+                        label: const Text('Sign out'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppTheme.deepCharcoal,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsAccountCard extends StatelessWidget {
+  final User? user;
+
+  const _SettingsAccountCard({required this.user});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                UserAvatar(
+                  avatarUrl: user?.avatarUrl,
+                  username: user?.username,
+                  radius: 28,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        user?.username ?? 'User',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      Text(
+                        user?.email ?? 'No verified email yet',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  builder: (_) => const AvatarPickerSheet(),
+                );
+              },
+              icon: const Icon(Icons.face_retouching_natural_rounded),
+              label: const Text('Customize avatar'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsPlaceholderCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String description;
+
+  const _SettingsPlaceholderCard({
+    required this.icon,
+    required this.title,
+    required this.description,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: '$title settings placeholder. $description',
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: AppTheme.warmGray),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 6),
+                    Text(
+                      description,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1009,39 +1170,58 @@ class _DailyReminderCard extends ConsumerWidget {
 
 class _FriendHabitListTile extends ConsumerWidget {
   final dynamic habitData;
+  final String friendUserId;
 
-  const _FriendHabitListTile({required this.habitData});
+  const _FriendHabitListTile({
+    required this.habitData,
+    required this.friendUserId,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final title = habitData['title'] as String? ?? 'Habit';
+    final habitId = habitData['id']?.toString();
     final duration = habitData['target_duration'] as int? ?? 10;
+    final viewerUserId = ref.watch(authProvider).userId;
 
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-      subtitle: Text('$duration min / day'),
+      subtitle: Text('$duration days'),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Nudged! 👋'),
-                  behavior: SnackBarBehavior.floating,
-                  backgroundColor: AppTheme.sageGreen.withValues(alpha: 0.9),
-                  duration: const Duration(seconds: 2),
-                ),
-              );
-            },
-            icon: const Icon(Icons.back_hand, size: 16),
-            tooltip: 'Nudge',
+            onPressed: viewerUserId == null
+                ? null
+                : () async {
+                    final db = ref.read(databaseProvider);
+                    await enqueueNudge(
+                      db: db,
+                      senderUserId: viewerUserId,
+                      targetUserId: friendUserId,
+                      habitId: habitId,
+                    );
+                    unawaited(ref.read(syncServiceProvider).flushPending());
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Encouragement queued for $title.'),
+                        behavior: SnackBarBehavior.floating,
+                        backgroundColor: AppTheme.sageGreen.withValues(
+                          alpha: 0.9,
+                        ),
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  },
+            tooltip: 'Encourage on $title',
+            icon: const Icon(Icons.back_hand_rounded, size: 16),
             color: AppTheme.sageGreen,
           ),
           const SizedBox(width: 8),
           FilledButton.icon(
-            onPressed: () async {
+            onPressed: () {
               HabitFormSheet.show(context, prefilledTitle: title);
             },
             icon: const Icon(Icons.copy, size: 16),

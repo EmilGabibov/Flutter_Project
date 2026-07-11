@@ -73,10 +73,12 @@ Future<void> enqueueNudge({
   required AppDatabase db,
   required String senderUserId,
   required String targetUserId,
+  String? habitId,
 }) async {
   final payload = jsonEncode({
     'sender_id': senderUserId,
     'target_user_id': targetUserId,
+    if (habitId != null && habitId.isNotEmpty) 'habit_id': habitId,
   });
 
   await db.enqueueSync(

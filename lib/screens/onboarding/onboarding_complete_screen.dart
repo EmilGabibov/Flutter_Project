@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/database_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/usage_tracked_screen.dart';
-import '../home_screen.dart';
+import '../main_navigation_shell.dart';
 
 /// Step 4: Commit & Sync — write to Drift and route to Home.
 class OnboardingCompleteScreen extends ConsumerStatefulWidget {
@@ -70,7 +70,9 @@ class _OnboardingCompleteScreenState
 
     if (mounted) {
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => HomeScreen(userId: widget.userId)),
+        MaterialPageRoute(
+          builder: (_) => MainNavigationShell(userId: widget.userId),
+        ),
         (_) => false,
       );
     }

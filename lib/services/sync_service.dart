@@ -323,12 +323,26 @@ class SyncService {
         final List<dynamic> nudges = data['nudges'] ?? [];
         for (final nudge in nudges) {
           final senderId = nudge['senderId']?.toString() ?? '';
+          final rawHabitId =
+              nudge['habitId']?.toString() ?? nudge['habit_id']?.toString();
+          final habitId = rawHabitId == null || rawHabitId.isEmpty
+              ? null
+              : rawHabitId;
           final timestamp = nudge['timestamp']?.toString();
           if (senderId.isEmpty) continue;
+          final nudgedAt = DateTime.tryParse(timestamp ?? '') ?? DateTime.now();
           final friend = await _db.getAcceptedFriend(senderId);
+          await _db.markPartnerNudgeReceived(
+            senderId,
+            habitId: habitId,
+            nudgedAt: nudgedAt,
+          );
+          final actionPayload = <String, dynamic>{'sender_id': senderId};
+          if (habitId != null) actionPayload['habit_id'] = habitId;
+          if (timestamp != null) actionPayload['timestamp'] = timestamp;
           await _upsertNotificationEvent(
             userId: userId,
-            notificationId: 'nudge:$senderId:${timestamp ?? 'now'}',
+            notificationId: 'nudge:$senderId:${habitId ?? 'any'}',
             type: NotificationEventType.nudge,
             sourceType: 'nudge',
             sourceId: senderId,
@@ -336,16 +350,11 @@ class SyncService {
             body:
                 '${friend?.username ?? 'A friend'} sent you a reminder on a shared habit.',
             actionRoute: 'home',
-            actionPayload: {
-              'sender_id': senderId,
-              ...?timestamp == null ? null : {'timestamp': timestamp},
-            },
-            createdAt: DateTime.tryParse(timestamp ?? '') ?? DateTime.now(),
+            actionPayload: actionPayload,
+            createdAt: nudgedAt,
             expiresAt: timestamp == null
                 ? null
-                : DateTime.tryParse(
-                    timestamp,
-                  )?.add(const Duration(hours: 24)),
+                : DateTime.tryParse(timestamp)?.add(const Duration(hours: 24)),
           );
         }
 

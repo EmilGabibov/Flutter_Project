@@ -11,8 +11,10 @@ import '../database/database.dart';
 const allowedUsageScreenNames = <String>{
   'app',
   'auth',
+  'main_shell',
   'home',
   'profile',
+  'settings',
   'social_hub',
   'notification_center',
   'habit_form',

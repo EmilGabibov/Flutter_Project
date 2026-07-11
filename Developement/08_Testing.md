@@ -29,9 +29,11 @@ Because Hable involves mutual habit tracking and a offline-first sync engine, it
 - **Role Authorization:** After Bob accepts the habit invite, verify Alice can still edit/archive the shared habit, Bob can complete/skip it but cannot edit/archive it, and a future supporter account cannot complete/skip it.
 - **Home Habit Creation:** From Home, tap the header add button and verify it opens `HabitFormSheet`. In the empty state, tap **Add habit** and verify it opens the same sheet. After creating a habit, verify the suggested preset strip no longer crowds the active habit card.
 - **Preset Habit Partner Invite:** Create a preset habit in Alice's app, select Bob from the accepted-friend chips, verify the queued habit sync runs before `sendHabitInvitation`, then open Bob's app and accept/decline the invitation banner.
-- **Nudges:** Tap a partner avatar to enqueue a nudge. Wait for background sync and verify receipt on the twin app.
+- **Shared Check-In Retention:** After Bob accepts Alice's habit invite, have Bob complete the shared habit on his app. Verify Bob's shared habit card remains visible on Home after check-in instead of disappearing from active habits.
+- **Nudges:** Tap the separate hand/nudge action on a partnered habit card to enqueue a habit-scoped nudge. Wait for background sync and verify the receiving twin app shows a card-local ring pulse/chip such as "Nudged by Alice" and also records the notification-center row.
 - **Notification Center:** After sending a nudge, message, invite, or friend request, verify the receiver's Home bell shows a local unread badge and the notification center lists the event even after reopening the app.
 - **Daily Reminder:** From Profile, enable the daily reminder, grant OS permission, choose a time, restart the app, and verify the setting persists locally and restores scheduling without another prompt. Then disable it and verify the scheduled reminder is canceled.
+- **Friend Profile Drilldown:** From a habit card, tap a partner identity and verify it opens the friend's profile. Tap the separate hand/nudge action and verify a `sendNudge` queue item is created for that partner without navigating away. From the friend profile, tap `Follow` on an active habit and verify `HabitFormSheet` opens with the title prefilled; tap encourage and verify it uses the same queued nudge path.
 
 *(Note: Automated Flutter `integration_test` scripts are currently known to time out during the ADB install phase on physical devices, so this manual twin-harness remains the primary smoke procedure.)*
 
@@ -184,6 +186,19 @@ Then rerun `npm run db:setup`.
 3. Verified visible role copy still renders (`owner`) so the chip exposes role state even when avatar-only space is tight.
 
 **Outcome:** The per-card partner row preserves the avatar cap and overflow behavior required for narrow layouts without depending on network state.
+
+## 12. Shared Habit Retention And Nudge State Smoke
+
+**Date:** 2026-07-11  
+**Target:** Flutter database/widget tests plus backend type-check
+
+**Executed checks:**
+1. Verified `completeHabitDay(..., keepActiveWhenDurationEnds: true)` leaves a partner-side shared habit active at zero remaining days so `watchActiveHabits` keeps rendering the card.
+2. Verified `markPartnerNudgeReceived` coalesces repeated nudges into the same `PartnerSnapshots.lastNudgeAt` row for a sender/habit without touching unrelated shared habits.
+3. Verified `HabitPartnerRow` renders a visible `nudged` state for a recent `lastNudgeAt`.
+4. Type-checked the Cloudflare worker after adding optional `habit_id` nudge payload support.
+
+**Outcome:** Shared cards stay visible after partner check-in, received nudges have a durable local Home-card state, and repeated sender/habit nudges stay bounded.
 
 ## 7. Android Web-Era Regression Smoke
 

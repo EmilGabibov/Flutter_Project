@@ -6,7 +6,7 @@ import '../../database/database.dart';
 import '../../database/tables.dart' show HabitStatus;
 import '../../providers/database_provider.dart';
 import '../../widgets/usage_tracked_screen.dart';
-import '../home_screen.dart';
+import '../main_navigation_shell.dart';
 import 'onboarding_habit_screen.dart';
 
 /// Step 1: Profile Initialization — username input, UUID generation.
@@ -78,7 +78,7 @@ class _OnboardingUsernameScreenState
     if (mounted) {
       // Skip the rest of onboarding, go straight to Home
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => HomeScreen(userId: userId)),
+        MaterialPageRoute(builder: (_) => MainNavigationShell(userId: userId)),
       );
     }
   }

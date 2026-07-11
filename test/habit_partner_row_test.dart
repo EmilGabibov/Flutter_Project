@@ -10,6 +10,7 @@ PartnerSnapshot _partner({
   required String name,
   required PartnershipRole role,
   required bool completed,
+  DateTime? lastNudgeAt,
 }) {
   return PartnerSnapshot(
     habitId: 'habit-1',
@@ -19,7 +20,7 @@ PartnerSnapshot _partner({
     role: role,
     currentDuration: 3,
     hasCompletedToday: completed,
-    lastNudgeAt: null,
+    lastNudgeAt: lastNudgeAt,
     updatedAt: DateTime(2026),
     isSynced: true,
   );
@@ -64,7 +65,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.lightTheme,
+        theme: AppTheme.lightTheme.copyWith(
+          splashFactory: NoSplash.splashFactory,
+        ),
         home: Scaffold(
           body: Padding(
             padding: const EdgeInsets.all(16),
@@ -85,5 +88,84 @@ void main() {
     expect(find.byKey(const Key('partner-overflow-chip')), findsOneWidget);
     expect(find.text('+1'), findsOneWidget);
     expect(find.text('owner'), findsOneWidget);
+  });
+
+  testWidgets('HabitPartnerRow separates profile and nudge actions', (
+    tester,
+  ) async {
+    var openedProfileFor = '';
+    var nudgedPartner = '';
+    final partner = _partner(
+      id: 'p1',
+      name: 'Alex',
+      role: PartnershipRole.partner,
+      completed: false,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme.copyWith(
+          splashFactory: NoSplash.splashFactory,
+        ),
+        home: Scaffold(
+          body: Padding(
+            padding: const EdgeInsets.all(16),
+            child: HabitPartnerRow(
+              partners: [partner],
+              habitColor: AppTheme.sageGreen,
+              onProfileTap: (selected) {
+                openedProfileFor = selected.partnerUserId;
+              },
+              onNudgeTap: (selected) {
+                nudgedPartner = selected.partnerUserId;
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('partner-profile-p1')));
+    await tester.pump();
+
+    expect(openedProfileFor, 'p1');
+    expect(nudgedPartner, isEmpty);
+
+    await tester.tap(find.byKey(const Key('partner-nudge-p1')));
+    await tester.pump();
+
+    expect(openedProfileFor, 'p1');
+    expect(nudgedPartner, 'p1');
+  });
+
+  testWidgets('HabitPartnerRow surfaces a recent received nudge', (
+    tester,
+  ) async {
+    final partner = _partner(
+      id: 'p1',
+      name: 'Alex',
+      role: PartnershipRole.partner,
+      completed: false,
+      lastNudgeAt: DateTime.now(),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme.copyWith(
+          splashFactory: NoSplash.splashFactory,
+        ),
+        home: Scaffold(
+          body: Padding(
+            padding: const EdgeInsets.all(16),
+            child: HabitPartnerRow(
+              partners: [partner],
+              habitColor: AppTheme.sageGreen,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('nudged'), findsOneWidget);
   });
 }

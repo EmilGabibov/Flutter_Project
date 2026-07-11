@@ -27,19 +27,23 @@ All nudges are treated as ephemeral, transient data using Cloudflare KV.
 * **Sending a Nudge:** 
   * The flutter app writes the `NUDGE` action to the local sync queue.
   * The background worker calls `POST /api/social/nudge`.
-  * The backend authorizes the request only when the sender has a directed partnership row to the target on at least one shared habit.
-  * The backend writes a key to KV: `nudge:{target_user_id}:{sender_id}` with a **TTL of 24 hours**.
+  * The backend authorizes the request only when the sender has a directed partnership row to the target. If the request includes `habit_id`, authorization is narrowed to that exact shared habit.
+  * The backend writes a key to KV with a **TTL of 24 hours**. New habit-scoped nudges use `nudge:{target_user_id}:{sender_id}:{habit_id}`; legacy sender-only nudges may still use `nudge:{target_user_id}:{sender_id}`.
 * **Receiving a Nudge:**
   * During the background sync, the Worker checks KV for any active nudges.
-  * Passed to the Flutter client in the sync payload, then immediately deleted from KV.
-  * Flutter should also normalize the received nudge into a local `notification_events` row so the user can revisit it from the notification center after the ephemeral KV event has been consumed.
+  * Passed to the Flutter client in the sync payload with `senderId`, optional `habitId`, and `timestamp`, then immediately deleted from KV.
+  * Flutter should normalize the received nudge into a local `notification_events` row so the user can revisit it from the notification center after the ephemeral KV event has been consumed.
+  * Flutter should also coalesce the card state into `PartnerSnapshots.lastNudgeAt` for the matching sender/habit so Home can show a bounded ring pulse and "Nudged by X" chip after app restart.
 
 ## 3. The "Partner Whisper" UI
 
 * **Primary Surface:** The main social status surface now lives inside each habit card, not in a detached global ticker. Each card renders up to four partner/supporter avatars for that specific habit.
 * **Payload Fields:** `GET /api/sync/daily` should provide `role` plus a daily completion bit (`has_completed_today`) for each partner snapshot so Flutter can render rings and role labels from Drift without guessing.
 * **Status Indicators:** Completed-today partners use the habit-colored ring; incomplete partners are muted; supporters carry a softer read-only tint. Overflow beyond four avatars collapses to `+N`.
-* **In-App Notification:** Sending a nudge should still produce a lightweight in-app snackbar, never an OS-level push notification in this MVP.
+* **Profile vs Nudge Targeting:** Partner identity taps open the friend's profile. Nudge/encourage is a separate hand action inside the relevant habit card or friend habit row and enqueues `SyncAction.sendNudge`.
+* **Nudge Visibility:** Received nudges should show on the relevant card for a bounded 24-hour window using local Drift state. Repeated nudges from the same sender/habit should coalesce rather than stack duplicate chips or notification rows.
+* **Friend Profile Privacy:** `GET /api/social/user/:id/profile` must stay authenticated and accepted-friend scoped. It may return only safe identity fields and allowed active shared-habit metadata; `Follow` in Flutter pre-fills local habit creation and does not create remote follow state.
+* **In-App Notification:** Sending a nudge should produce card-local queued feedback plus a lightweight snackbar, never an OS-level push notification in this MVP.
 * **Unified Social Notification Stream:** Friend requests, accepted-friend events, private messages, habit invitations, and nudges should all fan into the same Drift-backed notification center so Home and Social Hub share one unread model instead of bespoke badges.
 
 ## 4. The Daily Quote Engine

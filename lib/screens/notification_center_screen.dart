@@ -59,9 +59,7 @@ class NotificationCenterScreen extends ConsumerWidget {
                       Text(
                         'Friend requests, invites, nudges, and reminder updates will appear here.',
                         textAlign: TextAlign.center,
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodyMedium?.copyWith(
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: AppTheme.warmGray.withValues(alpha: 0.85),
                         ),
                       ),
@@ -91,9 +89,9 @@ class NotificationCenterScreen extends ConsumerWidget {
                   child: ListTile(
                     contentPadding: const EdgeInsets.all(16),
                     leading: CircleAvatar(
-                      backgroundColor: _iconTint(notification.type).withValues(
-                        alpha: 0.14,
-                      ),
+                      backgroundColor: _iconTint(
+                        notification.type,
+                      ).withValues(alpha: 0.14),
                       child: Icon(
                         _iconForType(notification.type),
                         color: _iconTint(notification.type),
@@ -186,7 +184,7 @@ class NotificationCenterScreen extends ConsumerWidget {
       case 'profile':
         await Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => ProfileScreen(userId: userId),
+            builder: (_) => ProfileScreen(userId: userId, showBackButton: true),
           ),
         );
         return;

@@ -165,14 +165,17 @@ class AppDatabase extends _$AppDatabase {
     }
   }
 
-  Future<void> completeHabitDay(String habitId) async {
+  Future<void> completeHabitDay(
+    String habitId, {
+    bool keepActiveWhenDurationEnds = false,
+  }) async {
     final habit = await getHabit(habitId);
     if (habit == null) return;
 
     final remainingDays = habit.currentDuration > 0
         ? habit.currentDuration - 1
         : 0;
-    final nextStatus = remainingDays == 0
+    final nextStatus = remainingDays == 0 && !keepActiveWhenDurationEnds
         ? HabitStatus.completed
         : HabitStatus.active;
 
@@ -692,6 +695,26 @@ class AppDatabase extends _$AppDatabase {
   Future<void> upsertPartnerSnapshot(PartnerSnapshotsCompanion snapshot) =>
       into(partnerSnapshots).insertOnConflictUpdate(snapshot);
 
+  /// Coalesce a received nudge into the local partner snapshot read model.
+  Future<void> markPartnerNudgeReceived(
+    String partnerUserId, {
+    String? habitId,
+    DateTime? nudgedAt,
+  }) {
+    final updateStatement = update(partnerSnapshots)
+      ..where((s) => s.partnerUserId.equals(partnerUserId));
+    if (habitId != null && habitId.isNotEmpty) {
+      updateStatement.where((s) => s.habitId.equals(habitId));
+    }
+
+    return updateStatement.write(
+      PartnerSnapshotsCompanion(
+        lastNudgeAt: Value(nudgedAt ?? DateTime.now()),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+  }
+
   /// Watch all partner snapshots for a given habit — drives PartnerTicker.
   Stream<List<PartnerSnapshot>> watchPartnersByHabit(String habitId) =>
       (select(partnerSnapshots)
@@ -748,40 +771,37 @@ class AppDatabase extends _$AppDatabase {
 
   Stream<List<NotificationEvent>> watchUnreadNotificationsForUser(
     String userId,
-  ) => (select(notificationEvents)
-        ..where((n) => n.userId.equals(userId) & n.readAt.isNull())
-        ..orderBy([(n) => OrderingTerm.desc(n.createdAt)]))
-      .watch();
+  ) =>
+      (select(notificationEvents)
+            ..where((n) => n.userId.equals(userId) & n.readAt.isNull())
+            ..orderBy([(n) => OrderingTerm.desc(n.createdAt)]))
+          .watch();
 
   Future<void> markNotificationRead(String notificationId) =>
-      (update(notificationEvents)
-            ..where((n) => n.notificationId.equals(notificationId)))
-          .write(
-            NotificationEventsCompanion(
-              readAt: Value(DateTime.now()),
-              updatedAt: Value(DateTime.now()),
-            ),
-          );
+      (update(
+        notificationEvents,
+      )..where((n) => n.notificationId.equals(notificationId))).write(
+        NotificationEventsCompanion(
+          readAt: Value(DateTime.now()),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
 
   Future<void> markAllNotificationsRead(String userId) {
     final now = DateTime.now();
-    return (update(notificationEvents)
-          ..where((n) => n.userId.equals(userId) & n.readAt.isNull()))
-        .write(
-          NotificationEventsCompanion(
-            readAt: Value(now),
-            updatedAt: Value(now),
-          ),
-        );
+    return (update(
+      notificationEvents,
+    )..where((n) => n.userId.equals(userId) & n.readAt.isNull())).write(
+      NotificationEventsCompanion(readAt: Value(now), updatedAt: Value(now)),
+    );
   }
 
   Future<void> deleteExpiredNotificationEvents() =>
-      (delete(notificationEvents)
-            ..where(
-              (n) =>
-                  n.expiresAt.isNotNull() &
-                  n.expiresAt.isSmallerThanValue(DateTime.now()),
-            ))
+      (delete(notificationEvents)..where(
+            (n) =>
+                n.expiresAt.isNotNull() &
+                n.expiresAt.isSmallerThanValue(DateTime.now()),
+          ))
           .go();
 
   // ---------------------------------------------------------------------------

@@ -37,7 +37,7 @@
 
 - [x] Transferred 2026-07-09 -> **Support Emoji Or Uploaded Profile Pictures** (`Task1_Engineered.md#support-emoji-or-uploaded-profile-pictures`). Raw source: make possible to set Profile Picture; user should choose either a funny emoji avatar or upload an image profile picture. Uploaded profile pictures must be optimized server-side for web/profile display, stored, and used across the app.
 
-- [x] Transferred 2026-07-11 -> **Add Friend Profile Drilldown And Habit-Scoped Nudge Actions** (`Task1_Engineered.md#add-friend-profile-drilldown-and-habit-scoped-nudge-actions`). Raw source: work on seeing friends profile by tapping on their name at homepage, and the nudging is exclusively for partners on the partnered habits cards (inside the card). Follow-up detail: you can see friends profile, and their active habbits, and able to follow their habits and nudge them without being partner in that habbit.
+- [x] Transferred 2026-07-11 -> **Add Friend Profile Drilldown And Habit-Scoped Nudge Actions** (`Task2_Archived.md#add-friend-profile-drilldown-and-habit-scoped-nudge-actions`). Raw source: work on seeing friends profile by tapping on their name at homepage, and the nudging is exclusively for partners on the partnered habits cards (inside the card). Follow-up detail: you can see friends profile, and their active habbits, and able to follow their habits and nudge them without being partner in that habbit.
 
 - [x] Transferred 2026-07-09 -> **Verify Web-Era Changes On Android APKs** (`Task2_Archived.md#verify-web-era-changes-on-android-apks`). Raw source: make sure new web changes is availble on android too. install new apk and test it.
 
@@ -254,7 +254,7 @@
   - Both apps are installed and running on the virtual device.
   - Completed At: 2026-07-11 (Current session)
 
-- [x] Transferred 2026-07-11 -> **Keep Partner Shared Habits Visible After Check-In And Surface Nudges** (`Task1_Engineered.md#keep-partner-shared-habits-visible-after-check-in-and-surface-nudges`). Raw source: HABIT PARTNERING bug report:
+- [x] Transferred 2026-07-11 -> **Keep Partner Shared Habits Visible After Check-In And Surface Nudges** (`Task2_Archived.md#keep-partner-shared-habits-visible-after-check-in-and-surface-nudges`). Raw source: HABIT PARTNERING bug report:
     - for partner, not creator, habit card shws up, but it gets deleted once the user checkes in (completes the ring), hoof, gone.
     - nudge is not implemented yet:
         - just the announcement of the nudge has been sent appears at the very bottom of the home screen for a second, which is not enough. also, it should be more visible and obvious.
@@ -276,3 +276,5 @@
 - [x] Transferred 2026-07-11 -> **Rework Daily Navigation And Screen Information Architecture** (`Task1_Engineered.md#rework-daily-navigation-and-screen-information-architecture`). Raw source: document different sections, tabs, and pages (`home`, `profile`, `social`, `settings`, etc), revise their structure and placement, consider tabs for main navigation and habit creation as the most important action, minimize clutter, optimize common user journeys, and clarify what Home, Profile, Social, Settings, and habit creation should contain.
 
 - [x] Transferred 2026-07-11 -> **Lock Hable To Three-Tab IA With Nested Profile Settings** (`Task1_Engineered.md#lock-hable-to-three-tab-ia-with-nested-profile-settings`). Raw source: Refined Core Information Architecture & UX Strategy: implement a highly focused 3-tab navigation shell for Hable with Home, Social, and Profile as the primary destinations. Home should stay dedicated to today's active habits and immediate progress, with a persistent FAB as the main habit-creation entry point. Social should own friends, partnered habits, mutual obligations, nudges/activity history, and friend-profile drilldown. Profile should own identity, long-term history, all-habit management, progress charts, and a clear gear entry point to nested Settings. Settings should handle durable account/system configuration including authenticated email, name, username, avatar customization, notification preferences, and future accessibility/language foundations. Habit creation should launch from the Home FAB as a focused onboarding-style flow with partner selection and custom emoji options. Minimize clutter, keep daily use lightweight, and avoid turning the app into an overwhelming dashboard. Raw source: `Task_Idea.md` "Hable: Core Information Architecture & UX Strategy".
+
+- [ ] implement better skeleton empty states.

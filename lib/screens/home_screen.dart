@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -24,7 +26,19 @@ import '../widgets/milestone_wish_carousel.dart';
 import '../widgets/usage_tracked_screen.dart';
 import 'notification_center_screen.dart';
 import 'profile_screen.dart';
-import 'social/social_hub_screen.dart';
+
+const _nudgeVisibilityTtl = Duration(hours: 24);
+const _sentNudgeFeedbackTtl = Duration(seconds: 4);
+
+class _QueuedNudgeFeedback {
+  final String partnerName;
+  final DateTime queuedAt;
+
+  const _QueuedNudgeFeedback({
+    required this.partnerName,
+    required this.queuedAt,
+  });
+}
 
 /// Home Screen — focuses ONLY on today's action.
 /// No dashboard fatigue. No loading spinners for network requests.
@@ -67,6 +81,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return UsageTrackedScreen(
       screenName: 'home',
       child: Scaffold(
+        floatingActionButton: Semantics(
+          label: 'Create a new habit',
+          button: true,
+          child: FloatingActionButton.extended(
+            heroTag: 'home-create-habit',
+            onPressed: () => HabitFormSheet.show(context),
+            backgroundColor: AppTheme.deepCharcoal,
+            foregroundColor: Colors.white,
+            icon: const Icon(Icons.add_rounded),
+            label: const Text('Habit'),
+          ),
+        ),
         body: SafeArea(
           child: habitsAsync.when(
             data: (habits) => _buildContent(context, habits, quoteAsync),
@@ -120,30 +146,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 Row(
                   children: [
-                    IconButton(
-                      tooltip: 'Open social hub',
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const SocialHubScreen(),
-                          ),
-                        );
-                      },
-                      icon: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: AppTheme.sageGreen.withValues(alpha: 0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.people_alt_rounded,
-                          color: AppTheme.sageGreen,
-                          size: 22,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
                     Consumer(
                       builder: (context, ref, _) {
                         final unreadAsync = ref.watch(
@@ -213,49 +215,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                         );
                       },
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      tooltip: 'Add habit',
-                      onPressed: () => HabitFormSheet.show(context),
-                      icon: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: AppTheme.deepCharcoal,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.add_rounded,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      tooltip: 'Open profile',
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                ProfileScreen(userId: widget.userId),
-                          ),
-                        );
-                      },
-                      icon: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: AppTheme.surfaceVariant,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.person_rounded,
-                          color: AppTheme.warmGray,
-                          size: 22,
-                        ),
-                      ),
                     ),
                   ],
                 ),
@@ -434,11 +393,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
-class _HabitCard extends ConsumerWidget {
+class _HabitCard extends ConsumerStatefulWidget {
   final Habit habit;
   final String userId;
 
   const _HabitCard({required this.habit, required this.userId});
+
+  @override
+  ConsumerState<_HabitCard> createState() => _HabitCardState();
+}
+
+class _HabitCardState extends ConsumerState<_HabitCard> {
+  _QueuedNudgeFeedback? _sentNudgeFeedback;
+  Timer? _clearSentNudgeTimer;
+
+  @override
+  void dispose() {
+    _clearSentNudgeTimer?.cancel();
+    super.dispose();
+  }
 
   /// Convert a stored hex string like 'FF9CAF88' to a Flutter [Color].
   Color _hexToColor(String hex) {
@@ -450,7 +423,9 @@ class _HabitCard extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    final habit = widget.habit;
+    final userId = widget.userId;
     final todaysLogAsync = ref.watch(todaysLogProvider(habit.habitId));
     final streakAsync = ref.watch(streakProvider(habit.habitId));
     final partnersAsync = ref.watch(habitPartnersProvider(habit.habitId));
@@ -485,6 +460,17 @@ class _HabitCard extends ConsumerWidget {
       error: (_, _) => PartnershipRole.owner,
     );
     final canLogProgress = viewerRole != PartnershipRole.supporter;
+    final recentNudge = partnersAsync.when(
+      data: _latestRecentNudge,
+      loading: () => null,
+      error: (_, _) => null,
+    );
+    final visibleSentNudgeFeedback =
+        _sentNudgeFeedback != null &&
+            DateTime.now().difference(_sentNudgeFeedback!.queuedAt) <
+                _sentNudgeFeedbackTtl
+        ? _sentNudgeFeedback
+        : null;
 
     return Semantics(
       label:
@@ -492,7 +478,7 @@ class _HabitCard extends ConsumerWidget {
               ? "Completed today."
               : isSkippedToday
               ? "Skipped today."
-              : "Not completed today."}',
+              : "Not completed today."}${recentNudge == null ? "" : " ${recentNudge.username} nudged this habit."}',
       child: Card(
         margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
         clipBehavior: Clip.antiAlias,
@@ -510,19 +496,27 @@ class _HabitCard extends ConsumerWidget {
                       opacity: canLogProgress ? 1 : 0.45,
                       child: IgnorePointer(
                         ignoring: !canLogProgress,
-                        child: MudLongPressButton(
-                          resistanceCoefficient:
-                              resistance.resistanceCoefficient,
-                          calculatedDurationMs: resistance.calculatedDurationMs,
-                          isCompleted: isCompletedToday,
-                          habitColor: habitColor,
-                          habitIcon: habitMeta?.emoji,
-                          visualParameters: HabitVisualParameters.standard,
-                          onCompletion: () => _handleCompletion(
-                            context,
-                            ref,
-                            habit,
-                            challengeDay,
+                        child: _NudgedRingPulse(
+                          isActive: recentNudge != null && !isCompletedToday,
+                          color: habitColor,
+                          pulseKey:
+                              recentNudge?.lastNudgeAt?.millisecondsSinceEpoch,
+                          child: MudLongPressButton(
+                            resistanceCoefficient:
+                                resistance.resistanceCoefficient,
+                            calculatedDurationMs:
+                                resistance.calculatedDurationMs,
+                            isCompleted: isCompletedToday,
+                            habitColor: habitColor,
+                            habitIcon: habitMeta?.emoji,
+                            visualParameters: HabitVisualParameters.standard,
+                            onCompletion: () => _handleCompletion(
+                              context,
+                              ref,
+                              habit,
+                              challengeDay,
+                              viewerRole,
+                            ),
                           ),
                         ),
                       ),
@@ -536,17 +530,45 @@ class _HabitCard extends ConsumerWidget {
                       partners: partners,
                       habitColor: habitColor,
                       maxVisible: 4,
-                      onPartnerTap: (partner) async {
+                      onProfileTap: (partner) {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                ProfileScreen(userId: partner.partnerUserId),
+                          ),
+                        );
+                      },
+                      onNudgeTap: (partner) async {
                         final db = ref.read(databaseProvider);
+                        final queuedAt = DateTime.now();
+                        setState(() {
+                          _sentNudgeFeedback = _QueuedNudgeFeedback(
+                            partnerName: partner.username,
+                            queuedAt: queuedAt,
+                          );
+                        });
+                        _clearSentNudgeTimer?.cancel();
+                        _clearSentNudgeTimer = Timer(_sentNudgeFeedbackTtl, () {
+                          if (!mounted) return;
+                          setState(() {
+                            if (_sentNudgeFeedback?.queuedAt == queuedAt) {
+                              _sentNudgeFeedback = null;
+                            }
+                          });
+                        });
                         await enqueueNudge(
                           db: db,
                           senderUserId: userId,
                           targetUserId: partner.partnerUserId,
+                          habitId: habit.habitId,
                         );
+                        unawaited(ref.read(syncServiceProvider).flushPending());
                         if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Nudge sent to ${partner.username}.'),
+                            content: Text(
+                              'Nudge queued for ${partner.username} on ${habit.title}.',
+                            ),
                             behavior: SnackBarBehavior.floating,
                             backgroundColor: habitColor.withValues(alpha: 0.92),
                           ),
@@ -558,6 +580,25 @@ class _HabitCard extends ConsumerWidget {
                   ),
 
                   const SizedBox(height: 12),
+
+                  if (recentNudge != null) ...[
+                    _HabitNudgeChip(
+                      label: 'Nudged by ${recentNudge.username}',
+                      color: habitColor,
+                      icon: Icons.notifications_active_rounded,
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+
+                  if (visibleSentNudgeFeedback != null) ...[
+                    _HabitNudgeChip(
+                      label:
+                          'Nudge queued for ${visibleSentNudgeFeedback.partnerName}',
+                      color: habitColor,
+                      icon: Icons.back_hand_rounded,
+                    ),
+                    const SizedBox(height: 8),
+                  ],
 
                   // Streak badge
                   streakAsync.when(
@@ -667,6 +708,20 @@ class _HabitCard extends ConsumerWidget {
     );
   }
 
+  PartnerSnapshot? _latestRecentNudge(List<PartnerSnapshot> partners) {
+    final cutoff = DateTime.now().subtract(_nudgeVisibilityTtl);
+    final nudgedPartners =
+        partners
+            .where(
+              (partner) =>
+                  partner.lastNudgeAt != null &&
+                  partner.lastNudgeAt!.isAfter(cutoff),
+            )
+            .toList()
+          ..sort((a, b) => b.lastNudgeAt!.compareTo(a.lastNudgeAt!));
+    return nudgedPartners.isEmpty ? null : nudgedPartners.first;
+  }
+
   int _challengeDay(Habit habit) {
     final total = habit.targetDuration > 0 ? habit.targetDuration : 1;
     final raw = total - habit.currentDuration + 1;
@@ -695,6 +750,7 @@ class _HabitCard extends ConsumerWidget {
     WidgetRef ref,
     Habit habit,
     int currentDay,
+    PartnershipRole viewerRole,
   ) async {
     final db = ref.read(databaseProvider);
     final logId = const Uuid().v4();
@@ -724,14 +780,17 @@ class _HabitCard extends ConsumerWidget {
     );
 
     // 3. Update optimistic local progression.
-    await db.completeHabitDay(habit.habitId);
+    await db.completeHabitDay(
+      habit.habitId,
+      keepActiveWhenDurationEnds: viewerRole != PartnershipRole.owner,
+    );
 
     await ref.read(syncServiceProvider).flushPending();
 
     // Invalidate providers to refresh UI
     ref.invalidate(todaysLogProvider(habit.habitId));
     ref.invalidate(streakProvider(habit.habitId));
-    ref.invalidate(activeHabitsProvider(userId));
+    ref.invalidate(activeHabitsProvider(widget.userId));
   }
 
   void _handleSkip(BuildContext context, WidgetRef ref, Habit habit) {
@@ -773,8 +832,100 @@ class _HabitCard extends ConsumerWidget {
         await ref.read(syncServiceProvider).flushPending();
 
         ref.invalidate(todaysLogProvider(habit.habitId));
-        ref.invalidate(activeHabitsProvider(userId));
+        ref.invalidate(activeHabitsProvider(widget.userId));
       },
+    );
+  }
+}
+
+class _NudgedRingPulse extends StatelessWidget {
+  final bool isActive;
+  final Color color;
+  final int? pulseKey;
+  final Widget child;
+
+  const _NudgedRingPulse({
+    required this.isActive,
+    required this.color,
+    required this.pulseKey,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (!isActive) return child;
+
+    return TweenAnimationBuilder<double>(
+      key: ValueKey('nudge-pulse-$pulseKey'),
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 900),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        final pulse = 1 - value;
+        return Transform.scale(
+          scale: 1 + (pulse * 0.04),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.28 * pulse),
+                  blurRadius: 34,
+                  spreadRadius: 12,
+                ),
+              ],
+            ),
+            child: child,
+          ),
+        );
+      },
+      child: child,
+    );
+  }
+}
+
+class _HabitNudgeChip extends StatelessWidget {
+  final String label;
+  final Color color;
+  final IconData icon;
+
+  const _HabitNudgeChip({
+    required this.label,
+    required this.color,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: label,
+      child: Container(
+        key: ValueKey(label),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.14),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: color.withValues(alpha: 0.45)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 15, color: color),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppTheme.deepCharcoal,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

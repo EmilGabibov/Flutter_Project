@@ -5,7 +5,7 @@ import 'providers/auth_provider.dart';
 import 'providers/habit_providers.dart';
 import 'providers/usage_diagnostics_provider.dart';
 import 'screens/auth_screen.dart';
-import 'screens/home_screen.dart';
+import 'screens/main_navigation_shell.dart';
 import 'theme/app_theme.dart';
 import 'widgets/usage_tracked_screen.dart';
 
@@ -30,7 +30,7 @@ class HableApp extends ConsumerWidget {
   }
 }
 
-/// Routes to AuthScreen if no user exists, otherwise to Home.
+/// Routes to AuthScreen if no user exists, otherwise to the three-tab app shell.
 class _AppGate extends ConsumerWidget {
   const _AppGate();
 
@@ -48,7 +48,7 @@ class _AppGate extends ConsumerWidget {
 
     final userAsync = ref.watch(currentUserProvider);
     return userAsync.when(
-      data: (_) => HomeScreen(userId: authState.userId!),
+      data: (_) => MainNavigationShell(userId: authState.userId!),
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (err, stack) => Scaffold(body: Center(child: Text('Error: $err'))),

@@ -1302,16 +1302,21 @@ app.post('/api/social/nudge', async (c) => {
   await ensurePartnershipRoleSchema(c.env)
   const payload = c.get('jwtPayload')
   const sender_id = payload.id
-  const { target_user_id } = await c.req.json()
+  const requestBody = await c.req.json()
+  const target_user_id = requestBody.target_user_id
+  const habit_id = typeof requestBody.habit_id === 'string' && requestBody.habit_id.trim()
+    ? requestBody.habit_id.trim()
+    : null
 
   if (!target_user_id) {
     return c.json({ error: 'Missing target_user_id' }, 400)
   }
 
-  const permissionRow = await c.env.DB.prepare(`
+  const permissionSql = `
     SELECT role
     FROM partnerships
     WHERE user_id = ? AND partner_id = ?
+      ${habit_id ? 'AND habit_id = ?' : ''}
     ORDER BY
       CASE role
         WHEN 'owner' THEN 0
@@ -1319,14 +1324,19 @@ app.post('/api/social/nudge', async (c) => {
         ELSE 2
       END
     LIMIT 1
-  `).bind(sender_id, target_user_id).first<{ role: string }>()
+  `
+  const permissionRow = habit_id
+    ? await c.env.DB.prepare(permissionSql).bind(sender_id, target_user_id, habit_id).first<{ role: string }>()
+    : await c.env.DB.prepare(permissionSql).bind(sender_id, target_user_id).first<{ role: string }>()
 
   const senderRole = permissionRow ? normalizeRole(permissionRow.role) : null
   if (!senderRole) {
     return c.json({ error: 'Unauthorized: Not a participant in a shared habit' }, 403)
   }
 
-  const key = `nudge:${target_user_id}:${sender_id}`
+  const key = habit_id
+    ? `nudge:${target_user_id}:${sender_id}:${habit_id}`
+    : `nudge:${target_user_id}:${sender_id}`
   
   // Set in KV with 24 hours TTL (86400 seconds)
   await c.env.NUDGES.put(key, new Date().toISOString(), { expirationTtl: 86400 })
@@ -1564,9 +1574,10 @@ app.get('/api/sync/daily', async (c) => {
   
   const nudges = []
   for (const key of nudgeList.keys) {
-    const senderId = key.name.replace(nudgePrefix, '')
+    const [senderId, habitId] = key.name.slice(nudgePrefix.length).split(':')
+    if (!senderId) continue
     const timestamp = await c.env.NUDGES.get(key.name)
-    nudges.push({ senderId, timestamp })
+    nudges.push({ senderId, ...(habitId ? { habitId } : {}), timestamp })
     
     // Nudges are ephemeral, so we delete them after they are consumed
     await c.env.NUDGES.delete(key.name)
