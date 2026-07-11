@@ -27,7 +27,9 @@ Because Hable involves mutual habit tracking and a offline-first sync engine, it
 - **Acceptance:** In Bob's app, open Social Hub -> Requests, and accept Alice's request.
 - **Habit Sync:** Create a new habit in Alice's app. Verify it syncs to the Cloudflare Worker.
 - **Role Authorization:** After Bob accepts the habit invite, verify Alice can still edit/archive the shared habit, Bob can complete/skip it but cannot edit/archive it, and a future supporter account cannot complete/skip it.
-- **Home Habit Creation:** From Home, tap the header add button and verify it opens `HabitFormSheet`. In the empty state, tap **Add habit** and verify it opens the same sheet. After creating a habit, verify the suggested preset strip no longer crowds the active habit card.
+- **Three-Tab Shell:** Verify authenticated users land in a shell with exactly Home, Social, and Profile as primary destinations. Android back from Social/Profile should return to Home before exiting.
+- **Home Habit Creation:** From Home, tap the persistent **Habit** FAB and verify it opens `HabitFormSheet`. In the empty state, tap **Add habit** and verify it opens the same sheet. After creating a habit, verify the suggested preset strip no longer crowds the active habit card.
+- **Nested Settings:** From Profile, tap the gear icon and verify Settings opens with account/avatar, cloud activation, daily reminder, accessibility/language placeholders, and sign out. Settings must not appear as a fourth tab.
 - **Preset Habit Partner Invite:** Create a preset habit in Alice's app, select Bob from the accepted-friend chips, verify the queued habit sync runs before `sendHabitInvitation`, then open Bob's app and accept/decline the invitation banner.
 - **Shared Check-In Retention:** After Bob accepts Alice's habit invite, have Bob complete the shared habit on his app. Verify Bob's shared habit card remains visible on Home after check-in instead of disappearing from active habits.
 - **Nudges:** Tap the separate hand/nudge action on a partnered habit card to enqueue a habit-scoped nudge. Wait for background sync and verify the receiving twin app shows a card-local ring pulse/chip such as "Nudged by Alice" and also records the notification-center row.
@@ -115,8 +117,8 @@ Because Hable involves mutual habit tracking and a offline-first sync engine, it
 
 **Observations:**
 1. Built and installed `app-primary-debug.apk` with Alice seed defines, cleared app data, and launched Home.
-2. Verified Home header exposes labeled icon buttons for Social Hub, Add habit, and Profile.
-3. Tapped the header **Add habit** button and confirmed it opens the shared `HabitFormSheet`.
+2. Verified the authenticated shell exposes Home, Social, and Profile as primary destinations.
+3. Tapped the Home **Habit** FAB and confirmed it opens the shared `HabitFormSheet`.
 4. Closed the sheet, tapped the empty-state **Add habit** button, selected the Hydration preset, and saved.
 5. Verified the new Hydration habit appeared immediately through local Home state and the suggested preset strip no longer rendered above the active habit card.
 6. Device logs showed `POST SYNC_HABIT successful`; no Flutter `RenderFlex` overflow was present in the Home creation flow.
@@ -186,6 +188,20 @@ Then rerun `npm run db:setup`.
 3. Verified visible role copy still renders (`owner`) so the chip exposes role state even when avatar-only space is tight.
 
 **Outcome:** The per-card partner row preserves the avatar cap and overflow behavior required for narrow layouts without depending on network state.
+
+## 13. Three-Tab IA Widget Smoke
+
+**Date:** 2026-07-11  
+**Target:** Flutter widget test
+
+**Executed checks:**
+1. Rendered `MainNavigationShell` with an in-memory Drift database.
+2. Verified the shell exposes Home, Social, and Profile in the primary `NavigationBar`.
+3. Verified the Home **Habit** FAB opens `HabitFormSheet`.
+4. Verified switching to Social exposes the Social Hub internal tabs.
+5. Verified switching to Profile exposes the settings gear.
+
+**Outcome:** The refined three-tab IA is covered at the widget level without adding a fourth Settings tab or a duplicate habit-creation path.
 
 ## 12. Shared Habit Retention And Nudge State Smoke
 

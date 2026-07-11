@@ -12,6 +12,7 @@ The backend must never expose a user's entire profile or habit list. Social data
 
 ### Friend Search & Habit Partner Invitations
 
+* **Navigation Ownership:** Social is a primary destination in the three-tab shell. Home should not own hidden Social navigation buttons; social obligations belong in Social and notification-center entry points.
 * **Friend Search:** Users can search by username or exact user code. Search results must expose only safe fields: `user_id`, `username`, `avatar_url`, and relationship state (`none`, `pending`, `accepted`).
 * **Friend Request Gate:** A user must be an accepted friend before receiving a habit-partner invite.
 * **Accepted Friend Cache:** `GET /api/sync/daily` returns accepted friends so Flutter can cache safe friend fields in Drift and render the habit creation partner picker offline.

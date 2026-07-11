@@ -61,15 +61,19 @@ void main() {
     await tester.tap(find.text('Habit'));
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.text('New Habit'), findsOneWidget);
-    await tester.tap(find.byIcon(Icons.close));
+    Navigator.of(tester.element(find.byType(MainNavigationShell))).pop();
     await tester.pump(const Duration(milliseconds: 500));
 
     await tester.tap(find.text('Social'));
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('Social Hub'), findsOneWidget);
+    expect(find.text('Find Friends'), findsOneWidget);
+    expect(find.text('Leaderboard'), findsOneWidget);
 
     await tester.tap(find.text('Profile'));
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.byTooltip('Open settings'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 1));
   });
 }

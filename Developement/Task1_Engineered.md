@@ -2,6 +2,10 @@
 
 ## Completed Tasks
 
+- 2026-07-11 16:06 CEST: [Lock Hable To Three-Tab IA With Nested Profile Settings](Task2_Archived.md#lock-hable-to-three-tab-ia-with-nested-profile-settings)
+
+- 2026-07-11 16:06 CEST: [Rework Daily Navigation And Screen Information Architecture](Task2_Archived.md#rework-daily-navigation-and-screen-information-architecture)
+
 - 2026-07-11 15:51 CEST: [Keep Partner Shared Habits Visible After Check-In And Surface Nudges](Task2_Archived.md#keep-partner-shared-habits-visible-after-check-in-and-surface-nudges)
 
 - 2026-07-11 15:38 CEST: [Add Friend Profile Drilldown And Habit-Scoped Nudge Actions](Task2_Archived.md#add-friend-profile-drilldown-and-habit-scoped-nudge-actions)
@@ -151,103 +155,3 @@
 **Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
 
 <a id="wire-friend-requests-through-social-hub-and-twin-harness-verification"></a>
-
-<a id="rework-daily-navigation-and-screen-information-architecture"></a>
-### [ ] Rework Daily Navigation And Screen Information Architecture
-
-**Raw source:** From `Task_Idea.md`: document different sections, tabs, and pages (`home`, `profile`, `social`, `settings`, etc.), then revise the structure and placement of them. Consider tabs for main navigation elements and a page for the most important action, creating a habit. Minimize clutter and use the fewest UI elements needed for the maximum information and functionality. Think as a designer and developer: Hable is a daily habit tracker, so it should stay simple, elegant, easy, fun, and engaging. Review the current UI and user journey, optimize common actions, remove redundant steps, add missing steps, and clarify Home, Profile, Social, Settings, and habit creation.
-
-**Issue:** Hable's current app structure is still screen-push based: `_AppGate` sends authenticated users to `HomeScreen`, and Home opens Social Hub, habit creation, and Profile through header buttons. Profile also mixes account state, cloud activation, charts, habit management, calendar subscription, achievements, and avatar editing. Social Hub contains several tabs internally. There is no dedicated Settings surface. The result works functionally, but the information architecture is starting to blur daily action, account settings, social obligations, historical progress, and habit creation.
-
-**Ponytail triage:**
-- *Should exist:* Yes, the app has enough shipped surfaces that navigation and section ownership now need deliberate structure.
-- *Smallest safe scope:* Produce a bounded in-app navigation and screen-ownership refactor: introduce or design a persistent main shell for Home, Social, Profile, and Settings; keep habit creation as a prominent action; move only clearly misplaced account/settings controls; and preserve current Home/Profile/Social functionality.
-- *Skipped scope:* Full visual redesign, new brand system, onboarding rewrite, new backend features, OS notifications, settings for every future feature, desktop-specific navigation, and a separate design-system package.
-- *Boundaries:* Do not rewrite feature logic while reorganizing surfaces. Home remains the daily action view. Profile remains progress/history. Social remains friends, requests, leaderboards, inbox, and shared obligations. Settings owns account, recovery, notifications/preferences, accessibility/language placeholders, and other durable configuration.
-
-**Action:** Audit Hable's current screen structure and implement the smallest useful information-architecture cleanup. Define screen responsibilities, add a main navigation shell if warranted by the current UI, keep habit creation easy from daily use, move account/settings controls into an appropriate Settings surface, and update docs/tests to reflect the new navigation model.
-
-**Hable perspective:** The Flutter app is offline-first and Riverpod/Drift-driven. Navigation changes must not introduce live-network-driven Home state or duplicate habit mutation paths. Habit creation should continue through `HabitFormSheet` or a deliberate replacement with the same Drift/sync behavior. Social and Profile may continue to use their existing providers, but the user should not have to remember hidden header buttons for core app areas.
-
-**Implementation scope:**
-- `lib/main.dart`: replace direct `HomeScreen` authentication target with an app shell only if it keeps `_AppGate` simple and preserves auth gating.
-- Main navigation shell: add a small Flutter widget such as `AppShell` or `MainNavigationShell` with stable destinations for Home, Social, Profile, and Settings, plus an obvious create-habit action.
-- `lib/screens/home_screen.dart`: keep daily habits and today's action primary. Remove duplicate or hidden navigation affordances once the shell owns navigation. Preserve empty-state habit creation and suggested presets only where they help the first-run daily flow.
-- `lib/screens/profile_screen.dart`: keep user identity, progress/history, achievements, calendar subscription, and habit management; move sign-out, email/cloud activation, avatar/account editing, notification preferences, and future durable preferences to Settings where appropriate.
-- `lib/screens/social/social_hub_screen.dart`: preserve friends, requests, leaderboard, find friends, and inbox; reduce nested navigation conflicts if the shell gives Social a top-level destination.
-- Settings screen: add the smallest useful `SettingsScreen` if one does not exist, covering account, email/cloud recovery status, sign out, notification/preferences entry points, accessibility/language placeholders, and profile-picture/account edit entry points without pretending unbuilt settings are functional.
-- Habit creation: decide whether creation stays as `HabitFormSheet` launched from a floating/center action or becomes a focused create page. Reuse existing creation logic and accepted-friend partner picker either way.
-- Accessibility: ensure the shell destinations, create action, and settings groups have Semantics labels and large enough tap targets.
-- Tests/smoke: add focused widget tests or documented smoke checks for authenticated navigation, main destinations, create action, sign-out route, and no loss of existing Social/Profile access.
-
-**Scalability considerations:** A shell reduces navigation complexity as features grow, but it can also increase rebuilds if every destination watches broad providers. Keep each destination's provider watches local to that destination. Preserve lazy screen construction where possible so charts, social requests, and home habit streams do not all rebuild at once.
-
-**Future split guidance:** A full design-system pass, desktop/tablet adaptive navigation, notification preference implementation, language/accessibility settings implementation, profile editing redesign, and a dedicated create-habit page should become separate tasks if the shell exposes larger product decisions. This task should settle ownership and navigation first.
-
-**Edge cases:** Logged-out state, seed-user twin harness startup, Android back button from shell destinations, deep pushes to friend profile or habit form, unsaved habit form state, switching tabs while sync updates local Drift, small Android screens, web browser back button, settings controls for features not implemented yet, sign out from nested screens, and duplicated Profile/Social routes after introducing shell navigation.
-
-**Acceptance criteria:**
-- The app has a documented screen ownership model for Home, Social, Profile, Settings, and habit creation.
-- Authenticated users can reach Home, Social, Profile, and Settings through clear top-level navigation or a deliberately documented equivalent.
-- Creating a habit remains no more than one primary action away from Home and reuses the existing offline-first creation/sync path.
-- Home stays focused on today's habits and does not become a generic dashboard.
-- Profile no longer owns durable account/settings controls that belong in Settings, unless the task documents why a control intentionally remains there.
-- Social Hub remains reachable and its internal tabs do not conflict with the new top-level navigation.
-- Settings exposes only real or explicitly placeholder-safe controls; it must not create dead-end fake settings.
-- Android back behavior and web/mobile layout do not trap the user or overflow on common viewports.
-- Focused tests or documented smoke checks cover top-level navigation, create-habit launch, Social/Profile access, Settings access, and sign out.
-- `03_UI_UX_and_Animations.md`, `02_Offline_Architecture.md`, `04_Social_and_Analytics.md`, and `08_Testing.md` are verified and updated if navigation, screen ownership, or smoke procedures change.
-
-**Dependencies:** `03_UI_UX_and_Animations.md`, `02_Offline_Architecture.md`, `04_Social_and_Analytics.md`, `08_Testing.md`, `Task_Idea.md`
-
-**Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
-
-<a id="lock-hable-to-three-tab-ia-with-nested-profile-settings"></a>
-### [ ] Lock Hable To Three-Tab IA With Nested Profile Settings
-
-**Raw source:** Refined Core Information Architecture & UX Strategy: implement a highly focused 3-tab navigation shell for Hable with Home, Social, and Profile as the primary destinations. Home should stay dedicated to today's active habits and immediate progress, with a persistent FAB as the main habit-creation entry point. Social should own friends, partnered habits, mutual obligations, nudges/activity history, and friend-profile drilldown. Profile should own identity, long-term history, all-habit management, progress charts, and a clear gear entry point to nested Settings. Settings should handle durable account/system configuration including authenticated email, name, username, avatar customization, notification preferences, and future accessibility/language foundations. Habit creation should launch from the Home FAB as a focused onboarding-style flow with partner selection and custom emoji options. Minimize clutter, keep daily use lightweight, and avoid turning the app into an overwhelming dashboard. Raw source: `Task_Idea.md` "Hable: Core Information Architecture & UX Strategy".
-
-**Issue:** The previous IA task identifies the navigation problem, but it still leaves a key product choice open by allowing Settings to be either a top-level destination or an equivalent surface. The refined strategy makes that decision explicit: authenticated Hable should use exactly three primary destinations - Home, Social, and Profile - while Settings is nested under Profile. Current code still routes `_AppGate` directly to `HomeScreen`; Home owns header buttons for Social, Add Habit, and Profile; Profile owns sign-out, avatar, email activation, charts, history, calendar, and habit management; and there is no dedicated Settings screen. The result works, but it does not yet match the intended lightweight daily ritual IA.
-
-**Ponytail triage:**
-- *Should exist:* Yes, because it resolves the ambiguity in the older IA task and prevents implementing a four-tab shell that contradicts the refined plan.
-- *Smallest safe scope:* Add a three-tab shell for Home, Social, and Profile; make habit creation a prominent Home FAB using the existing `HabitFormSheet`; add a nested Settings route from Profile; move only durable account/system controls that already exist or can be represented safely.
-- *Skipped scope:* Full visual redesign, new design system, new backend features, OS notifications, image upload backend work, notification preference implementation, language/accessibility implementation, desktop/tablet adaptive navigation, and a new custom habit-creation engine.
-- *Boundaries:* Do not duplicate habit creation logic, do not make Settings a fourth tab, do not move social data into Home, and do not let live network responses directly drive Home state.
-
-**Action:** Implement the refined IA as a focused navigation and ownership refactor. Replace Home's header-button navigation with an authenticated three-tab app shell, keep Home as the daily action surface, route habit creation through a Home FAB, keep Social as the multiplayer destination, keep Profile as identity/history/management, and add nested Settings behind a gear in Profile for durable account/system controls.
-
-**Hable perspective:** Hable is offline-first and Riverpod/Drift-driven. The shell must not introduce a parallel state model or direct network-driven dashboard. `HomeScreen`, `SocialHubScreen`, `ProfileScreen`, and `HabitFormSheet` should keep their existing providers and local-first behavior, but their responsibilities should become clearer. This task supersedes the ambiguous parts of `Rework Daily Navigation And Screen Information Architecture`; the implementer should prefer the three-tab decision here when the two tasks conflict.
-
-**Implementation scope:**
-- App shell: add a small authenticated navigation shell, likely `MainNavigationShell`, and have `_AppGate` route authenticated users to it instead of directly to `HomeScreen`.
-- Home: remove Social/Profile header navigation buttons after the shell owns them; expose habit creation as a persistent FAB and keep empty-state creation wired to `HabitFormSheet.show`.
-- Social: keep `SocialHubScreen` as the Social tab and preserve its internal tabs for friends, requests, leaderboard, find friends, inbox, and social activity.
-- Profile: keep identity, history, progression, charts, calendar, all-habit management, and friend-profile drilldown behavior; add a gear entry point to nested Settings.
-- Settings: add the smallest real `SettingsScreen` needed for sign out, email/cloud activation, avatar/account access, and safe placeholders for notifications, accessibility, and language.
-- State and sync: keep Riverpod watches scoped inside each destination and preserve Drift-backed reads; do not add new tables or backend endpoints for navigation alone.
-- Accessibility: add Semantics labels for tab destinations, Home FAB, Profile settings gear, and settings sections; preserve large tap targets on small Android screens.
-- Tests/smoke: add focused widget tests or documented smoke checks for authenticated shell routing, three tab destinations, Home FAB creation launch, Profile gear to Settings, sign out, Android back behavior, and no loss of Social/Profile access.
-
-**Scalability considerations:** The shell should not cause every destination to rebuild together. Keep provider watches inside destination widgets and preserve lazy construction where practical so Home habit streams, Social network-backed providers, and Profile charts do not all execute on every tab switch.
-
-**Future split guidance:** If implementation exposes larger needs, append separate raw tasks for notification preferences, accessibility/language settings, uploaded profile-picture storage, desktop/tablet adaptive navigation, and a full habit-creation redesign. Do not expand this task into those features.
-
-**Edge cases:** Logged-out app startup, seed-user twin harness startup, switching tabs while `/api/sync/daily` updates Drift, Android back button from each tab and nested Settings, returning from Settings after sign out, Home FAB while a habit sheet is already open, unsaved habit form state when switching tabs, Social Hub's internal tab controller inside the shell, friend profile pushes from Social or partner rows, small screens with keyboard open, web browser back behavior, and placeholder settings that look interactive before they are implemented.
-
-**Acceptance criteria:**
-- Authenticated users land in a three-tab shell with exactly Home, Social, and Profile as primary destinations.
-- Settings is nested under Profile behind a clear gear entry point, not exposed as a fourth primary tab.
-- Home remains focused on today's active habits and immediate progress.
-- Habit creation is available from a persistent Home FAB and still uses the existing offline-first `HabitFormSheet` creation path.
-- Home no longer relies on header buttons for Social/Profile navigation once the shell owns top-level navigation.
-- Social keeps friends, partnered habits, requests, leaderboard, search, inbox/activity, and friend drilldown reachable.
-- Profile keeps identity, history/progress charts, achievements, calendar, and habit management while moving durable account/system actions to Settings where appropriate.
-- Settings exposes only real controls or clearly safe placeholders; sign out and profile activation continue to work.
-- Navigation does not create duplicate sync paths, duplicate habit mutation paths, or direct network-driven Home reads.
-- Focused tests or smoke notes cover the shell, all three tabs, Home FAB, Settings route, sign out, and Android back behavior.
-- `03_UI_UX_and_Animations.md`, `02_Offline_Architecture.md`, `04_Social_and_Analytics.md`, and `08_Testing.md` are verified and updated if navigation, screen ownership, or smoke procedures change.
-
-**Dependencies:** `03_UI_UX_and_Animations.md`, `02_Offline_Architecture.md`, `04_Social_and_Analytics.md`, `08_Testing.md`, `Task_Idea.md`
-
-**Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
