@@ -1,10 +1,18 @@
 import { Hono } from 'hono'
+import { cors } from 'hono/cors'
 import { jwt, sign } from 'hono/jwt'
 
 type Bindings = {
   DB: D1Database
   NUDGES: KVNamespace
   JWT_SECRET: string
+  ENVIRONMENT?: string
+  EMAIL_WORKER?: {
+    fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+  }
+  CLOUDFLARE_ACCOUNT_ID?: string
+  PRIVATE_CLOUDFLARE_EMAIL_API_TOKEN?: string
+  PRIVATE_EMAIL_SENDER?: string
 }
 
 type Variables = {
@@ -15,6 +23,11 @@ type Variables = {
 }
 
 const app = new Hono<{ Bindings: Bindings; Variables: Variables }>()
+const allowedCorsOrigins = new Set([
+  'https://hable.pages.dev',
+  'http://localhost',
+  'http://127.0.0.1',
+])
 const partnershipRoles = ['owner', 'partner', 'supporter'] as const
 type PartnershipRole = (typeof partnershipRoles)[number]
 const completedCheckInPoints = 5
@@ -49,9 +62,116 @@ function generateCalendarToken(): string {
   return crypto.randomUUID() + '-' + crypto.randomUUID();
 }
 
+function normalizeEmail(email: unknown): string {
+  return String(email ?? '').trim().toLowerCase()
+}
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
+function isLocalRequest(url: string): boolean {
+  const hostname = new URL(url).hostname
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0'
+}
+
+function shouldLogPins(env: Bindings, requestUrl: string): boolean {
+  return env.ENVIRONMENT === 'development' || isLocalRequest(requestUrl)
+}
+
+async function sendPinEmail(
+  env: Bindings,
+  to: string,
+  pin: string,
+  purpose: 'password-reset' | 'profile-activation',
+): Promise<void> {
+  const sender = env.PRIVATE_EMAIL_SENDER
+  if (!sender) {
+    throw new Error('Cloudflare email sender is not configured.')
+  }
+
+  const purposeLabel = purpose === 'password-reset' ? 'password reset' : 'profile activation'
+  const subject = purpose === 'password-reset'
+    ? 'Your Hable password reset PIN'
+    : 'Activate sync for your Hable profile'
+  const text = `Your Hable ${purposeLabel} PIN is ${pin}. It expires in 10 minutes.`
+  const html = `
+    <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.5;">
+      <p>Your Hable ${purposeLabel} PIN is:</p>
+      <p style="font-size: 28px; font-weight: 700; letter-spacing: 0.2em;">${pin}</p>
+      <p>This PIN expires in 10 minutes. If you did not request it, you can ignore this email.</p>
+    </div>
+  `
+
+  if (env.EMAIL_WORKER) {
+    const response = await env.EMAIL_WORKER.fetch('https://mailer.internal/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to,
+        subject,
+        html,
+        text,
+      }),
+    })
+    const details = await response.text().catch(() => '')
+    if (!response.ok) {
+      throw new Error(`Email Worker failed with ${response.status}: ${details}`)
+    }
+    return
+  }
+
+  const accountId = env.CLOUDFLARE_ACCOUNT_ID
+  const apiToken = env.PRIVATE_CLOUDFLARE_EMAIL_API_TOKEN
+  if (!accountId || !apiToken) {
+    throw new Error('Cloudflare email binding and REST credentials are both unavailable.')
+  }
+
+  const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/email/sending/send`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: sender,
+      to,
+      subject,
+      html,
+      text,
+    }),
+  })
+
+  if (!response.ok) {
+    const details = await response.text().catch(() => '')
+    throw new Error(`Cloudflare Email Sending failed with ${response.status}: ${details}`)
+  }
+}
+
+app.use('/api/*', cors({
+  origin: (origin) => {
+    if (!origin) return null
+    try {
+      const url = new URL(origin)
+      const normalizedOrigin = `${url.protocol}//${url.hostname}${url.port ? `:${url.port}` : ''}`
+      if (allowedCorsOrigins.has(normalizedOrigin)) return origin
+      if ((url.hostname === 'localhost' || url.hostname === '127.0.0.1') && url.protocol === 'http:') {
+        return origin
+      }
+    } catch {
+      return null
+    }
+    return null
+  },
+  allowHeaders: ['Content-Type', 'Authorization'],
+  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  maxAge: 600,
+}))
+
 let ensurePartnershipSchemaPromise: Promise<void> | null = null
 let ensureGamificationSchemaPromise: Promise<void> | null = null
 let ensureCalendarFeedSchemaPromise: Promise<void> | null = null
+let ensureAuthSchemaPromise: Promise<void> | null = null
 
 function normalizeRole(value: unknown): PartnershipRole {
   if (typeof value === 'string' && partnershipRoles.includes(value as PartnershipRole)) {
@@ -89,6 +209,44 @@ async function ensureCalendarFeedSchema(env: Bindings): Promise<void> {
   }
 
   await ensureCalendarFeedSchemaPromise
+}
+
+async function ensureAuthSchema(env: Bindings): Promise<void> {
+  if (!ensureAuthSchemaPromise) {
+    ensureAuthSchemaPromise = (async () => {
+      const userPragma = await env.DB.prepare('PRAGMA table_info(users)').all()
+      const userColumns = (userPragma.results ?? []) as Array<{ name?: string }>
+      const hasUserColumn = (name: string) => userColumns.some((column) => column.name === name)
+
+      if (!hasUserColumn('email')) {
+        await env.DB.prepare('ALTER TABLE users ADD COLUMN email TEXT').run()
+      }
+      if (!hasUserColumn('email_verified_at')) {
+        await env.DB.prepare('ALTER TABLE users ADD COLUMN email_verified_at DATETIME').run()
+      }
+      if (!hasUserColumn('password_hash')) {
+        await env.DB.prepare('ALTER TABLE users ADD COLUMN password_hash TEXT').run()
+      }
+      if (!hasUserColumn('total_score')) {
+        await env.DB.prepare('ALTER TABLE users ADD COLUMN total_score INTEGER NOT NULL DEFAULT 0').run()
+      }
+
+      await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_users_username_lower ON users(lower(username))').run()
+      await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_users_email_lower ON users(lower(email))').run()
+      await env.DB.prepare(`
+        CREATE TABLE IF NOT EXISTS auth_pins (
+            email TEXT PRIMARY KEY,
+            pin_hash TEXT NOT NULL,
+            expires_at INTEGER NOT NULL
+        )
+      `).run()
+    })().catch((error) => {
+      ensureAuthSchemaPromise = null
+      throw error
+    })
+  }
+
+  await ensureAuthSchemaPromise
 }
 
 async function ensurePartnershipRoleSchema(env: Bindings): Promise<void> {
@@ -405,16 +563,28 @@ async function getGamificationPayload(env: Bindings, userId: string) {
 
 // 1. Auth Endpoints
 app.post('/api/auth/register', async (c) => {
-  const { username, password, email } = await c.req.json();
+  await ensureAuthSchema(c.env)
+  const body = await c.req.json().catch(() => ({})) as { username?: unknown; password?: unknown; email?: unknown }
+  const username = String(body.username ?? '').trim()
+  const password = String(body.password ?? '')
+  const email = normalizeEmail(body.email)
 
-  if (!username || !password || !email) {
-    return c.json({ error: 'Missing username, password, or email' }, 400);
+  if (!username || !password) {
+    return c.json({ error: 'Missing username or password' }, 400);
+  }
+  if (email && !isValidEmail(email)) {
+    return c.json({ error: 'Enter a valid email address' }, 400)
+  }
+  if (password.length < 6) {
+    return c.json({ error: 'Password must be at least 6 characters' }, 400)
   }
 
   // Check if username or email exists
-  const existingUser = await c.env.DB.prepare('SELECT id FROM users WHERE username = ? OR email = ?').bind(username, email).first();
+  const existingUser = email
+    ? await c.env.DB.prepare('SELECT id FROM users WHERE lower(username) = lower(?) OR lower(email) = lower(?)').bind(username, email).first()
+    : await c.env.DB.prepare('SELECT id FROM users WHERE lower(username) = lower(?)').bind(username).first()
   if (existingUser) {
-    return c.json({ error: 'Username or email already exists' }, 409);
+    return c.json({ error: email ? 'Username or email already exists' : 'Username already exists' }, 409);
   }
 
   const id = crypto.randomUUID();
@@ -422,8 +592,8 @@ app.post('/api/auth/register', async (c) => {
   const password_hash = await hashPassword(password);
 
   await c.env.DB.prepare(
-    'INSERT INTO users (id, username, email, password_hash, avatar_url, total_score) VALUES (?, ?, ?, ?, ?, ?)'
-  ).bind(id, username, email, password_hash, avatar_url, 0).run();
+    'INSERT INTO users (id, username, email, email_verified_at, password_hash, avatar_url, total_score) VALUES (?, ?, ?, ?, ?, ?, ?)'
+  ).bind(id, username, email || null, email ? new Date().toISOString() : null, password_hash, avatar_url, 0).run();
 
   const payload = {
     id: id,
@@ -436,8 +606,11 @@ app.post('/api/auth/register', async (c) => {
 });
 
 app.post('/api/auth/request-pin', async (c) => {
-  const { email } = await c.req.json();
+  await ensureAuthSchema(c.env)
+  const body = await c.req.json().catch(() => ({})) as { email?: unknown }
+  const email = normalizeEmail(body.email)
   if (!email) return c.json({ error: 'Missing email' }, 400);
+  if (!isValidEmail(email)) return c.json({ error: 'Enter a valid email address' }, 400)
   
   const user = await c.env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(email).first();
   if (!user) return c.json({ error: 'Email not found' }, 404);
@@ -450,14 +623,33 @@ app.post('/api/auth/request-pin', async (c) => {
     'INSERT INTO auth_pins (email, pin_hash, expires_at) VALUES (?, ?, ?) ON CONFLICT(email) DO UPDATE SET pin_hash = excluded.pin_hash, expires_at = excluded.expires_at'
   ).bind(email, pinHash, expiresAt).run();
 
-  console.log(`\n\n================================\n[auth] Password Reset PIN for ${email}: ${pin}\n================================\n\n`);
+  if (shouldLogPins(c.env, c.req.url)) {
+    console.log(`\n\n================================\n[auth] Development Password Reset PIN for ${email}: ${pin}\n================================\n\n`);
+    return c.json({ success: true, message: 'Development PIN generated and printed to server logs' });
+  }
+
+  try {
+    await sendPinEmail(c.env, email, pin, 'password-reset')
+  } catch (error) {
+    await c.env.DB.prepare('DELETE FROM auth_pins WHERE email = ?').bind(email).run()
+    const detail = error instanceof Error ? error.message : String(error)
+    console.error(`[auth] Failed to deliver password reset PIN for ${email}: ${detail}`)
+    return c.json({ error: 'Verification email delivery failed. Please try again.' }, 502)
+  }
   
-  return c.json({ success: true, message: 'PIN generated and printed to server logs' });
+  return c.json({ success: true, message: 'Verification PIN sent' });
 });
 
 app.post('/api/auth/reset-password', async (c) => {
-  const { email, pin, new_password } = await c.req.json();
+  await ensureAuthSchema(c.env)
+  const body = await c.req.json().catch(() => ({})) as { email?: unknown; pin?: unknown; new_password?: unknown }
+  const email = normalizeEmail(body.email)
+  const pin = String(body.pin ?? '').trim()
+  const new_password = String(body.new_password ?? '')
   if (!email || !pin || !new_password) return c.json({ error: 'Missing fields' }, 400);
+  if (!isValidEmail(email)) return c.json({ error: 'Enter a valid email address' }, 400)
+  if (!/^\d{6}$/.test(pin)) return c.json({ error: 'PIN must be 6 digits' }, 400)
+  if (new_password.length < 6) return c.json({ error: 'Password must be at least 6 characters' }, 400)
 
   const pinRecord = await c.env.DB.prepare('SELECT pin_hash, expires_at FROM auth_pins WHERE email = ?').bind(email).first() as any;
   if (!pinRecord) return c.json({ error: 'No PIN requested or it expired' }, 400);
@@ -480,24 +672,28 @@ app.post('/api/auth/reset-password', async (c) => {
 });
 
 app.post('/api/auth/login', async (c) => {
-  const { username, password, user_id } = await c.req.json()
+  await ensureAuthSchema(c.env)
+  const body = await c.req.json().catch(() => ({})) as { username?: unknown; password?: unknown; user_id?: unknown }
+  const username = String(body.username ?? '').trim()
+  const password = String(body.password ?? '')
+  const user_id = String(body.user_id ?? '').trim()
 
   if (user_id) {
     // Backwards compatibility for twin-app testing (auto-login via SEED_USER_ID)
-    const user = await c.env.DB.prepare('SELECT id, username, avatar_url FROM users WHERE id = ?').bind(user_id).first()
+    const user = await c.env.DB.prepare('SELECT id, username, avatar_url, email, email_verified_at FROM users WHERE id = ?').bind(user_id).first()
     if (!user) return c.json({ error: 'User not found' }, 404)
 
     const payload = { id: user_id, exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30 }
     const secret = c.env.JWT_SECRET || 'fallback_local_secret'
     const token = await sign(payload, secret)
-    return c.json({ token, user_id, username: user.username, avatar_url: user.avatar_url })
+    return c.json({ token, user_id, username: user.username, avatar_url: user.avatar_url, email: user.email, email_verified_at: user.email_verified_at })
   }
 
   if (!username || !password) {
     return c.json({ error: 'Missing username or password' }, 400)
   }
 
-  const user = await c.env.DB.prepare('SELECT id, password_hash, username, avatar_url FROM users WHERE username = ?').bind(username).first()
+  const user = await c.env.DB.prepare('SELECT id, password_hash, username, avatar_url, email, email_verified_at FROM users WHERE lower(username) = lower(?)').bind(username).first()
   if (!user) {
     return c.json({ error: 'Invalid username or password' }, 401)
   }
@@ -514,13 +710,107 @@ app.post('/api/auth/login', async (c) => {
   const secret = c.env.JWT_SECRET || 'fallback_local_secret'
   const token = await sign(payload, secret)
   
-  return c.json({ token, user_id: user.id, username: user.username, avatar_url: user.avatar_url })
+  return c.json({ token, user_id: user.id, username: user.username, avatar_url: user.avatar_url, email: user.email, email_verified_at: user.email_verified_at })
 })
 
 app.use('/api/user/*', async (c, next) => {
   const secret = c.env.JWT_SECRET || 'fallback_local_secret'
   const jwtMiddleware = jwt({ secret, alg: 'HS256' })
   return jwtMiddleware(c, next)
+})
+
+app.post('/api/user/email/request-pin', async (c) => {
+  await ensureAuthSchema(c.env)
+  const payload = c.get('jwtPayload')
+  const body = await c.req.json().catch(() => ({})) as { email?: unknown }
+  const email = normalizeEmail(body.email)
+
+  if (!email) return c.json({ error: 'Missing email' }, 400)
+  if (!isValidEmail(email)) return c.json({ error: 'Enter a valid email address' }, 400)
+
+  const existing = await c.env.DB.prepare(
+    'SELECT id FROM users WHERE lower(email) = lower(?) AND id != ?'
+  ).bind(email, payload.id).first()
+  if (existing) {
+    return c.json({ error: 'This email is already attached to another account' }, 409)
+  }
+
+  const pin = Math.floor(100000 + Math.random() * 900000).toString()
+  const pinHash = await hashPassword(pin)
+  const expiresAt = Math.floor(Date.now() / 1000) + 10 * 60
+
+  await c.env.DB.prepare(
+    'INSERT INTO auth_pins (email, pin_hash, expires_at) VALUES (?, ?, ?) ON CONFLICT(email) DO UPDATE SET pin_hash = excluded.pin_hash, expires_at = excluded.expires_at'
+  ).bind(email, pinHash, expiresAt).run()
+
+  if (shouldLogPins(c.env, c.req.url)) {
+    console.log(`\n\n================================\n[auth] Development Profile Activation PIN for ${email}: ${pin}\n================================\n\n`)
+    return c.json({ success: true, message: 'Development PIN generated and printed to server logs' })
+  }
+
+  try {
+    await sendPinEmail(c.env, email, pin, 'profile-activation')
+  } catch (error) {
+    await c.env.DB.prepare('DELETE FROM auth_pins WHERE email = ?').bind(email).run()
+    const detail = error instanceof Error ? error.message : String(error)
+    console.error(`[auth] Failed to deliver profile activation PIN for ${email}: ${detail}`)
+    return c.json({ error: 'Verification email delivery failed. Please try again.' }, 502)
+  }
+
+  return c.json({ success: true, message: 'Verification PIN sent' })
+})
+
+app.post('/api/user/email/verify-pin', async (c) => {
+  await ensureAuthSchema(c.env)
+  const payload = c.get('jwtPayload')
+  const body = await c.req.json().catch(() => ({})) as { email?: unknown; pin?: unknown }
+  const email = normalizeEmail(body.email)
+  const pin = String(body.pin ?? '').trim()
+
+  if (!email || !pin) return c.json({ error: 'Missing email or PIN' }, 400)
+  if (!isValidEmail(email)) return c.json({ error: 'Enter a valid email address' }, 400)
+  if (!/^\d{6}$/.test(pin)) return c.json({ error: 'PIN must be 6 digits' }, 400)
+
+  const existing = await c.env.DB.prepare(
+    'SELECT id FROM users WHERE lower(email) = lower(?) AND id != ?'
+  ).bind(email, payload.id).first()
+  if (existing) {
+    return c.json({ error: 'This email is already attached to another account' }, 409)
+  }
+
+  const pinRecord = await c.env.DB.prepare(
+    'SELECT pin_hash, expires_at FROM auth_pins WHERE email = ?'
+  ).bind(email).first<{ pin_hash: string; expires_at: number }>()
+  if (!pinRecord) return c.json({ error: 'No PIN requested or it expired' }, 400)
+
+  const now = Math.floor(Date.now() / 1000)
+  if (pinRecord.expires_at < now) {
+    return c.json({ error: 'PIN expired' }, 400)
+  }
+
+  const expectedHash = await hashPassword(pin)
+  if (expectedHash !== pinRecord.pin_hash) {
+    return c.json({ error: 'Invalid PIN' }, 400)
+  }
+
+  const verifiedAt = new Date().toISOString()
+  await c.env.DB.prepare(
+    'UPDATE users SET email = ?, email_verified_at = ? WHERE id = ?'
+  ).bind(email, verifiedAt, payload.id).run()
+  await c.env.DB.prepare('DELETE FROM auth_pins WHERE email = ?').bind(email).run()
+
+  const user = await c.env.DB.prepare(
+    'SELECT id, username, email, email_verified_at, avatar_url FROM users WHERE id = ?'
+  ).bind(payload.id).first()
+
+  return c.json({
+    success: true,
+    user_id: user?.id ?? payload.id,
+    username: user?.username,
+    email: user?.email,
+    email_verified_at: user?.email_verified_at,
+    avatar_url: user?.avatar_url,
+  })
 })
 
 app.put('/api/user/avatar', async (c) => {

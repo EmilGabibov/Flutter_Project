@@ -8,10 +8,31 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="fd1ab86b-db97-4164-a492-03ba983685aa" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/copilotDiffState.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/markdown.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/settings.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/android/settings.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Developement/01_SCHEMA_AND_CORE_LOGIC.md" beforeDir="false" afterPath="$PROJECT_DIR$/Developement/01_SCHEMA_AND_CORE_LOGIC.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Developement/02_OFFLINE_ARCHITECTURE.md" beforeDir="false" afterPath="$PROJECT_DIR$/Developement/02_OFFLINE_ARCHITECTURE.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Developement/03_UI_UX_AND_ANIMATIONS.md" beforeDir="false" afterPath="$PROJECT_DIR$/Developement/03_UI_UX_AND_ANIMATIONS.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Developement/08_Testing.md" beforeDir="false" afterPath="$PROJECT_DIR$/Developement/08_Testing.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Developement/Task0_Raw.md" beforeDir="false" afterPath="$PROJECT_DIR$/Developement/Task0_Raw.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Developement/Task1_Engineered.md" beforeDir="false" afterPath="$PROJECT_DIR$/Developement/Task1_Engineered.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/schema.sql" beforeDir="false" afterPath="$PROJECT_DIR$/backend/schema.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/config/api_config.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/config/api_config.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/database/database.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/database/database.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/database/database.g.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/database/database.g.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/database/tables.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/database/tables.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/providers/auth_provider.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/providers/auth_provider.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/screens/auth_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/screens/auth_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/screens/home_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/screens/home_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/screens/profile_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/screens/profile_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/widgets/calendar_subscription_card.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/widgets/calendar_subscription_card.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/widgets/habit_partner_row.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/widgets/habit_partner_row.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/widgets/mud_long_press_button.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/widgets/mud_long_press_button.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/leaderboard_card_test.dart" beforeDir="false" afterPath="$PROJECT_DIR$/test/leaderboard_card_test.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -24,12 +45,13 @@
   <component name="CopilotPersistence">
     <persistenceIdMap>
       <entry key="_/Users/h.ettefagh/Documents/VibeCoding/Flutter/hable/android" value="3GDoZRfRbhnBelYUxDD9nQ9QZXD" />
+      <entry key="_/opt/homebrew/share/flutter/packages/flutter_tools/gradle" value="3GM6U7jjDAp6tb6IvfRFUMl55b8" />
     </persistenceIdMap>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="479" />
+    <option name="cachedIndexableFilesCount" value="628" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[]" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[LocalEmulator::path=/Users/h.ettefagh/.android/avd/Pixel_9.avd]" />
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$/android">
       <ProjectState />
@@ -72,6 +94,20 @@
   &quot;fromUser&quot;: false
 }</component>
   <component name="ProjectId" id="3GDoZRfRbhnBelYUxDD9nQ9QZXD" />
+  <component name="ProjectSessionTemplates">
+    <option name="panelTemplate">
+      <template>
+        <option name="modeId" value="Agent" />
+        <option name="model">
+          <model>
+            <option name="modelType" value="builtin_id" />
+            <option name="modelValue" value="auto" />
+          </model>
+        </option>
+        <option name="targetType" value="LOCAL" />
+      </template>
+    </option>
+  </component>
   <component name="ProjectView">
     <navigator currentView="ProjectPane" proportions="" version="1" />
     <panes>
@@ -90,9 +126,12 @@
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.MCP Project settings loaded": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.cidr.known.project.marker": "true",
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "android.gradle.sync.needed": "true",
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
     "com.google.services.firebase.aqiPopupShown": "true",
@@ -101,7 +140,7 @@
     "git-widget-placeholder": "main",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "/Users/h.ettefagh/Documents/VibeCoding/Flutter/hable",
-    "settings.editor.selected.configurable": "ml.llm.LLMThirdPartyAiProvidersConfigurable",
+    "settings.editor.selected.configurable": "com.github.copilot.settings.chat.ChatConfigurable",
     "show.migrate.to.gradle.popup": "false"
   }
 }]]></component>
@@ -235,6 +274,12 @@
       <option name="SEARCH_ACTIVITY_IN_GLOBAL_SCOPE" value="false" />
       <option name="SKIP_ACTIVITY_VALIDATION" value="false" />
       <method v="2" />
+    </configuration>
+    <configuration default="true" type="AppleRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" IS_LOCATION_SIMULATION_SUPPORTED="false" IS_LOCATION_SIMULATION_ALLOWED="true" APPLICATION_LANGUAGE="IDELaunchSchemeLanguageUseSystemLanguage" APPLICATION_REGION="" DEVELOPMENT_TEAM="" MAKE_ACTIVE="TRUE" SHOULD_DEBUG_EXTENSIONS="false">
+      <embedded_app_extension_list />
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
     </configuration>
   </component>
   <component name="TaskManager">

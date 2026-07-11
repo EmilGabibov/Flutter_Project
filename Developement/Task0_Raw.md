@@ -253,3 +253,22 @@
   - Friend APK: `/Users/h.ettefagh/Documents/VibeCoding/Flutter/hable/build/app/outputs/flutter-apk/app-friend-debug.apk`
   - Both apps are installed and running on the virtual device.
   - Completed At: 2026-07-11 (Current session)
+
+- [x] Transferred 2026-07-11 -> **Keep Partner Shared Habits Visible After Check-In And Surface Nudges** (`Task1_Engineered.md#keep-partner-shared-habits-visible-after-check-in-and-surface-nudges`). Raw source: HABIT PARTNERING bug report:
+    - for partner, not creator, habit card shws up, but it gets deleted once the user checkes in (completes the ring), hoof, gone.
+    - nudge is not implemented yet:
+        - just the announcement of the nudge has been sent appears at the very bottom of the home screen for a second, which is not enough. also, it should be more visible and obvious.
+        - (the nudged person) is not aware of the nudge at all, in app or when it's closed.
+        - when user is nudged, the card does not change state (the ring should animate in a special way)
+        - research about how nudging/poking/reminding works and what is the best way to implement it (not spamming, but effective, psychological and fun).
+- [x] Transferred 2026-07-11 -> **Refine Habit Card Ring Icon Partner Rings And Responsive State Model** (`Task1_Engineered.md#refine-habit-card-ring-icon-partner-rings-and-responsive-state-model`). Raw source: Card UI:
+        put the habit dedicated icon inside the ring, make the icon in the main ring bigger , but faded. very smooth along with the ring completion make it smaller but completeley visible (like this is something transparent recognizable, which established and stables by pressing down and holding the ring; exactly like a task during creation, a habit in a real life, which is a tough, which is a wheel, but not exist yet slowly wait difficulty of doing a real life task, which has been implemented into during completion mathematically, it's slowly established and appears after doing it in the real life, in a way that it is smooth, and not abruptly appears.) Encoding make these parameters, which used by during, the difficulty and level and a step of establishment of a habit reusable, in a way to New Zealand in the future indifference elements maybe instead of a progress or as a border, creating a dynamic background for the card. 
+        - make the partner profile picture bigger, make its ring thickness momore like the main habit ring, and make it more visible. rings are the main element on the UI, make them pop! 
+        - the habit cards arrangement should be responsible to the screen size, number of habits, and should not overflow. now there is no gap between last card and the very bottom.
+        - in order of reducing ui elements, integrate the subtitle of habit name 'challenge day of X of Y' into the progress bar. bringing the habit name from top left to bottom over progress bar, make the ring and the partners the main focused ui elements. 
+        - create habit states update (check-in, skip, missed, nudge) not developing a UI for it, just on code level
+            - the first developed UI would be a should connect with the completion of the task the check-in, which now has a animation transition for the habit icon, and a very short appearance of the done UI, with his smooth transition to the established habit. In the next phases of developing the happiness state updates we would have a splash screen with different elements, just now focus on implementing the fundamental and the foundation of this approach.
+
+- [x] Transferred 2026-07-11 -> **Add Privacy-Preserving Anonymous Usage Aggregates For Development Diagnostics** (`Task1_Engineered.md#add-privacy-preserving-anonymous-usage-aggregates-for-development-diagnostics`). Raw source: implement anonymous usage tracking for development and debugging purposes. Track how frequently users open the app, which screens they visit, and how long they spend on each screen. This data should be anonymized and should not include any personal information. no fingerprinting, no traceable ids; acknowledge-free, don't pass the limits which needs GDPR, but instead, implement it in a way that is GDPR-compliant.
+    - haing an admin panel for it on the web. 
+    - for ui use (npx @21st-dev/cli add larsen66/efferd-dashboard-2)

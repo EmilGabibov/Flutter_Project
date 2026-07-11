@@ -32,6 +32,27 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _emailMeta = const VerificationMeta('email');
+  @override
+  late final GeneratedColumn<String> email = GeneratedColumn<String>(
+    'email',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _emailVerifiedAtMeta = const VerificationMeta(
+    'emailVerifiedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> emailVerifiedAt =
+      GeneratedColumn<DateTime>(
+        'email_verified_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _avatarUrlMeta = const VerificationMeta(
     'avatarUrl',
   );
@@ -110,6 +131,8 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
   List<GeneratedColumn> get $columns => [
     userId,
     username,
+    email,
+    emailVerifiedAt,
     avatarUrl,
     levelName,
     createdAt,
@@ -144,6 +167,21 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
       );
     } else if (isInserting) {
       context.missing(_usernameMeta);
+    }
+    if (data.containsKey('email')) {
+      context.handle(
+        _emailMeta,
+        email.isAcceptableOrUnknown(data['email']!, _emailMeta),
+      );
+    }
+    if (data.containsKey('email_verified_at')) {
+      context.handle(
+        _emailVerifiedAtMeta,
+        emailVerifiedAt.isAcceptableOrUnknown(
+          data['email_verified_at']!,
+          _emailVerifiedAtMeta,
+        ),
+      );
     }
     if (data.containsKey('avatar_url')) {
       context.handle(
@@ -198,6 +236,14 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
         DriftSqlType.string,
         data['${effectivePrefix}username'],
       )!,
+      email: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}email'],
+      ),
+      emailVerifiedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}email_verified_at'],
+      ),
       avatarUrl: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}avatar_url'],
@@ -234,6 +280,8 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
 class User extends DataClass implements Insertable<User> {
   final String userId;
   final String username;
+  final String? email;
+  final DateTime? emailVerifiedAt;
   final String? avatarUrl;
   final String levelName;
   final DateTime createdAt;
@@ -243,6 +291,8 @@ class User extends DataClass implements Insertable<User> {
   const User({
     required this.userId,
     required this.username,
+    this.email,
+    this.emailVerifiedAt,
     this.avatarUrl,
     required this.levelName,
     required this.createdAt,
@@ -255,6 +305,12 @@ class User extends DataClass implements Insertable<User> {
     final map = <String, Expression>{};
     map['user_id'] = Variable<String>(userId);
     map['username'] = Variable<String>(username);
+    if (!nullToAbsent || email != null) {
+      map['email'] = Variable<String>(email);
+    }
+    if (!nullToAbsent || emailVerifiedAt != null) {
+      map['email_verified_at'] = Variable<DateTime>(emailVerifiedAt);
+    }
     if (!nullToAbsent || avatarUrl != null) {
       map['avatar_url'] = Variable<String>(avatarUrl);
     }
@@ -270,6 +326,12 @@ class User extends DataClass implements Insertable<User> {
     return UsersCompanion(
       userId: Value(userId),
       username: Value(username),
+      email: email == null && nullToAbsent
+          ? const Value.absent()
+          : Value(email),
+      emailVerifiedAt: emailVerifiedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(emailVerifiedAt),
       avatarUrl: avatarUrl == null && nullToAbsent
           ? const Value.absent()
           : Value(avatarUrl),
@@ -289,6 +351,8 @@ class User extends DataClass implements Insertable<User> {
     return User(
       userId: serializer.fromJson<String>(json['userId']),
       username: serializer.fromJson<String>(json['username']),
+      email: serializer.fromJson<String?>(json['email']),
+      emailVerifiedAt: serializer.fromJson<DateTime?>(json['emailVerifiedAt']),
       avatarUrl: serializer.fromJson<String?>(json['avatarUrl']),
       levelName: serializer.fromJson<String>(json['levelName']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
@@ -303,6 +367,8 @@ class User extends DataClass implements Insertable<User> {
     return <String, dynamic>{
       'userId': serializer.toJson<String>(userId),
       'username': serializer.toJson<String>(username),
+      'email': serializer.toJson<String?>(email),
+      'emailVerifiedAt': serializer.toJson<DateTime?>(emailVerifiedAt),
       'avatarUrl': serializer.toJson<String?>(avatarUrl),
       'levelName': serializer.toJson<String>(levelName),
       'createdAt': serializer.toJson<DateTime>(createdAt),
@@ -315,6 +381,8 @@ class User extends DataClass implements Insertable<User> {
   User copyWith({
     String? userId,
     String? username,
+    Value<String?> email = const Value.absent(),
+    Value<DateTime?> emailVerifiedAt = const Value.absent(),
     Value<String?> avatarUrl = const Value.absent(),
     String? levelName,
     DateTime? createdAt,
@@ -324,6 +392,10 @@ class User extends DataClass implements Insertable<User> {
   }) => User(
     userId: userId ?? this.userId,
     username: username ?? this.username,
+    email: email.present ? email.value : this.email,
+    emailVerifiedAt: emailVerifiedAt.present
+        ? emailVerifiedAt.value
+        : this.emailVerifiedAt,
     avatarUrl: avatarUrl.present ? avatarUrl.value : this.avatarUrl,
     levelName: levelName ?? this.levelName,
     createdAt: createdAt ?? this.createdAt,
@@ -335,6 +407,10 @@ class User extends DataClass implements Insertable<User> {
     return User(
       userId: data.userId.present ? data.userId.value : this.userId,
       username: data.username.present ? data.username.value : this.username,
+      email: data.email.present ? data.email.value : this.email,
+      emailVerifiedAt: data.emailVerifiedAt.present
+          ? data.emailVerifiedAt.value
+          : this.emailVerifiedAt,
       avatarUrl: data.avatarUrl.present ? data.avatarUrl.value : this.avatarUrl,
       levelName: data.levelName.present ? data.levelName.value : this.levelName,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
@@ -351,6 +427,8 @@ class User extends DataClass implements Insertable<User> {
     return (StringBuffer('User(')
           ..write('userId: $userId, ')
           ..write('username: $username, ')
+          ..write('email: $email, ')
+          ..write('emailVerifiedAt: $emailVerifiedAt, ')
           ..write('avatarUrl: $avatarUrl, ')
           ..write('levelName: $levelName, ')
           ..write('createdAt: $createdAt, ')
@@ -365,6 +443,8 @@ class User extends DataClass implements Insertable<User> {
   int get hashCode => Object.hash(
     userId,
     username,
+    email,
+    emailVerifiedAt,
     avatarUrl,
     levelName,
     createdAt,
@@ -378,6 +458,8 @@ class User extends DataClass implements Insertable<User> {
       (other is User &&
           other.userId == this.userId &&
           other.username == this.username &&
+          other.email == this.email &&
+          other.emailVerifiedAt == this.emailVerifiedAt &&
           other.avatarUrl == this.avatarUrl &&
           other.levelName == this.levelName &&
           other.createdAt == this.createdAt &&
@@ -389,6 +471,8 @@ class User extends DataClass implements Insertable<User> {
 class UsersCompanion extends UpdateCompanion<User> {
   final Value<String> userId;
   final Value<String> username;
+  final Value<String?> email;
+  final Value<DateTime?> emailVerifiedAt;
   final Value<String?> avatarUrl;
   final Value<String> levelName;
   final Value<DateTime> createdAt;
@@ -399,6 +483,8 @@ class UsersCompanion extends UpdateCompanion<User> {
   const UsersCompanion({
     this.userId = const Value.absent(),
     this.username = const Value.absent(),
+    this.email = const Value.absent(),
+    this.emailVerifiedAt = const Value.absent(),
     this.avatarUrl = const Value.absent(),
     this.levelName = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -410,6 +496,8 @@ class UsersCompanion extends UpdateCompanion<User> {
   UsersCompanion.insert({
     required String userId,
     required String username,
+    this.email = const Value.absent(),
+    this.emailVerifiedAt = const Value.absent(),
     this.avatarUrl = const Value.absent(),
     this.levelName = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -422,6 +510,8 @@ class UsersCompanion extends UpdateCompanion<User> {
   static Insertable<User> custom({
     Expression<String>? userId,
     Expression<String>? username,
+    Expression<String>? email,
+    Expression<DateTime>? emailVerifiedAt,
     Expression<String>? avatarUrl,
     Expression<String>? levelName,
     Expression<DateTime>? createdAt,
@@ -433,6 +523,8 @@ class UsersCompanion extends UpdateCompanion<User> {
     return RawValuesInsertable({
       if (userId != null) 'user_id': userId,
       if (username != null) 'username': username,
+      if (email != null) 'email': email,
+      if (emailVerifiedAt != null) 'email_verified_at': emailVerifiedAt,
       if (avatarUrl != null) 'avatar_url': avatarUrl,
       if (levelName != null) 'level_name': levelName,
       if (createdAt != null) 'created_at': createdAt,
@@ -446,6 +538,8 @@ class UsersCompanion extends UpdateCompanion<User> {
   UsersCompanion copyWith({
     Value<String>? userId,
     Value<String>? username,
+    Value<String?>? email,
+    Value<DateTime?>? emailVerifiedAt,
     Value<String?>? avatarUrl,
     Value<String>? levelName,
     Value<DateTime>? createdAt,
@@ -457,6 +551,8 @@ class UsersCompanion extends UpdateCompanion<User> {
     return UsersCompanion(
       userId: userId ?? this.userId,
       username: username ?? this.username,
+      email: email ?? this.email,
+      emailVerifiedAt: emailVerifiedAt ?? this.emailVerifiedAt,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       levelName: levelName ?? this.levelName,
       createdAt: createdAt ?? this.createdAt,
@@ -475,6 +571,12 @@ class UsersCompanion extends UpdateCompanion<User> {
     }
     if (username.present) {
       map['username'] = Variable<String>(username.value);
+    }
+    if (email.present) {
+      map['email'] = Variable<String>(email.value);
+    }
+    if (emailVerifiedAt.present) {
+      map['email_verified_at'] = Variable<DateTime>(emailVerifiedAt.value);
     }
     if (avatarUrl.present) {
       map['avatar_url'] = Variable<String>(avatarUrl.value);
@@ -505,6 +607,8 @@ class UsersCompanion extends UpdateCompanion<User> {
     return (StringBuffer('UsersCompanion(')
           ..write('userId: $userId, ')
           ..write('username: $username, ')
+          ..write('email: $email, ')
+          ..write('emailVerifiedAt: $emailVerifiedAt, ')
           ..write('avatarUrl: $avatarUrl, ')
           ..write('levelName: $levelName, ')
           ..write('createdAt: $createdAt, ')
@@ -6171,6 +6275,8 @@ typedef $$UsersTableCreateCompanionBuilder =
     UsersCompanion Function({
       required String userId,
       required String username,
+      Value<String?> email,
+      Value<DateTime?> emailVerifiedAt,
       Value<String?> avatarUrl,
       Value<String> levelName,
       Value<DateTime> createdAt,
@@ -6183,6 +6289,8 @@ typedef $$UsersTableUpdateCompanionBuilder =
     UsersCompanion Function({
       Value<String> userId,
       Value<String> username,
+      Value<String?> email,
+      Value<DateTime?> emailVerifiedAt,
       Value<String?> avatarUrl,
       Value<String> levelName,
       Value<DateTime> createdAt,
@@ -6230,6 +6338,16 @@ class $$UsersTableFilterComposer extends Composer<_$AppDatabase, $UsersTable> {
 
   ColumnFilters<String> get username => $composableBuilder(
     column: $table.username,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get emailVerifiedAt => $composableBuilder(
+    column: $table.emailVerifiedAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -6308,6 +6426,16 @@ class $$UsersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get emailVerifiedAt => $composableBuilder(
+    column: $table.emailVerifiedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get avatarUrl => $composableBuilder(
     column: $table.avatarUrl,
     builder: (column) => ColumnOrderings(column),
@@ -6353,6 +6481,14 @@ class $$UsersTableAnnotationComposer
 
   GeneratedColumn<String> get username =>
       $composableBuilder(column: $table.username, builder: (column) => column);
+
+  GeneratedColumn<String> get email =>
+      $composableBuilder(column: $table.email, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get emailVerifiedAt => $composableBuilder(
+    column: $table.emailVerifiedAt,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get avatarUrl =>
       $composableBuilder(column: $table.avatarUrl, builder: (column) => column);
@@ -6430,6 +6566,8 @@ class $$UsersTableTableManager
               ({
                 Value<String> userId = const Value.absent(),
                 Value<String> username = const Value.absent(),
+                Value<String?> email = const Value.absent(),
+                Value<DateTime?> emailVerifiedAt = const Value.absent(),
                 Value<String?> avatarUrl = const Value.absent(),
                 Value<String> levelName = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -6440,6 +6578,8 @@ class $$UsersTableTableManager
               }) => UsersCompanion(
                 userId: userId,
                 username: username,
+                email: email,
+                emailVerifiedAt: emailVerifiedAt,
                 avatarUrl: avatarUrl,
                 levelName: levelName,
                 createdAt: createdAt,
@@ -6452,6 +6592,8 @@ class $$UsersTableTableManager
               ({
                 required String userId,
                 required String username,
+                Value<String?> email = const Value.absent(),
+                Value<DateTime?> emailVerifiedAt = const Value.absent(),
                 Value<String?> avatarUrl = const Value.absent(),
                 Value<String> levelName = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -6462,6 +6604,8 @@ class $$UsersTableTableManager
               }) => UsersCompanion.insert(
                 userId: userId,
                 username: username,
+                email: email,
+                emailVerifiedAt: emailVerifiedAt,
                 avatarUrl: avatarUrl,
                 levelName: levelName,
                 createdAt: createdAt,

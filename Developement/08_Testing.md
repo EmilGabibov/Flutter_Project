@@ -232,8 +232,8 @@ Then rerun `npm run db:setup`.
 - Logged-out users cannot access Home, Profile, or Social Hub; gating works correctly. ✅
 
 **Phase 3: Registration & Auth Flow**
-- Tapped "Sign up" button → Registration form appeared with Username, Email, Password fields.
-- Entered credentials: `testuser_smoke1` / `testuser.smoke1@hable.local` / `TestPass123`.
+- Tapped "Sign up" button -> Registration form appeared with Username and Password fields.
+- Entered credentials: `testuser_smoke1` / `TestPass123`.
 - Tapped "Sign Up" → Request sent to backend, registration completed in ~2 seconds.
 - Post-registration: App automatically routed to `HomeScreen` without requiring manual login. ✅
 
@@ -269,3 +269,20 @@ All acceptance criteria met:
 - Registration end-to-end flow confirmed.
 - Both `primary` and `friend` flavors installed side-by-side with isolation.
 - `.gitignore` properly configured.
+
+## 12. Auth Repair And Profile Activation Smoke
+
+**Date:** 2026-07-11
+**Target:** Local Pages Functions Worker on `http://127.0.0.1:8788` because port `8787` was already occupied by another local process.
+
+**Commands/Checks:**
+- Ran `npm run db:setup` to apply `backend/schema.sql` locally.
+- Ran `npx wrangler pages dev public --port 8788`.
+- Verified `POST /api/auth/register` accepts username/password only and returns JWT/user payload.
+- Verified `POST /api/auth/login` accepts uppercase username input for the same stored lowercase username.
+- Verified browser CORS preflight for `Origin: http://localhost:59999` returns `Access-Control-Allow-Origin`.
+- Verified authenticated `POST /api/user/email/request-pin` prints a development Profile Activation PIN locally.
+- Verified authenticated `POST /api/user/email/verify-pin` stores `email` and `email_verified_at`.
+- Verified `POST /api/auth/request-pin`, `POST /api/auth/reset-password`, and login with the changed password for the activated email.
+
+**Outcome:** PASS. Signup no longer requires email, username login is case-insensitive, Profile owns optional email/PIN activation, and password reset works after activation.

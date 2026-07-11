@@ -65,6 +65,11 @@ class AuthNotifier extends Notifier<AuthState> {
     if (message.contains('SocketException')) {
       return 'Cannot reach the backend at $apiBaseUrl. Start the backend or check the API base URL.';
     }
+    if (message.contains('XMLHttpRequest') ||
+        message.contains('ClientException') ||
+        message.contains('Failed to fetch')) {
+      return 'Cannot reach the backend at $apiBaseUrl. Start the backend, check CORS, or set HABLE_API_BASE_URL.';
+    }
     if (message.contains('HandshakeException')) {
       return 'Unable to establish a secure connection to the backend.';
     }
@@ -72,6 +77,35 @@ class AuthNotifier extends Notifier<AuthState> {
       return 'Unexpected response from the backend.';
     }
     return message;
+  }
+
+  String _errorFromResponse(http.Response response, String fallback) {
+    final body = response.body.trim();
+    if (body.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(body);
+        if (decoded is Map<String, dynamic>) {
+          final error = decoded['error'] ?? decoded['message'];
+          if (error is String && error.trim().isNotEmpty) {
+            return error.trim();
+          }
+        }
+      } catch (_) {
+        if (kDebugMode) {
+          debugPrint(
+            'Auth endpoint returned non-JSON ${response.statusCode}: '
+            '${body.length > 240 ? '${body.substring(0, 240)}...' : body}',
+          );
+        }
+      }
+    }
+
+    return '$fallback (${response.statusCode})';
+  }
+
+  DateTime? _parseOptionalDate(Object? value) {
+    if (value == null) return null;
+    return DateTime.tryParse(value.toString());
   }
 
   @override
@@ -113,14 +147,19 @@ class AuthNotifier extends Notifier<AuthState> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         await _saveAuth(data['token'], data['user_id'], data['username']);
-        await _ensureUserInDb(data['user_id'], data['username'], data['avatar_url']);
+        await _ensureUserInDb(
+          data['user_id'],
+          data['username'],
+          data['avatar_url'],
+          email: data['email'],
+          emailVerifiedAt: _parseOptionalDate(data['email_verified_at']),
+        );
         state = state.copyWith(isLoading: false);
         return true;
       } else {
-        final data = jsonDecode(response.body);
         state = state.copyWith(
           isLoading: false,
-          error: data['error'] ?? 'Login failed',
+          error: _errorFromResponse(response, 'Login failed'),
         );
         return false;
       }
@@ -145,11 +184,20 @@ class AuthNotifier extends Notifier<AuthState> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         await _saveAuth(data['token'], data['user_id'], data['username']);
-        await _ensureUserInDb(data['user_id'], data['username'], data['avatar_url']);
+        await _ensureUserInDb(
+          data['user_id'],
+          data['username'],
+          data['avatar_url'],
+          email: data['email'],
+          emailVerifiedAt: _parseOptionalDate(data['email_verified_at']),
+        );
         state = state.copyWith(isLoading: false);
         return true;
       }
-      state = state.copyWith(isLoading: false, error: 'Test login failed');
+      state = state.copyWith(
+        isLoading: false,
+        error: _errorFromResponse(response, 'Test login failed'),
+      );
       return false;
     } on TimeoutException {
       state = state.copyWith(isLoading: false, error: 'Request timed out');
@@ -160,7 +208,7 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
-  Future<bool> register(String username, String email, String password) async {
+  Future<bool> register(String username, String password) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       final response = await http.post(
@@ -168,7 +216,6 @@ class AuthNotifier extends Notifier<AuthState> {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'username': username,
-          'email': email,
           'password': password,
         }),
       ).timeout(const Duration(seconds: 10));
@@ -176,14 +223,19 @@ class AuthNotifier extends Notifier<AuthState> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         await _saveAuth(data['token'], data['user_id'], data['username']);
-        await _ensureUserInDb(data['user_id'], data['username'], data['avatar_url']);
+        await _ensureUserInDb(
+          data['user_id'],
+          data['username'],
+          data['avatar_url'],
+          email: data['email'],
+          emailVerifiedAt: _parseOptionalDate(data['email_verified_at']),
+        );
         state = state.copyWith(isLoading: false);
         return true;
       } else {
-        final data = jsonDecode(response.body);
         state = state.copyWith(
           isLoading: false,
-          error: data['error'] ?? 'Registration failed',
+          error: _errorFromResponse(response, 'Registration failed'),
         );
         return false;
       }
@@ -208,8 +260,10 @@ class AuthNotifier extends Notifier<AuthState> {
         state = state.copyWith(isLoading: false);
         return true;
       }
-      final data = jsonDecode(response.body);
-      state = state.copyWith(isLoading: false, error: data['error'] ?? 'Failed to request PIN');
+      state = state.copyWith(
+        isLoading: false,
+        error: _errorFromResponse(response, 'Failed to request PIN'),
+      );
       return false;
     } on TimeoutException {
       state = state.copyWith(isLoading: false, error: 'Request timed out');
@@ -236,14 +290,99 @@ class AuthNotifier extends Notifier<AuthState> {
         state = state.copyWith(isLoading: false);
         return true;
       }
-      final data = jsonDecode(response.body);
-      state = state.copyWith(isLoading: false, error: data['error'] ?? 'Reset failed');
+      state = state.copyWith(
+        isLoading: false,
+        error: _errorFromResponse(response, 'Reset failed'),
+      );
       return false;
     } on TimeoutException {
       state = state.copyWith(isLoading: false, error: 'Request timed out');
       return false;
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: 'Network error');
+      state = state.copyWith(isLoading: false, error: _networkErrorMessage(e));
+      return false;
+    }
+  }
+
+  Future<bool> requestProfileActivationPin(String email) async {
+    final token = state.token;
+    if (token == null) {
+      state = state.copyWith(error: 'Log in before activating cloud sync');
+      return false;
+    }
+
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final response = await http.post(
+        Uri.parse('$apiBaseUrl/api/user/email/request-pin'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'email': email}),
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        state = state.copyWith(isLoading: false);
+        return true;
+      }
+
+      state = state.copyWith(
+        isLoading: false,
+        error: _errorFromResponse(response, 'Failed to request activation PIN'),
+      );
+      return false;
+    } on TimeoutException {
+      state = state.copyWith(isLoading: false, error: 'Request timed out');
+      return false;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: _networkErrorMessage(e));
+      return false;
+    }
+  }
+
+  Future<bool> verifyProfileActivationPin(String email, String pin) async {
+    final token = state.token;
+    final userId = state.userId;
+    if (token == null || userId == null) {
+      state = state.copyWith(error: 'Log in before activating cloud sync');
+      return false;
+    }
+
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final response = await http.post(
+        Uri.parse('$apiBaseUrl/api/user/email/verify-pin'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'email': email, 'pin': pin}),
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final verifiedAt =
+            _parseOptionalDate(data['email_verified_at']) ?? DateTime.now();
+        await _db.updateUserEmailVerification(
+          userId,
+          email: data['email']?.toString() ?? email,
+          emailVerifiedAt: verifiedAt,
+        );
+        state = state.copyWith(isLoading: false);
+        return true;
+      }
+
+      state = state.copyWith(
+        isLoading: false,
+        error: _errorFromResponse(response, 'Failed to verify activation PIN'),
+      );
+      return false;
+    } on TimeoutException {
+      state = state.copyWith(isLoading: false, error: 'Request timed out');
+      return false;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: _networkErrorMessage(e));
       return false;
     }
   }
@@ -306,11 +445,19 @@ class AuthNotifier extends Notifier<AuthState> {
     );
   }
 
-  Future<void> _ensureUserInDb(String userId, String username, String? avatarUrl) async {
+  Future<void> _ensureUserInDb(
+    String userId,
+    String username,
+    String? avatarUrl, {
+    Object? email,
+    DateTime? emailVerifiedAt,
+  }) async {
     // Upsert user into local Drift DB so the app can function offline
     await _db.into(_db.users).insertOnConflictUpdate(UsersCompanion(
       userId: Value(userId),
       username: Value(username),
+      email: Value(email?.toString()),
+      emailVerifiedAt: Value(emailVerifiedAt),
       avatarUrl: Value(avatarUrl),
       createdAt: Value(DateTime.now()),
       updatedAt: Value(DateTime.now()),

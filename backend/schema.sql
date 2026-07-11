@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
     username TEXT NOT NULL,
     email TEXT UNIQUE,
+    email_verified_at DATETIME,
     password_hash TEXT,
     avatar_url TEXT,
     total_score INTEGER NOT NULL DEFAULT 0

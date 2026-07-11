@@ -119,13 +119,13 @@ class _PartnerChip extends StatelessWidget {
       button: onTap != null,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         child: Container(
-          constraints: const BoxConstraints(maxWidth: 140),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          constraints: const BoxConstraints(maxWidth: 160),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
             color: fillColor,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(color: borderColor, width: 1.5),
           ),
           child: Row(
@@ -137,21 +137,21 @@ class _PartnerChip extends StatelessWidget {
                   Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: borderColor, width: 2),
+                      border: Border.all(color: borderColor, width: 2.5),
                     ),
                     child: UserAvatar(
                       avatarUrl: partner.avatarUrl,
                       username: partner.username,
-                      radius: 12,
+                      radius: 16,
                       backgroundColor: Colors.white,
                     ),
                   ),
                   Positioned(
-                    right: -1,
-                    bottom: -1,
+                    right: -2,
+                    bottom: -2,
                     child: Container(
-                      width: 10,
-                      height: 10,
+                      width: 12,
+                      height: 12,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: partner.hasCompletedToday
@@ -159,13 +159,13 @@ class _PartnerChip extends StatelessWidget {
                             : partner.role == PartnershipRole.supporter
                             ? AppTheme.mutedLavender
                             : AppTheme.warmGray,
-                        border: Border.all(color: Colors.white, width: 1.2),
+                        border: Border.all(color: Colors.white, width: 1.5),
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Flexible(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -184,8 +184,7 @@ class _PartnerChip extends StatelessWidget {
                       roleLabel,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontSize: 11,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: partner.role == PartnershipRole.supporter
                             ? AppTheme.mutedLavender
                             : borderColor,

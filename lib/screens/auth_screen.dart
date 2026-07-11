@@ -60,11 +60,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     } 
     else if (_currentView == AuthView.register) {
       final username = _usernameController.text.trim();
-      final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
-      if (username.isEmpty || email.isEmpty || password.isEmpty) return;
+      if (username.isEmpty || password.isEmpty) return;
       
-      final success = await notifier.register(username, email, password);
+      final success = await notifier.register(username, password);
       if (!success && mounted) {
         setState(() {});
       }
@@ -121,7 +120,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         break;
       case AuthView.register:
         title = 'Join Hable.';
-        subtitle = 'Create an account to track your habits.';
+        subtitle = 'Choose a username and password. You can activate cloud recovery from Profile later.';
         buttonText = 'Sign Up';
         break;
       case AuthView.forgotPasswordRequest:
@@ -157,11 +156,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     TextField(
                       controller: _usernameController,
                       decoration: const InputDecoration(labelText: 'Username', prefixIcon: Icon(Icons.person_outline_rounded)),
+                      autocorrect: false,
+                      enableSuggestions: false,
+                      textCapitalization: TextCapitalization.none,
                       textInputAction: TextInputAction.next,
                     ),
-                  if (_currentView == AuthView.register || _currentView == AuthView.forgotPasswordRequest)
+                  if (_currentView == AuthView.forgotPasswordRequest)
                     Padding(
-                      padding: EdgeInsets.only(top: _currentView == AuthView.register ? 16 : 0),
+                      padding: EdgeInsets.zero,
                       child: TextField(
                         controller: _emailController,
                         decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email_outlined)),

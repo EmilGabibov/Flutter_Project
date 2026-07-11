@@ -2,6 +2,7 @@
 
 ## Completed Tasks
 
+- 2026-07-11 13:17 CEST: [Repair SignUp SignIn And Forgot Password Network Failures](#repair-signup-signin-and-forgot-password-network-failures)
 - 2026-07-11 04:15 UTC: [Add Revocable iCal Feed For Native Calendar Subscriptions](#add-revocable-ical-feed-for-native-calendar-subscriptions)
 - 2026-07-11 05:30 UTC: [Run ADB Smoke Tests For Auth, Friend Harness, And Recent UI Changes](#run-adb-smoke-tests-for-auth-friend-harness-and-recent-ui-changes)
 - 2026-07-08 15:59 Z: [Add Cloudflare Worker Backend For Social Sync & Ephemeral Nudges](Task2_Archived.md#add-cloudflare-worker-backend-for-social-sync-ephemeral-nudges)
@@ -113,6 +114,101 @@
 - Completion notes state which dependencies were verified and updated.
 
 **Dependencies:** `00_Agent_Directives.md`, `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `05_Search_Engine_Architecture.md`, `07_Multi_User_Social_Features.md`, `TWIN_TEST_HARNESS.md`, `08_Testing.md`, `Task_ai_agent_contract.md`
+
+**Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+
+<a id="refine-habit-card-ring-icon-partner-rings-and-responsive-state-model"></a>
+### [x] Refine Habit Card Ring Icon Partner Rings And Responsive State Model
+
+**Raw source:** Card UI:
+- Put the habit dedicated icon inside the ring. Make the icon in the main ring bigger, but faded. Very smooth along with the ring completion, make it smaller but completely visible. The desired metaphor is that a habit starts as transparent/recognizable but not established yet, then stabilizes through the hold/completion interaction.
+- Encode the reusable parameters used by difficulty, level, completion, and habit establishment so the same logic can later drive progress, border, or dynamic card background effects.
+- Make the partner profile picture bigger, make its ring thickness more like the main habit ring, and make it more visible. Rings are the main element on the UI, make them pop.
+- Habit card arrangement should respond to screen size and number of habits, and should not overflow. There is currently no gap between the last card and the very bottom.
+- Reduce UI elements by integrating the subtitle of the habit name, "challenge day X of Y", into the progress bar. Bring the habit name from top-left to bottom over the progress bar, making the ring and partners the main focused UI elements.
+- Create habit state updates (`check-in`, `skip`, `missed`, `nudge`) at code level, not as full UI yet.
+- First developed UI state should connect with task completion/check-in: the current animation transition for the habit icon, a very short appearance of done UI, then a smooth transition to the established habit. Future happiness/splash states are separate phases.
+- Follow-up constraint: completed state does not need a green ring. A tech-style completed ring using the habit/ring visual language is enough.
+
+**Issue:** The current Home habit card treats the ring as one element among many: title/subtitle sit at the top, partner chips are visually smaller than the main ring, the ring uses a generic icon/text treatment, and the challenge label is duplicated outside the progress bar. The card also has layout pressure on small screens and near the bottom of the scroll view. Completion state risks becoming a generic green success treatment instead of preserving Hable's ring-driven, habit-specific visual language.
+
+**Ponytail triage:**
+- *Should exist:* Yes, the habit card is the primary daily action surface, and the current composition does not match the intended ring-first product direction.
+- *Smallest safe scope:* Refactor the existing `_HabitCard`, `MudLongPressButton`, and `HabitPartnerRow` visuals and add a tiny reusable state model for habit visual state. Use existing habit metadata, colors, Drift/Riverpod state, and Flutter animation primitives.
+- *Skipped scope:* New design system package, new animation framework, shaders, 3D backgrounds, full happiness splash screen, OS notifications, remote state-machine redesign, and broad navigation changes.
+- *Boundaries:* Do not change backend habit completion semantics in this UI task. Do not add new dependencies unless a platform limitation proves impossible with existing Flutter APIs. Do not force completed rings to green; preserve the habit/tech ring identity.
+
+**Completion notes:**
+- **Touched files:** `lib/models/habit_visual_state.dart` (created), `lib/widgets/mud_long_press_button.dart` (enhanced with icon animation), `lib/screens/home_screen.dart` (refactored card layout to ring-first), `lib/widgets/habit_partner_row.dart` (enlarged avatars), `test/habit_card_ring_refinement_test.dart` (created for validation).
+- **Behavior implemented:**
+  - Created `HabitVisualState` enum with idle, pressing, checkInComplete, established, skipped, missed, nudged states.
+  - Created `HabitVisualParameters` class encoding reusable icon scale, opacity, ring thickness, and animation durations; provided standard, highDifficulty, and lowDifficulty presets.
+  - Updated `MudLongPressButton` to accept optional habit icon and render it inside the ring with smooth animation from larger/faded to smaller/fully visible during hold.
+  - Ring thickness parameter now drives both background track and progress arc, responding to hold progress and resistance.
+  - Refactored `_HabitCard` layout to center the mud button as the primary focus; moved habit name and challenge day info to bottom progress area; partner avatars now render below the ring with up to 4 visible + overflow indicator.
+  - Enlarged `HabitPartnerRow` partner avatars from radius 12 to 16; increased ring border thickness from 2 to 2.5; improved padding and alignment for better visibility.
+  - Card layout now responsive: habit name/challenge info integrated into bottom section with habit color background; progress bar at top of bottom section; no overflow on small screens.
+  - Completed state shows brief done confirmation, then settles into established habit state using habit color (not forced green).
+- **Verification run:** `flutter analyze` (no issues), `flutter test test/habit_card_ring_refinement_test.dart` (6 tests pass), `flutter test --coverage` (9 total tests pass).
+- **Documentation verification:** No doc updates were required beyond confirmation that the implementation aligns with intended ring-first philosophy already documented in `03_UI_UX_and_Animations.md`.
+- **Completed At:** 2026-07-11 14:30 CEST
+
+<a id="add-privacy-preserving-anonymous-usage-aggregates-for-development-diagnostics"></a>
+### [ ] Add Privacy-Preserving Anonymous Usage Aggregates For Development Diagnostics
+
+**Raw source:** implement anonymous usage tracking for development and debugging purposes. Track how frequently users open the app, which screens they visit, and how long they spend on each screen. This data should be anonymized and should not include any personal information. no fingerprinting, no traceable ids; acknowledge-free, don't pass the limits which needs GDPR, but instead, implement it in a way that is GDPR-compliant.
+- having an admin panel for it on the web.
+- for ui use `npx @21st-dev/cli add larsen66/efferd-dashboard-2`.
+
+**Issue:** Hable has no usage diagnostics layer. That makes it harder to see whether users open the app, which top-level screens are reached, and whether screens are abandoned immediately. But raw analytics events, user IDs, device IDs, IP/user-agent storage, session replay, screen paths containing habit/user data, or third-party analytics SDKs would violate the user's explicit constraints. The implementation must collect only aggregate development diagnostics and must not create a hidden user-tracking system. The requested `21st-dev` dashboard command targets a React/shadcn-style web UI, while Hable is currently a Flutter app, so it must not force a new web stack inside this task unless a separate admin web shell already exists.
+
+**Ponytail triage:**
+- *Should exist:* Yes, but only as coarse diagnostics. A full product analytics stack is unnecessary and risky for this app right now.
+- *Smallest safe scope:* Build an in-house aggregate counter with static screen labels, in-memory screen timing, optional local Drift buckets, an optional remote aggregate endpoint enabled only by explicit build flag, and a minimal dev-only aggregate report/admin surface. Do not add a third-party analytics SDK.
+- *Skipped scope:* Firebase Analytics, Segment, Amplitude, Sentry session replay, per-user funnels, attribution, advertising IDs, device IDs, A/B testing, heatmaps, raw event exports, broad marketing dashboards, crash reporting, and creating a full React admin app solely to host one dashboard component.
+- *Boundaries:* No user ID, account ID, device ID, installation ID, stable session ID, IP address, user agent, precise location, habit title, friend name, email, username, route parameter, fingerprint signal, or raw event timeline may be stored in analytics data. If a future need requires any of those, it must become a separate consent/privacy task.
+
+**Action:** Add privacy-preserving anonymous usage aggregates for development diagnostics. Track app opens, allowlisted top-level screen visits, and rounded visible duration per screen as aggregate counters only. Keep collection disabled or local-only by default unless an explicit development/build flag enables remote aggregate upload. Ensure the backend stores only bucketed counts and duration totals, not request metadata or identifiers. Provide a small web-visible admin/report surface for aggregate buckets; use the requested `21st-dev` dashboard template only if there is an appropriate React/shadcn admin shell, otherwise treat it as visual inspiration and do not graft React tooling into the Flutter app.
+
+**Hable perspective:** Hable is offline-first and already uses Flutter/Riverpod/Drift with direct `Navigator` pushes from `MaterialApp(home: _AppGate())`. Usage diagnostics should follow that architecture: Flutter records only local aggregate counters, Riverpod exposes the small service, Drift can buffer unsent aggregate buckets, and Cloudflare Workers/D1 can receive anonymous aggregate increments without authentication or user linkage. Home/Profile/Social UI must not wait on analytics.
+
+**Implementation scope:**
+- Flutter service: add a small `UsageDiagnosticsService` or provider that records `app_open`, `screen_visit`, and `screen_visible_ms` for a fixed allowlist such as `auth`, `home`, `profile`, `social_hub`, `habit_form`, and `onboarding`.
+- Screen instrumentation: because the app does not use named routes, add minimal wrappers or explicit lifecycle calls in top-level screens rather than relying on a route observer that cannot see all direct widget swaps.
+- Timing model: use app lifecycle and screen visibility to accumulate duration in memory, round durations to coarse buckets such as 5 or 10 seconds, and flush aggregate totals rather than individual events.
+- Local persistence: if offline buffering is needed, add a Drift-only `UsageAggregateBuckets` table keyed by coarse date, platform/build channel, static screen name, and metric type. Do not include `userId`, username, auth state, habit id, friend id, route arguments, or any persistent client identifier.
+- Remote upload: add an optional Worker route such as `POST /api/dev/usage-aggregate` only if remote diagnostics are enabled by explicit compile-time flag. The route must increment D1 aggregate rows and must not persist IP address, user agent, auth header, request id, or raw JSON event logs.
+- Backend schema: if remote upload is implemented, add a D1 aggregate table such as `usage_aggregate_buckets(bucket_date, platform, build_channel, app_version, screen_name, metric_name, count, total_duration_ms, updated_at)` with a unique aggregate key. Keep dimensions intentionally coarse.
+- Admin/report surface: add the smallest useful web-facing aggregate report, such as a protected Worker HTML endpoint, a Flutter web admin-only route behind a development flag, or documented D1 SQL output. It must show only aggregate counts and rounded durations by date/screen/platform, with no per-user drilldown.
+- Requested UI template: evaluate `npx @21st-dev/cli add larsen66/efferd-dashboard-2` only if a separate React/shadcn admin app already exists or is explicitly created by a future task. Do not add Node/React/shadcn dependencies to the Flutter app just for this dashboard.
+- Privacy controls: default production builds to disabled unless a documented privacy review changes that. For web, do not use analytics cookies, localStorage identifiers, browser fingerprinting APIs, or cross-site tracking. Do not add a banner merely to justify non-essential tracking.
+- Reporting: provide a tiny developer-facing query or documented SQL snippet for aggregate counts/durations. Hide or suppress reporting for very small buckets if the report could single out one person in a low-traffic environment.
+- Documentation: update `01_SCHEMA_AND_CORE_LOGIC.md`, `02_Offline_Architecture.md`, `04_Social_and_Analytics.md`, and `08_Testing.md` if schema, local buffering, backend route, or smoke procedure changes.
+- Test surface: add focused unit/provider tests for aggregate incrementing, duration rounding, no identifier fields in payloads, disabled-by-default behavior, and no UI crash when analytics upload fails.
+
+**Scalability considerations:** Keep local and remote storage bounded by aggregate bucket count, not raw event count. Flush in small batches, coalesce repeated screen timings before writing to Drift, and never let upload retries block sync or UI rendering. D1 writes should use aggregate upserts keyed by coarse dimensions so daily growth is proportional to `screens * metrics * platforms`, not active users or events.
+
+**Future split guidance:** A full React/shadcn admin app using the requested `21st-dev` dashboard component, consented product analytics, privacy policy updates, data subject request tooling, differential privacy, k-anonymity enforcement, crash reporting, performance tracing, feature funnels, A/B testing, and retention dashboards should be separate tasks. If production telemetry is needed, add a consent/privacy-design task before collecting personal or pseudonymous data.
+
+**Privacy baseline:** GDPR Article 4 treats online identifiers as potential personal data, and GDPR Recital 26 excludes anonymous information only when a person is not or is no longer identifiable. EDPB's current anonymisation guidance work frames anonymity around preventing singling out, linkage, and inference. ICO storage/access guidance also treats analytics cookies/storage as non-essential and consent-requiring in the web context. For Hable, "acknowledge-free" therefore means no cookies, no persistent analytics IDs, no fingerprinting, and no linkable raw event history.
+
+**Edge cases:** App launched while logged out, auth gate swaps from `AuthScreen` to `HomeScreen`, app backgrounded while a screen timer is running, Android process killed before flush, web tab hidden, multiple browser tabs open, offline for several days, failed remote upload, device clock skew, debug seed users, very low traffic buckets, unsupported platform names, screen rename breaking aggregate continuity, route arguments accidentally included in a screen label, and Cloudflare/platform access logs containing request metadata outside the app-level analytics table.
+
+**Acceptance criteria:**
+- App opens, top-level screen visits, and screen visible duration are tracked as aggregate counters only.
+- No analytics payload or local analytics table contains `userId`, username, email, auth token, device/install/session ID, IP address, user agent, habit id/title, friend id/name, route parameter, precise timestamped event trail, or fingerprinting signal.
+- Analytics collection is disabled or local-only by default, and any remote upload requires an explicit development/build flag.
+- Remote upload, if implemented, writes only coarse aggregate D1 rows and never raw event rows.
+- A web-visible admin/report surface exists only for aggregate buckets, or the implementation explicitly documents why the safe MVP is SQL/local reporting instead.
+- The requested `21st-dev` dashboard template is not added to the Flutter app unless a compatible React/shadcn admin shell exists; if skipped, the completion notes state that compatibility boundary.
+- Screen duration is rounded/coarsened before persistence or upload.
+- Analytics failures never block auth, Home rendering, habit actions, social sync, or offline-first behavior.
+- Web builds do not create analytics cookies, localStorage identifiers, or browser fingerprinting probes.
+- Tests or documented checks prove disabled-by-default behavior, aggregate incrementing, duration rounding, and absence of identifier fields.
+- Documentation dependencies are verified and updated if schema, architecture, analytics behavior, or testing procedure changes.
+- The implementation notes clearly state whether the result is local-only development diagnostics or remote aggregate diagnostics; it must not be described as user-level analytics.
+
+**Dependencies:** `01_SCHEMA_AND_CORE_LOGIC.md`, `02_Offline_Architecture.md`, `04_Social_and_Analytics.md`, `08_Testing.md`
 
 **Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
 
@@ -569,7 +665,7 @@
 
 
 <a id="repair-signup-signin-and-forgot-password-network-failures"></a>
-### [ ] Repair SignUp SignIn And Forgot Password Network Failures
+### [x] Repair SignUp SignIn And Forgot Password Network Failures
 
 **Raw source:** Continue developement of SignUp, SignIn, and Forgot Password process. You can look and inspire from email authentitcation from VibeCoding/campusweb (the sign in and sign up just says 'Network error'). Previous transfer note referenced **Implement Email Authentication And PIN Reset Flow**, but no matching engineered task anchor currently exists in `Task1_Engineered.md`.
 
@@ -616,7 +712,14 @@
 
 **Dependencies:** `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `08_Testing.md`, `Commands.md`, `../../campusweb/src/routes/api/auth/request-pin/+server.ts`, `../../campusweb/src/routes/api/auth/verify-pin/+server.ts`, `../../campusweb/src/lib/server/auth/email.ts`
 
-**Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+**Completion notes:**
+- Touched files: `backend/src/index.ts`, `backend/schema.sql`, `lib/config/api_config.dart`, `lib/database/tables.dart`, `lib/database/database.dart`, `lib/database/database.g.dart`, `lib/providers/auth_provider.dart`, `lib/screens/auth_screen.dart`, `lib/screens/profile_screen.dart`, `lib/widgets/calendar_subscription_card.dart`, `test/leaderboard_card_test.dart`, `Developement/01_Schema_and_Core_Logic.md`, `Developement/02_Offline_Architecture.md`, `Developement/03_UI_UX_and_Animations.md`, and `Developement/08_Testing.md`.
+- Behavior implemented: signup now asks for username/password only; username login is case-insensitive; Flutter auth errors preserve backend JSON/non-JSON details instead of collapsing to generic `Network error`; `/api/*` has local/prod CORS handling; Android debug defaults to `127.0.0.1:8787` for `adb reverse`; Profile now has optional email/PIN activation for recoverable cloud progress; password reset uses attached email and production PIN delivery returns a clear failure unless Cloudflare email is configured.
+- Behavior verified: `POST /api/auth/register` username/password-only returned 200; uppercase username login returned 200 for the stored account; CORS preflight returned `Access-Control-Allow-Origin`; authenticated profile activation PIN request/verify returned 200 and persisted `email_verified_at`; password reset PIN request/reset returned 200; login with the changed password returned 200.
+- Verification run: `npx tsc --noEmit`, `flutter pub run build_runner build --delete-conflicting-outputs`, `flutter analyze`, `flutter test`, `npm run db:setup`, and local Worker curl smoke on `http://127.0.0.1:8788` because 8787 was already occupied.
+- Docs verified/updated: `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, and `08_Testing.md` were updated. `Commands.md` was verified and already matched the `adb reverse` local backend guidance.
+- Archive note: no task archive script is present in the repo, so the completed body was not manually moved to `Task2_Archived.md`.
+- Completed At: 2026-07-11 13:17 CEST
 
 
 <a id="build-notification-center-and-local-reminder-mvp"></a>
@@ -724,5 +827,65 @@
 - Dependency docs are verified and updated if UX placement, backend privacy rules, or smoke procedures change.
 
 **Dependencies:** `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `07_Multi_User_Social_Features.md`, `08_Testing.md`
+
+**Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+
+<a id="keep-partner-shared-habits-visible-after-check-in-and-surface-nudges"></a>
+### [ ] Keep Partner Shared Habits Visible After Check-In And Surface Nudges
+
+**Raw source:** HABIT PARTNERING bug report:
+- for partner, not creator, habit card shws up, but it gets deleted once the user checkes in (completes the ring), hoof, gone.
+- nudge is not implemented yet:
+  - just the announcement of the nudge has been sent appears at the very bottom of the home screen for a second, which is not enough. also, it should be more visible and obvious.
+  - (the nudged person) is not aware of the nudge at all, in app or when it's closed.
+  - when user is nudged, the card does not change state (the ring should animate in a special way)
+  - research about how nudging/poking/reminding works and what is the best way to implement it (not spamming, but effective, psychological and fun).
+
+**Issue:** Partner-accepted shared habit cards are being upserted into the recipient's local `Habits` table from `/api/sync/daily`, then completed through the same `_HabitCard._handleCompletion` path as owned habits. The current completion path can set `HabitStatus.completed`, and `watchActiveHabits(userId)` filters completed habits out of Home, so a partner-side check-in can make the shared card disappear. Nudge sending is also only a queued `sendNudge` plus a brief snackbar; received nudges are returned by `/api/sync/daily` but `SyncService` only logs them with `debugPrint`, so the recipient sees no durable in-app state, no card/ring reaction, and no useful feedback if the app was closed.
+
+**Ponytail triage:**
+- *Should exist:* Yes, this is a concrete user-visible regression in shared habit retention and a missing feedback loop for an already implemented backend nudge path.
+- *Smallest safe scope:* Fix the root shared-habit lifecycle bug in the local completion/sync path, persist or expose received nudges enough for Home to react in-app, and make send/receive feedback visible on the relevant habit card without adding a full push-notification stack.
+- *Skipped scope:* FCM/APNs/web push, service workers, notification permission UI, full notification center, real-time sockets, rich encouragement message authoring, anti-spam analytics, and a broad behavioral-science research project.
+- *Boundaries:* Keep the app offline-first. Home must render from Drift/Riverpod. Do not expose private journal data. Do not let a nudge create progress/logs or pressure supporters into completion. Do not implement OS notifications here; defer that to the existing notification-center/reminder task.
+
+**Action:** Repair shared habit check-in retention and make nudges visible in the existing Home card experience. Trace `_HabitCard._handleCompletion`, `watchActiveHabits`, `SyncService.pullDailySync`, `PartnerSnapshots`, and `/api/social/nudge`; prevent partner-side daily check-ins from changing the habit lifecycle status to a value that removes the card from Home; and convert received nudge payloads into local state that the relevant habit card can display with a clear temporary ring/card animation or persistent in-app indicator until seen.
+
+**Hable perspective:** Shared habit visibility belongs to accepted habit partnerships, not local habit ownership. A partner can complete/skip their own daily log for a shared habit, but that should not archive or complete the shared habit metadata row unless the owner intentionally changes the habit lifecycle. Nudges are social cues for already-authorized shared habits: sender writes a queued local intent, Worker stores/returns an ephemeral event, and Flutter must persist enough local read-model state for Home to show it even after an app restart.
+
+**Implementation scope:**
+- Root-cause audit: inspect `lib/screens/home_screen.dart` `_HabitCard._handleCompletion`, `lib/database/database.dart` `watchActiveHabits` and `updateHabitStatus`, and `lib/services/sync_service.dart` shared-habit upsert behavior.
+- Local lifecycle fix: ensure a partner/shared habit remains `HabitStatus.active` after the viewer completes today's ring; if the code needs to distinguish daily completion from challenge lifecycle completion, keep that distinction in Drift/provider logic rather than overloading `HabitStatus.completed`.
+- Shared progress semantics: verify `currentDuration`, `targetDuration`, `_challengeDay`, and `_progressFraction` do not make a received shared habit look finished on day one because `/api/sync/daily` inserted it with `currentDuration = 0`.
+- Backend sync check: verify `POST /api/sync/log` still accepts owner/partner completion and skip based on role, and verify `/api/sync/daily` returns enough habit metadata/progress to reconstruct the shared card without leaking private fields.
+- Nudge receive state: convert `data['nudges']` in `SyncService.pullDailySync` from `debugPrint` only into a small local read model. Prefer an existing notification table/provider if the notification-center task has landed by then; otherwise add the smallest Drift-backed received-nudge cache needed for Home.
+- Nudge card UI: make the relevant habit card/ring react when there is an unseen recent nudge from a partner, using a visible but non-spammy treatment such as a short pulse, badge, or "nudged by X" chip that clears after viewing or after a bounded TTL.
+- Nudge send feedback: replace or supplement the bottom snackbar with card-local feedback near the partner chip so the sender sees which habit/person was nudged.
+- Anti-spam baseline: keep nudges opt-in-by-context and bounded. Use one visible nudge state per sender/habit or a short cooldown/merge window rather than stacking repeated alerts.
+- Tests: add focused Drift/provider/widget tests proving shared habits stay active after partner check-in, received nudges persist into local state, and Home renders a visible nudge indicator without duplicate spam.
+- Manual smoke: update `08_Testing.md` with a twin-app flow: Alice invites Bob, Bob accepts, Bob checks in and the card remains visible, Alice nudges Bob, Bob syncs/reopens and sees an in-app card/ring nudge state.
+
+**Scalability considerations:** Nudge state should stay bounded by TTL, sender, and habit so local storage does not become an unbounded event log. Repeated nudges should coalesce by `(habitId, senderId)` or expire quickly. Partner habit rendering should remain habit-scoped through `habitPartnersProvider(habitId)` and should not watch all nudge/social rows for every card.
+
+**Future split guidance:** OS push when the app is closed, notification permissions, web push, configurable quiet hours, nudge cooldown policy, richer encouragement copy, analytics on nudge effectiveness, and psychology-backed personalization should be separate tasks. The existing **Build Notification Center And Local Reminder MVP** task can own durable notification-center design; this task should only create the minimal in-app state required for shared habit cards to react correctly.
+
+**Research baseline:** Lightweight nudges should preserve user choice, stay relevant, and avoid excessive frequency. Behavior-change literature supports timely cues as useful short-term prompts, while notification research warns that overly frequent or irrelevant prompts create fatigue. Use this as a product guardrail: one contextual nudge per habit/partner state is better than generic repeated alerts. References reviewed during engineering: `https://pmc.ncbi.nlm.nih.gov/articles/PMC11161714/`, `https://pmc.ncbi.nlm.nih.gov/articles/PMC10337295/`, and `https://pmc.ncbi.nlm.nih.gov/articles/PMC10002044/`.
+
+**Edge cases:** Partner checks in on a shared habit with `currentDuration = 0`, owner checks in on the final day of a challenge, partner skips instead of completes, sync log fails after optimistic local completion, user receives multiple nudges before opening the app, KV nudge is consumed by one sync before UI observes it, app restarts after receiving a nudge, stale partner snapshots after partnership removal, supporter receives or sends nudges but cannot complete/skip, nudge from a partner on a habit no longer active locally, and repeated taps causing duplicate queued nudges.
+
+**Acceptance criteria:**
+- A partner-side check-in on a shared habit no longer removes the habit card from the partner's Home active list.
+- The fix is rooted in lifecycle/progress semantics, not a one-off UI reinsert hack.
+- Shared habit cards inserted from `/api/sync/daily` have sane day/progress values and do not appear already complete on first receipt.
+- Owner/partner completion and skip logs still sync through `SyncAction.logHabit` and backend role authorization.
+- Received nudges from `/api/sync/daily` are persisted or exposed through a local Riverpod/Drift read model instead of only `debugPrint`.
+- Home shows a clear in-app nudge state on or near the relevant habit card/ring for the nudged recipient.
+- Sending a nudge gives visible feedback tied to the selected habit/partner, not only a barely noticeable bottom snackbar.
+- Repeated nudges are coalesced, cooldown-bounded, or TTL-bound so the UI cannot become spammy.
+- No OS push notification or service-worker scope is added in this task.
+- Focused tests or documented smoke cover partner check-in retention, nudge send feedback, nudge receipt display, app restart after receipt, and duplicate nudge handling.
+- `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `07_Multi_User_Social_Features.md`, and `08_Testing.md` are verified and updated if lifecycle, sync, nudge UI, or testing behavior changes.
+
+**Dependencies:** `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `07_Multi_User_Social_Features.md`, `08_Testing.md`
 
 **Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]

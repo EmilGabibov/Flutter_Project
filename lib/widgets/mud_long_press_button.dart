@@ -2,10 +2,14 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
+import '../models/habit_visual_state.dart';
 
 /// Physics-based "Mud" long-press completion button.
 /// Consumes pre-computed [resistanceCoefficient] and [calculatedDurationMs]
 /// from the Riverpod [ResistanceNotifier] — NO internal math.
+///
+/// Now supports rendering a habit icon inside the ring with smooth animations
+/// from larger/faded to smaller/fully visible during hold completion.
 class MudLongPressButton extends StatefulWidget {
   final double resistanceCoefficient;
   final int calculatedDurationMs;
@@ -13,6 +17,10 @@ class MudLongPressButton extends StatefulWidget {
   final bool isCompleted;
   /// Per-habit accent color for the ring arc. Defaults to sage green.
   final Color habitColor;
+  /// Optional habit icon/emoji to render inside the ring.
+  final String? habitIcon;
+  /// Reusable visual parameters for icon scale, opacity, ring thickness, etc.
+  final HabitVisualParameters visualParameters;
 
   const MudLongPressButton({
     super.key,
@@ -21,6 +29,8 @@ class MudLongPressButton extends StatefulWidget {
     required this.onCompletion,
     this.isCompleted = false,
     this.habitColor = AppTheme.sageGreen,
+    this.habitIcon,
+    this.visualParameters = HabitVisualParameters.standard,
   });
 
   @override
@@ -31,6 +41,8 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _curveAnimation;
+  late Animation<double> _iconScaleAnimation;
+  late Animation<double> _iconOpacityAnimation;
 
   @override
   void initState() {
@@ -78,6 +90,21 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
           widget.onCompletion();
         }
       });
+
+    // ─ Icon animations: fade in and scale down during hold ─
+    _iconOpacityAnimation = Tween<double>(
+      begin: widget.visualParameters.idleIconOpacity,
+      end: widget.visualParameters.completedIconOpacity,
+    ).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+
+    _iconScaleAnimation = Tween<double>(
+      begin: widget.visualParameters.idleIconScale,
+      end: widget.visualParameters.completedIconScale,
+    ).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
   }
 
   void _handleHapticFeedback() {
@@ -120,6 +147,10 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
               progress: _curveAnimation.value,
               resistance: widget.resistanceCoefficient,
               habitColor: widget.habitColor,
+              ringThickness: Tween<double>(
+                begin: widget.visualParameters.idleRingThickness,
+                end: widget.visualParameters.progressingRingThickness,
+              ).evaluate(_curveAnimation),
             ),
             child: child,
           );
@@ -128,26 +159,7 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
           width: 180,
           height: 180,
           child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.spa_rounded,
-                  size: 40,
-                  color: AppTheme.deepCharcoal.withValues(alpha: 0.6),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Hold to Complete',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 0.5,
-                    fontSize: 14,
-                    color: AppTheme.deepCharcoal.withValues(alpha: 0.7),
-                  ),
-                ),
-              ],
-            ),
+            child: _buildIconContent(),
           ),
         ),
       ),
@@ -163,6 +175,7 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
           progress: 1.0,
           resistance: 0.0,
           habitColor: widget.habitColor,
+          ringThickness: widget.visualParameters.progressingRingThickness,
         ),
         child: Center(
           child: Column(
@@ -188,17 +201,71 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
       ),
     );
   }
+
+  /// Build the icon content inside the ring.
+  /// If a habit icon is provided, display it with animations.
+  /// Otherwise, show a default spa icon with hold-to-complete text.
+  Widget _buildIconContent() {
+    if (widget.habitIcon != null && widget.habitIcon!.isNotEmpty) {
+      return Stack(
+        alignment: Alignment.center,
+        children: [
+          // Animated habit icon inside the ring
+          AnimatedBuilder(
+            animation: Listenable.merge([_iconScaleAnimation, _iconOpacityAnimation]),
+            builder: (context, child) {
+              return Opacity(
+                opacity: _iconOpacityAnimation.value,
+                child: Transform.scale(
+                  scale: _iconScaleAnimation.value,
+                  child: Text(
+                    widget.habitIcon!,
+                    style: const TextStyle(fontSize: 56),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      );
+    } else {
+      // Default icon with hold-to-complete text
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.spa_rounded,
+            size: 40,
+            color: AppTheme.deepCharcoal.withValues(alpha: 0.6),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Hold to Complete',
+            style: TextStyle(
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.5,
+              fontSize: 14,
+              color: AppTheme.deepCharcoal.withValues(alpha: 0.7),
+            ),
+          ),
+        ],
+      );
+    }
+  }
+
 }
 
 class _MudButtonPainter extends CustomPainter {
   final double progress;
   final double resistance;
   final Color habitColor;
+  final double ringThickness;
 
   _MudButtonPainter({
     required this.progress,
     required this.resistance,
     this.habitColor = AppTheme.sageGreen,
+    this.ringThickness = 6.0,
   });
 
   @override
@@ -209,7 +276,7 @@ class _MudButtonPainter extends CustomPainter {
     // ── Background track (thin, muted) ──────────────────────────────────────
     final bgPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 6.0
+      ..strokeWidth = ringThickness * 0.6
       ..strokeCap = StrokeCap.round
       ..color = habitColor.withValues(alpha: 0.12);
     canvas.drawCircle(center, radius - 10, bgPaint);
@@ -218,7 +285,7 @@ class _MudButtonPainter extends CustomPainter {
 
     // ── Dynamic progress arc — app-icon-inspired thick rounded ring ──────────
     // Ring starts thin and grows thicker under high resistance ("mud" feel).
-    final arcThickness = 12.0 + (resistance * 6.0 * (1.0 - progress));
+    final arcThickness = ringThickness + (resistance * 6.0 * (1.0 - progress));
 
     // Color: lerps from habit pastel → vivid completion green at 100%
     final progressColor = Color.lerp(
@@ -252,6 +319,7 @@ class _MudButtonPainter extends CustomPainter {
   bool shouldRepaint(covariant _MudButtonPainter oldDelegate) {
     return oldDelegate.progress != progress ||
         oldDelegate.resistance != resistance ||
-        oldDelegate.habitColor != habitColor;
+        oldDelegate.habitColor != habitColor ||
+        oldDelegate.ringThickness != ringThickness;
   }
 }

@@ -92,7 +92,7 @@ class CalendarSubscriptionCard extends ConsumerWidget {
                   Text(
                     'Paste this URL into your calendar app (Apple Calendar, Google Calendar, etc.) as an iCalendar subscription.',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppTheme.secondaryText,
+                      color: AppTheme.warmGray,
                       fontStyle: FontStyle.italic,
                     ),
                   ),
@@ -168,4 +168,3 @@ class CalendarSubscriptionCard extends ConsumerWidget {
     );
   }
 }
-

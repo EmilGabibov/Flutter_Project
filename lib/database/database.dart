@@ -30,7 +30,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Bump this when the schema changes.
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -60,6 +60,10 @@ class AppDatabase extends _$AppDatabase {
       if (from < 7) {
         await m.addColumn(users, users.levelName);
         await m.createTable(achievementUnlocks);
+      }
+      if (from < 8) {
+        await m.addColumn(users, users.email);
+        await m.addColumn(users, users.emailVerifiedAt);
       }
     },
   );
@@ -98,6 +102,19 @@ class AppDatabase extends _$AppDatabase {
     UsersCompanion(
       totalScore: Value(totalScore),
       levelName: Value(levelName),
+      updatedAt: Value(DateTime.now()),
+      isSynced: const Value(true),
+    ),
+  );
+
+  Future<void> updateUserEmailVerification(
+    String userId, {
+    required String email,
+    required DateTime emailVerifiedAt,
+  }) => (update(users)..where((u) => u.userId.equals(userId))).write(
+    UsersCompanion(
+      email: Value(email),
+      emailVerifiedAt: Value(emailVerifiedAt),
       updatedAt: Value(DateTime.now()),
       isSynced: const Value(true),
     ),

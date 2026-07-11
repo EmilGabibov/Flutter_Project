@@ -32,6 +32,8 @@ enum SyncAction {
 class Users extends Table {
   TextColumn get userId => text()();
   TextColumn get username => text().withLength(min: 1, max: 50)();
+  TextColumn get email => text().nullable()();
+  DateTimeColumn get emailVerifiedAt => dateTime().nullable()();
   TextColumn get avatarUrl => text().nullable()();
   TextColumn get levelName => text().withDefault(const Constant('Newbie'))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();

@@ -13,6 +13,7 @@ import '../providers/social_providers.dart';
 import '../providers/sync_provider.dart';
 import '../theme/app_theme.dart';
 import '../data/standard_habits.dart';
+import '../models/habit_visual_state.dart';
 import '../widgets/habit_partner_row.dart';
 import '../widgets/mud_long_press_button.dart';
 import '../widgets/skip_bottom_sheet.dart';
@@ -421,80 +422,44 @@ class _HabitCard extends ConsumerWidget {
         clipBehavior: Clip.antiAlias,
         child: Column(
           children: [
+            // ─── Ring-focused content area ───
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: habitColor.withValues(alpha: 0.12),
-                          shape: BoxShape.circle,
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          habitMeta?.emoji ?? '●',
-                          style: TextStyle(
-                            fontSize: habitMeta?.emoji != null ? 22 : 18,
-                            color: habitMeta?.emoji != null ? null : habitColor,
-                            fontWeight: FontWeight.w800,
+                  // Main ring with habit icon inside
+                  Center(
+                    child: Opacity(
+                      opacity: canLogProgress ? 1 : 0.45,
+                      child: IgnorePointer(
+                        ignoring: !canLogProgress,
+                        child: MudLongPressButton(
+                          resistanceCoefficient:
+                              resistance.resistanceCoefficient,
+                          calculatedDurationMs: resistance.calculatedDurationMs,
+                          isCompleted: isCompletedToday,
+                          habitColor: habitColor,
+                          habitIcon: habitMeta?.emoji,
+                          visualParameters: HabitVisualParameters.standard,
+                          onCompletion: () => _handleCompletion(
+                            context,
+                            ref,
+                            habit,
+                            challengeDay,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              habit.title,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.titleLarge,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Challenge: Day $challengeDay of $targetDays',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      streakAsync.when(
-                        data: (streak) => Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: habitColor.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Text(
-                            '🔥 $streak',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: habitColor,
-                            ),
-                          ),
-                        ),
-                        loading: () => const SizedBox.shrink(),
-                        error: (_, _) => const SizedBox.shrink(),
-                      ),
-                    ],
+                    ),
                   ),
                   const SizedBox(height: 16),
+
+                  // Partner avatars - now larger and more visible
                   partnersAsync.when(
                     data: (partners) => HabitPartnerRow(
                       partners: partners,
                       habitColor: habitColor,
+                      maxVisible: 4,
                       onPartnerTap: (partner) async {
                         final db = ref.read(databaseProvider);
                         await enqueueNudge(
@@ -515,67 +480,107 @@ class _HabitCard extends ConsumerWidget {
                     loading: () => const SizedBox.shrink(),
                     error: (_, _) => const SizedBox.shrink(),
                   ),
-                  const SizedBox(height: 20),
-                  Center(
-                    child: Opacity(
-                      opacity: canLogProgress ? 1 : 0.45,
-                      child: IgnorePointer(
-                        ignoring: !canLogProgress,
-                        child: MudLongPressButton(
-                          resistanceCoefficient:
-                              resistance.resistanceCoefficient,
-                          calculatedDurationMs: resistance.calculatedDurationMs,
-                          isCompleted: isCompletedToday,
-                          habitColor: habitColor,
-                          onCompletion: () => _handleCompletion(
-                            context,
-                            ref,
-                            habit,
-                            challengeDay,
-                          ),
+
+                  const SizedBox(height: 12),
+
+                  // Streak badge
+                  streakAsync.when(
+                    data: (streak) => Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: habitColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Text(
+                        '🔥 $streak',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: habitColor,
                         ),
                       ),
                     ),
+                    loading: () => const SizedBox.shrink(),
+                    error: (_, _) => const SizedBox.shrink(),
                   ),
-                  const SizedBox(height: 12),
+
+                  const SizedBox(height: 16),
+
+                  // Skip button - only show if not completed
                   if (!canLogProgress)
                     Text(
                       'Supporters can follow progress and send nudges.',
                       style: Theme.of(context).textTheme.bodyMedium,
+                      textAlign: TextAlign.center,
                     )
                   else if (!isCompletedToday)
-                    Align(
-                      alignment: Alignment.center,
-                      child: TextButton(
-                        onPressed: () => _handleSkip(context, ref, habit),
-                        child: Text(
-                          isSkippedToday ? 'Skipped today' : 'Skip today',
-                          style: TextStyle(
-                            color: AppTheme.warmGray,
-                            fontSize: 14,
-                          ),
+                    TextButton(
+                      onPressed: () => _handleSkip(context, ref, habit),
+                      child: Text(
+                        isSkippedToday ? 'Skipped today' : 'Skip today',
+                        style: TextStyle(
+                          color: AppTheme.warmGray,
+                          fontSize: 14,
                         ),
                       ),
                     ),
                 ],
               ),
             ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Semantics(
-                label:
-                    'Progress ${((progressFraction * 100).round())} percent.',
-                child: Container(
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: habitColor.withValues(alpha: 0.12),
+
+            // ─── Bottom progress area with habit name and challenge info ───
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: habitColor.withValues(alpha: 0.08),
+              ),
+              child: Column(
+                children: [
+                  // Progress bar
+                  Semantics(
+                    label:
+                        'Progress ${((progressFraction * 100).round())} percent.',
+                    child: Container(
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: habitColor.withValues(alpha: 0.12),
+                      ),
+                      child: FractionallySizedBox(
+                        widthFactor: progressFraction,
+                        alignment: Alignment.centerLeft,
+                        child: Container(color: habitColor),
+                      ),
+                    ),
                   ),
-                  child: FractionallySizedBox(
-                    widthFactor: progressFraction,
-                    alignment: Alignment.centerLeft,
-                    child: Container(color: habitColor),
+
+                  // Habit name and challenge info
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          habit.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Challenge: Day $challengeDay of $targetDays',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppTheme.deepCharcoal.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
           ],

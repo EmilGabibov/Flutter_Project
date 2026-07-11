@@ -181,6 +181,17 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ),
 
+            SliverToBoxAdapter(
+              child: userAsync.when(
+                data: (user) => Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                  child: _CloudSyncActivationCard(user: user),
+                ),
+                loading: () => const SizedBox.shrink(),
+                error: (_, _) => const SizedBox.shrink(),
+              ),
+            ),
+
             // Pie chart — Completion Distribution
             SliverToBoxAdapter(
               child: Padding(
@@ -626,6 +637,200 @@ class ProfileScreen extends ConsumerWidget {
                 ),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CloudSyncActivationCard extends ConsumerStatefulWidget {
+  final User? user;
+
+  const _CloudSyncActivationCard({required this.user});
+
+  @override
+  ConsumerState<_CloudSyncActivationCard> createState() =>
+      _CloudSyncActivationCardState();
+}
+
+class _CloudSyncActivationCardState
+    extends ConsumerState<_CloudSyncActivationCard> {
+  late final TextEditingController _emailController;
+  final _pinController = TextEditingController();
+  bool _pinSent = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController = TextEditingController(text: widget.user?.email ?? '');
+  }
+
+  @override
+  void didUpdateWidget(covariant _CloudSyncActivationCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final newEmail = widget.user?.email ?? '';
+    if (oldWidget.user?.email != newEmail && !_pinSent) {
+      _emailController.text = newEmail;
+    }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _pinController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _requestPin() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) return;
+
+    final success = await ref
+        .read(authProvider.notifier)
+        .requestProfileActivationPin(email);
+    if (!mounted) return;
+    if (success) {
+      setState(() => _pinSent = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Verification PIN sent.')),
+      );
+    }
+  }
+
+  Future<void> _verifyPin() async {
+    final email = _emailController.text.trim();
+    final pin = _pinController.text.trim();
+    if (email.isEmpty || pin.isEmpty) return;
+
+    final success = await ref
+        .read(authProvider.notifier)
+        .verifyProfileActivationPin(email, pin);
+    if (!mounted) return;
+    if (success) {
+      setState(() {
+        _pinSent = false;
+        _pinController.clear();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cloud sync activated.')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final authState = ref.watch(authProvider);
+    final user = widget.user;
+    final isVerified = user?.emailVerifiedAt != null;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  isVerified
+                      ? Icons.cloud_done_rounded
+                      : Icons.cloud_sync_rounded,
+                  color: isVerified
+                      ? AppTheme.completionGreen
+                      : AppTheme.sageGreen,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    isVerified ? 'Cloud sync active' : 'Activate cloud sync',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              isVerified
+                  ? 'Progress recovery is linked to ${user?.email ?? 'your verified email'}.'
+                  : 'Add a verified email when you want recoverable cloud progress and password reset support.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppTheme.warmGray.withValues(alpha: 0.9),
+              ),
+            ),
+            if (!isVerified) ...[
+              const SizedBox(height: 16),
+              TextField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: _pinSent
+                    ? TextInputAction.next
+                    : TextInputAction.done,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  prefixIcon: Icon(Icons.email_outlined),
+                ),
+                onSubmitted: (_) {
+                  if (!_pinSent) _requestPin();
+                },
+              ),
+              if (_pinSent) ...[
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _pinController,
+                  keyboardType: TextInputType.number,
+                  textInputAction: TextInputAction.done,
+                  decoration: const InputDecoration(
+                    labelText: '6-digit PIN',
+                    prefixIcon: Icon(Icons.pin_outlined),
+                  ),
+                  onSubmitted: (_) => _verifyPin(),
+                ),
+              ],
+              if (authState.error != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  authState.error!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ],
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: authState.isLoading
+                          ? null
+                          : (_pinSent ? _verifyPin : _requestPin),
+                      icon: authState.isLoading
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Icon(
+                              _pinSent
+                                  ? Icons.verified_rounded
+                                  : Icons.mark_email_read_rounded,
+                            ),
+                      label: Text(_pinSent ? 'Verify PIN' : 'Send PIN'),
+                    ),
+                  ),
+                  if (_pinSent) ...[
+                    const SizedBox(width: 8),
+                    TextButton(
+                      onPressed: authState.isLoading
+                          ? null
+                          : () => setState(() {
+                              _pinSent = false;
+                              _pinController.clear();
+                            }),
+                      child: const Text('Change email'),
+                    ),
+                  ],
+                ],
+              ),
+            ],
           ],
         ),
       ),

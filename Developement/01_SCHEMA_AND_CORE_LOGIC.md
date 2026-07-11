@@ -25,7 +25,7 @@ Both the local Drift (SQLite) database and the remote Cloudflare D1 (SQL) databa
 
 ### A. Core Tables (D1 & Drift)
 
-* **`users` table:** `user_id` (UUID, Primary Key), `username` (String), `password_hash` (String), `avatar_url` (String), `total_score` (Int).
+* **`users` table:** `user_id` (UUID, Primary Key), `username` (String), optional `email` (String), optional `email_verified_at` (Timestamp), `password_hash` (String), `avatar_url` (String), `total_score` (Int).
 * **`habits` table:** `id` (UUID, PK), `user_id` (FK), `title` (String), `target_duration` (Int), `color_hex` (String), `status` (Enum: active, abandoned), `created_at` (Timestamp), `updated_at` (Timestamp).
 * **`habit_logs` table:** `id` (UUID, PK), `user_id` (FK), `habit_id` (FK), `status` (Enum), `logged_at` (Timestamp).
 * **`habit_progress` table:** `user_id` (FK), `habit_id` (FK), `current_duration` (Int).
@@ -43,7 +43,9 @@ Both the local Drift (SQLite) database and the remote Cloudflare D1 (SQL) databa
 
 ## 3. API Endpoints (Cloudflare Workers - TypeScript/Hono)
 
-* `POST /api/auth/register` & `/api/auth/login` - Authenticates users and issues JWTs.
+* `POST /api/auth/register` & `/api/auth/login` - Authenticates users and issues JWTs. Registration starts with username/password only; login matches usernames case-insensitively while preserving the stored display casing.
+* `POST /api/user/email/request-pin` & `/verify-pin` - Authenticated Profile activation flow for users who want a verified email for recoverable cloud progress and password reset support.
+* `POST /api/auth/request-pin` & `/reset-password` - Password recovery for accounts with an attached email. Local development logs the PIN; production must send email or return a clear delivery failure.
 * `POST /api/sync/habit` - Initializes or updates habit metadata and color. Only the habit owner may update/archive an existing habit; the route also ensures the owner self-row exists in `partnerships`.
 * `POST /api/sync/log` - Submits a daily completion or a skip. Only `owner` and `partner` roles may create logs. New completed logs award backend-owned progression points and badges; duplicate `log_id` replays do not re-award.
 * `GET /api/sync/daily` - A single payload fetched silently in background to populate partner snapshots, nudges, friend invitations, and the authoritative `gamification` object.

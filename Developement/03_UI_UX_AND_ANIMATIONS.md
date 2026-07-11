@@ -10,6 +10,7 @@ This document provides the complete technical specification and native Flutter c
 * **Home Suggestions:** Suggested preset cards are quick-start shortcuts for the empty Home state only. Once active habits exist, Home should prioritize today's habit cards and keep the add action compact.
 * **Home Progress Labels:** Home habit cards should distinguish challenge progress (`Challenge: Day X of N`) from consecutive-completion streaks. Avoid duplicating day count and fire-streak language around the ring.
 * **Per-Card Social Context:** Habit cards should carry the primary partner/supporter status surface. Show up to four avatars inline, keep role/status visible without opening another screen, and use a simple `+N` overflow indicator for larger groups.
+* **Auth & Activation:** Initial signup/login should ask for username and password only. Email/PIN verification belongs in Profile as an optional cloud-sync/recovery activation card, so users can start quickly and opt into verified email later.
 * **Profile Progression:** Profile should display server-owned `total_points`, level name, and achievement unlocks cached from `/api/sync/daily`. Do not infer badges from completed local habits as the source of truth.
 * **Role-Gated Actions:** Supporters can observe and nudge but must not see active completion/skip affordances. Profile habit edit/archive controls should disable gracefully when cached role data says the user is not the owner.
 

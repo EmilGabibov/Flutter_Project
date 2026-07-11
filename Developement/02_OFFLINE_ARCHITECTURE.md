@@ -11,6 +11,7 @@ The app must read **only** from the local device database to render the UI. Netw
 * **Web Storage:** On Flutter web, Drift uses browser-backed storage via `WebDatabase('hable_db')`; the same local-first rules still apply, but the executor changes by platform.
 * **Sync Metadata:** Every local table must include one extra column specifically for Drift:
   * `is_synced` (Boolean): Defaults to `false` when a user makes a local change.
+* **Account activation state:** Local `users` rows cache optional `email` and `email_verified_at` fields. The app can start with username/password auth only; Profile activation later verifies email through the backend and updates Drift so recovery/cloud-sync status renders offline.
 
 ## 2. The Sync Engine (Background Worker)
 
