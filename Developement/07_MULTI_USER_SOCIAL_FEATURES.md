@@ -13,6 +13,7 @@ Hable is evolving beyond simple habit tracking into an inspiring, social experie
 
 ### 2. Contextual & Milestone-based Wishes (Private Messaging)
 - **Private Celebrations:** Users can send private, one-to-one messages or "best wishes" to friends based on their habit milestones.
+- **Server-Owned Progression:** Completion points, shared-habit bonuses, levels, and achievement badges are calculated in the Worker and returned through daily sync. Social UI should consume that payload instead of recomputing achievements locally.
 - **Smart Suggestions:** 
   - *Midway:* When a friend reaches the halfway point of a challenge, suggest messages like "Keep it up! 🔥" or "You're halfway there! 🚀".
   - *Near End:* Approaching a goal triggers suggestions like "Almost at the finish line! 🏆" or "Last push! 💪".
@@ -23,6 +24,7 @@ Hable is evolving beyond simple habit tracking into an inspiring, social experie
 - **Adding New Habits:** Streamlined flow for adding new habits inspired by friends.
 - **Partnering Up:** When creating a habit, a user can invite a friend to become a "Habit Partner".
 - **Mutual Tracking:** If the friend accepts, the habit becomes a shared entity. Both users' progress is visually linked in the 3D environment (e.g., a dual-colored orb or a bridge connecting their spaces).
+- **Role Foundation:** Shared habits are now role-scoped at the backend. `Owner` controls habit metadata, `partner` can log progress, and future `supporter` views must stay read-only for progress while still allowing encouragement.
 
 ### 4. Friend Search & Partner Invite Flow
 - **Friends List:** Users can view a list of accepted friends directly in the "Friends" tab of the Social Hub, which updates instantly when a friend request is accepted locally.
@@ -32,6 +34,7 @@ Hable is evolving beyond simple habit tracking into an inspiring, social experie
 - **Current MVP:** Habit creation reuses the shared standard-habit presets and presents accepted friends from the local Drift cache as compact chips. Sending an invite is queued offline after the habit is created.
 - **Private Invitation State:** Pending invites are visible only to sender and recipient. Accepting an invite creates the partnership rows for that habit; declining does not expose progress.
 - **Mutual Tracking After Accept:** Only after acceptance does the partner appear in social surfaces such as `PartnerTicker`, daily sync payloads, and future 3D linked habit views.
+- **Current Card Surface:** The practical MVP surface is the Home habit card itself: role-aware avatars, daily-completion state, and capped partner counts should sit next to the habit rather than in a disconnected global strip.
 
 ## Technical Implementation Considerations
 
@@ -44,8 +47,9 @@ Hable is evolving beyond simple habit tracking into an inspiring, social experie
   - `milestone_events`: Table to track when users hit halfway or near-end marks to trigger wish suggestions.
   - `private_messages`: Secure, private table for storing the wishes sent between users.
   - `habit_invitations`: Table to manage the state of partner invitations (pending, accepted, rejected).
+  - `user_score_events` and `user_achievements`: Backend-owned progression tables for idempotent point awards and badge unlocks.
 - **Search API:** Add a minimal friend search endpoint returning only safe profile fields and relationship state. Do not expose habit data from search.
-- **Invitation API:** Habit invitation endpoints must verify accepted friendship before creating a pending habit invite, and must create symmetric `partnerships` rows only after recipient acceptance.
+- **Invitation API:** Habit invitation endpoints must verify accepted friendship before creating a pending habit invite, and after recipient acceptance must create role-aware directed `partnerships` rows so all participants see only authorized shared-habit data.
 - **Push Notifications:** WebSockets or push notifications to alert users when they receive a wish or a partnership invite.
 
 ## Next Steps

@@ -6,8 +6,21 @@ enum HabitStatus { active, completed, abandoned }
 /// Log action status enum stored as text in SQLite.
 enum LogStatus { completed, skipped }
 
+/// Participant role for a shared habit.
+enum PartnershipRole { owner, partner, supporter }
+
 /// Sync queue action types for outbound mutations.
-enum SyncAction { createHabit, logHabit, updateHabit, sendNudge, sendPrivateMessage, acceptInvitation, declineInvitation, syncScore, sendHabitInvitation }
+enum SyncAction {
+  createHabit,
+  logHabit,
+  updateHabit,
+  sendNudge,
+  sendPrivateMessage,
+  acceptInvitation,
+  declineInvitation,
+  syncScore,
+  sendHabitInvitation,
+}
 
 // ---------------------------------------------------------------------------
 // Table Definitions — Mirror the Cloudflare D1 schema (spec 01)
@@ -20,6 +33,7 @@ class Users extends Table {
   TextColumn get userId => text()();
   TextColumn get username => text().withLength(min: 1, max: 50)();
   TextColumn get avatarUrl => text().nullable()();
+  TextColumn get levelName => text().withDefault(const Constant('Newbie'))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
   IntColumn get totalScore => integer().withDefault(const Constant(0))();
@@ -38,6 +52,7 @@ class Habits extends Table {
   IntColumn get targetDuration => integer()();
   IntColumn get currentDuration => integer()();
   TextColumn get status => textEnum<HabitStatus>()();
+
   /// Hex color string (e.g. 'FF9CAF88') for ring/avatar tinting. Assigned on
   /// creation from a fixed pastel palette; never null after migration.
   TextColumn get colorHex => text().withDefault(const Constant('FF9CAF88'))();
@@ -67,6 +82,8 @@ class Partnerships extends Table {
   TextColumn get partnershipId => text()();
   TextColumn get habitId => text().references(Habits, #habitId)();
   TextColumn get partnerUserId => text()();
+  TextColumn get role =>
+      textEnum<PartnershipRole>().withDefault(const Constant('partner'))();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
   BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
 
@@ -80,8 +97,7 @@ class SyncQueue extends Table {
   TextColumn get action => textEnum<SyncAction>()();
   TextColumn get payload => text()(); // JSON-encoded payload
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
-  BoolColumn get isProcessed =>
-      boolean().withDefault(const Constant(false))();
+  BoolColumn get isProcessed => boolean().withDefault(const Constant(false))();
 }
 
 /// Cached daily quotes pulled from the server.
@@ -112,6 +128,8 @@ class PartnerSnapshots extends Table {
   TextColumn get partnerUserId => text()();
   TextColumn get username => text()();
   TextColumn get avatarUrl => text().nullable()();
+  TextColumn get role =>
+      textEnum<PartnershipRole>().withDefault(const Constant('partner'))();
   IntColumn get currentDuration => integer().withDefault(const Constant(0))();
   BoolColumn get hasCompletedToday =>
       boolean().withDefault(const Constant(false))();
@@ -177,4 +195,17 @@ class AcceptedFriends extends Table {
 
   @override
   Set<Column> get primaryKey => {friendUserId};
+}
+
+/// Server-owned achievement unlock cache from /api/sync/daily.
+class AchievementUnlocks extends Table {
+  TextColumn get achievementId => text()();
+  TextColumn get userId => text()();
+  TextColumn get sourceEventId => text()();
+  DateTimeColumn get unlockedAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+  BoolColumn get isSynced => boolean().withDefault(const Constant(true))();
+
+  @override
+  Set<Column> get primaryKey => {userId, achievementId};
 }

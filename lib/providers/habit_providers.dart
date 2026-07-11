@@ -14,50 +14,62 @@ final currentUserProvider = StreamProvider<User?>((ref) {
 });
 
 /// Watches all ACTIVE habits for the current user.
-final activeHabitsProvider =
-    StreamProvider.family<List<Habit>, String>((ref, userId) {
+final activeHabitsProvider = StreamProvider.family<List<Habit>, String>((
+  ref,
+  userId,
+) {
   final db = ref.watch(databaseProvider);
   return db.watchActiveHabits(userId);
 });
 
 /// Watches ALL habits (for the Profile screen).
-final allHabitsProvider =
-    StreamProvider.family<List<Habit>, String>((ref, userId) {
+final allHabitsProvider = StreamProvider.family<List<Habit>, String>((
+  ref,
+  userId,
+) {
   final db = ref.watch(databaseProvider);
   return db.watchAllHabits(userId);
 });
 
 /// Watches logs for a specific habit.
-final habitLogsProvider =
-    StreamProvider.family<List<Log>, String>((ref, habitId) {
+final habitLogsProvider = StreamProvider.family<List<Log>, String>((
+  ref,
+  habitId,
+) {
   final db = ref.watch(databaseProvider);
   return db.watchLogsForHabit(habitId);
 });
 
 /// Fetches today's log for a habit (to check if already completed/skipped).
-final todaysLogProvider =
-    FutureProvider.family<Log?, String>((ref, habitId) {
+final todaysLogProvider = FutureProvider.family<Log?, String>((ref, habitId) {
   final db = ref.watch(databaseProvider);
   return db.getTodaysLog(habitId);
 });
 
 /// Fetches the current streak for a habit.
-final streakProvider =
-    FutureProvider.family<int, String>((ref, habitId) {
+final streakProvider = FutureProvider.family<int, String>((ref, habitId) {
   final db = ref.watch(databaseProvider);
   return db.getStreak(habitId);
 });
 
 /// Fetches log distribution for analytics pie chart.
-final logDistributionProvider =
-    FutureProvider.family<Map<String, int>, String>((ref, userId) {
-  final db = ref.watch(databaseProvider);
-  return db.getLogDistribution(userId);
-});
+final logDistributionProvider = FutureProvider.family<Map<String, int>, String>(
+  (ref, userId) {
+    final db = ref.watch(databaseProvider);
+    return db.getLogDistribution(userId);
+  },
+);
 
 /// Fetches 30-day point history for analytics line chart.
 final pointHistoryProvider =
     FutureProvider.family<List<MapEntry<DateTime, int>>, String>((ref, userId) {
-  final db = ref.watch(databaseProvider);
-  return db.get30DayPointHistory(userId);
-});
+      final db = ref.watch(databaseProvider);
+      return db.get30DayPointHistory(userId);
+    });
+
+/// Watches server-owned achievement unlocks cached from daily sync.
+final achievementUnlocksProvider =
+    StreamProvider.family<List<AchievementUnlock>, String>((ref, userId) {
+      final db = ref.watch(databaseProvider);
+      return db.watchAchievementUnlocks(userId);
+    });

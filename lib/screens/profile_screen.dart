@@ -2,10 +2,12 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../database/database.dart';
-import '../database/tables.dart' show HabitStatus;
+import '../database/tables.dart' show HabitStatus, PartnershipRole;
+import '../data/standard_habits.dart';
 import '../providers/habit_providers.dart';
 import '../theme/app_theme.dart';
 import '../widgets/habit_form_sheet.dart';
+import '../widgets/habit_partner_row.dart';
 import '../widgets/user_avatar.dart';
 import '../widgets/avatar_picker_sheet.dart';
 import '../providers/habit_actions_provider.dart';
@@ -32,6 +34,7 @@ class ProfileScreen extends ConsumerWidget {
     final distributionAsync = ref.watch(logDistributionProvider(userId));
     final historyAsync = ref.watch(pointHistoryProvider(userId));
     final allHabitsAsync = ref.watch(allHabitsProvider(userId));
+    final achievementsAsync = ref.watch(achievementUnlocksProvider(userId));
 
     return Scaffold(
       body: SafeArea(
@@ -61,7 +64,9 @@ class ProfileScreen extends ConsumerWidget {
                       onPressed: () async {
                         await ref.read(authProvider.notifier).logout();
                         if (!context.mounted) return;
-                        Navigator.of(context).popUntil((route) => route.isFirst);
+                        Navigator.of(
+                          context,
+                        ).popUntil((route) => route.isFirst);
                       },
                       icon: Icon(
                         Icons.logout_rounded,
@@ -73,15 +78,16 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ),
 
-            // Score card
+            // User card
             SliverToBoxAdapter(
               child: userAsync.when(
                 data: (user) => Padding(
                   padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                   child: Card(
                     child: Padding(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(20),
                       child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Stack(
                             children: [
@@ -127,10 +133,26 @@ class ProfileScreen extends ConsumerWidget {
                                   user?.username ?? 'User',
                                   style: Theme.of(context).textTheme.titleLarge,
                                 ),
+                                const SizedBox(height: 2),
                                 Text(
-                                  '${user?.totalScore ?? 0} points',
-                                  style: Theme.of(context).textTheme.bodyMedium
-                                      ?.copyWith(color: AppTheme.sageGreen),
+                                  '@${user?.username ?? 'user'}',
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                                const SizedBox(height: 10),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: [
+                                    _InfoPill(
+                                      label: user?.levelName ?? 'Newbie',
+                                      color: AppTheme.sageGreen,
+                                    ),
+                                    _InfoPill(
+                                      label: '${user?.totalScore ?? 0} points',
+                                      color: AppTheme.deepCharcoal,
+                                      fillColor: AppTheme.surfaceVariant,
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
@@ -142,6 +164,18 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 loading: () => const SizedBox.shrink(),
                 error: (_, _) => const SizedBox.shrink(),
+              ),
+            ),
+
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                child: Text(
+                  'Server-owned progression syncs into Profile and Social Hub through local Drift.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppTheme.warmGray.withValues(alpha: 0.9),
+                  ),
+                ),
               ),
             ),
 
@@ -339,12 +373,9 @@ class ProfileScreen extends ConsumerWidget {
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(height: 16),
-                        allHabitsAsync.when(
-                          data: (habits) {
-                            final completed = habits
-                                .where((h) => h.status == HabitStatus.completed)
-                                .toList();
-                            if (completed.isEmpty) {
+                        achievementsAsync.when(
+                          data: (achievements) {
+                            if (achievements.isEmpty) {
                               return Text(
                                 'Complete a habit to earn your first badge!',
                                 style: Theme.of(context).textTheme.bodyMedium,
@@ -353,8 +384,12 @@ class ProfileScreen extends ConsumerWidget {
                             return Wrap(
                               spacing: 12,
                               runSpacing: 12,
-                              children: completed
-                                  .map((h) => _AchievementBadge(title: h.title))
+                              children: achievements
+                                  .map(
+                                    (a) => _AchievementBadge(
+                                      title: _achievementLabel(a.achievementId),
+                                    ),
+                                  )
                                   .toList(),
                             );
                           },
@@ -505,11 +540,16 @@ class ProfileScreen extends ConsumerWidget {
                                   children: [
                                     Text(
                                       (user['username'] as String?) ?? 'Friend',
-                                      style: Theme.of(context).textTheme.titleLarge,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.titleLarge,
                                     ),
                                     Text(
                                       '${user['total_score'] ?? 0} points',
-                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.sageGreen),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(color: AppTheme.sageGreen),
                                     ),
                                   ],
                                 ),
@@ -519,7 +559,7 @@ class ProfileScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    
+
                     const Padding(
                       padding: EdgeInsets.fromLTRB(24, 32, 24, 8),
                       child: Text(
@@ -530,7 +570,7 @@ class ProfileScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    
+
                     if (habits.isEmpty)
                       const Padding(
                         padding: EdgeInsets.fromLTRB(24, 16, 24, 16),
@@ -570,7 +610,7 @@ class _FriendHabitListTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final title = habitData['title'] as String? ?? 'Habit';
     final duration = habitData['target_duration'] as int? ?? 10;
-    
+
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
@@ -596,10 +636,7 @@ class _FriendHabitListTile extends ConsumerWidget {
           const SizedBox(width: 8),
           FilledButton.icon(
             onPressed: () async {
-              HabitFormSheet.show(
-                context,
-                prefilledTitle: title,
-              );
+              HabitFormSheet.show(context, prefilledTitle: title);
             },
             icon: const Icon(Icons.copy, size: 16),
             label: const Text('Follow'),
@@ -612,6 +649,29 @@ class _FriendHabitListTile extends ConsumerWidget {
         ],
       ),
     );
+  }
+}
+
+String _achievementLabel(String achievementId) {
+  switch (achievementId) {
+    case 'first_check_in':
+      return 'First check-in';
+    case '10_streak':
+      return '10-day streak';
+    case '100_streak':
+      return '100-day streak';
+    case '1000_streak':
+      return '1000-day streak';
+    case 'first_nudge':
+      return 'First nudge';
+    case 'first_supporter':
+      return 'First supporter';
+    default:
+      return achievementId
+          .split('_')
+          .where((part) => part.isNotEmpty)
+          .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
+          .join(' ');
   }
 }
 
@@ -685,19 +745,55 @@ class _HabitListTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final partnersAsync = ref.watch(habitPartnersProvider(habit.habitId));
+    final role = partnersAsync.when(
+      data: _viewerRoleForPartners,
+      loading: () => PartnershipRole.owner,
+      error: (_, _) => PartnershipRole.owner,
+    );
+    final canEdit = role == PartnershipRole.owner;
+    final habitMeta = standardHabitForTitle(habit.title);
+
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      leading: CircleAvatar(
+        backgroundColor: AppTheme.surfaceVariant,
+        child: Text(
+          habitMeta?.emoji ?? '•',
+          style: TextStyle(
+            color: habitMeta == null ? AppTheme.sageGreen : null,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
       title: Text(
         habit.title,
         style: const TextStyle(fontWeight: FontWeight.w500),
       ),
-      subtitle: Text('${habit.targetDuration} days'),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('${habit.targetDuration} days · ${role.name}'),
+          const SizedBox(height: 6),
+          partnersAsync.when(
+            data: (partners) => HabitPartnerRow(
+              partners: partners,
+              habitColor: _tileColor(habit.colorHex),
+            ),
+            loading: () => const SizedBox.shrink(),
+            error: (_, _) => const SizedBox.shrink(),
+          ),
+        ],
+      ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
             icon: const Icon(Icons.edit_outlined, size: 20),
-            onPressed: () => HabitFormSheet.show(context, existingHabit: habit),
+            onPressed: canEdit
+                ? () => HabitFormSheet.show(context, existingHabit: habit)
+                : null,
           ),
           if (isActive)
             IconButton(
@@ -706,8 +802,11 @@ class _HabitListTile extends ConsumerWidget {
                 size: 20,
                 color: AppTheme.overdueRose,
               ),
-              onPressed: () =>
-                  ref.read(habitActionsProvider).archiveHabit(habit.habitId),
+              onPressed: canEdit
+                  ? () => ref
+                        .read(habitActionsProvider)
+                        .archiveHabit(habit.habitId)
+                  : null,
             )
           else
             IconButton(
@@ -716,10 +815,58 @@ class _HabitListTile extends ConsumerWidget {
                 size: 20,
                 color: AppTheme.sageGreen,
               ),
-              onPressed: () =>
-                  ref.read(habitActionsProvider).restoreHabit(habit.habitId),
+              onPressed: canEdit
+                  ? () => ref
+                        .read(habitActionsProvider)
+                        .restoreHabit(habit.habitId)
+                  : null,
             ),
         ],
+      ),
+    );
+  }
+
+  PartnershipRole _viewerRoleForPartners(List<PartnerSnapshot> partners) {
+    if (partners.isEmpty) return PartnershipRole.owner;
+    if (partners.any((partner) => partner.role == PartnershipRole.owner)) {
+      return PartnershipRole.owner;
+    }
+    if (partners.any((partner) => partner.role == PartnershipRole.partner)) {
+      return PartnershipRole.partner;
+    }
+    return PartnershipRole.supporter;
+  }
+
+  Color _tileColor(String hex) {
+    try {
+      return Color(int.parse(hex, radix: 16));
+    } catch (_) {
+      return AppTheme.sageGreen;
+    }
+  }
+}
+
+class _InfoPill extends StatelessWidget {
+  final String label;
+  final Color color;
+  final Color? fillColor;
+
+  const _InfoPill({required this.label, required this.color, this.fillColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: fillColor ?? color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

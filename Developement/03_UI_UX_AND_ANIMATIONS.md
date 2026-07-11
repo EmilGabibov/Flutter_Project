@@ -9,6 +9,9 @@ This document provides the complete technical specification and native Flutter c
 * **Habit Creation:** The shared `HabitFormSheet` is the single post-onboarding creation/edit surface. Home exposes a labeled add button in the header and an empty-state Add habit button; Profile remains the management/editing surface. The sheet offers quick-select chips from `standard_habits.dart`, a day-duration field, color selection, and an accepted-friend partner picker for new habits.
 * **Home Suggestions:** Suggested preset cards are quick-start shortcuts for the empty Home state only. Once active habits exist, Home should prioritize today's habit cards and keep the add action compact.
 * **Home Progress Labels:** Home habit cards should distinguish challenge progress (`Challenge: Day X of N`) from consecutive-completion streaks. Avoid duplicating day count and fire-streak language around the ring.
+* **Per-Card Social Context:** Habit cards should carry the primary partner/supporter status surface. Show up to four avatars inline, keep role/status visible without opening another screen, and use a simple `+N` overflow indicator for larger groups.
+* **Profile Progression:** Profile should display server-owned `total_points`, level name, and achievement unlocks cached from `/api/sync/daily`. Do not infer badges from completed local habits as the source of truth.
+* **Role-Gated Actions:** Supporters can observe and nudge but must not see active completion/skip affordances. Profile habit edit/archive controls should disable gracefully when cached role data says the user is not the owner.
 
 ### 2. Mandatory Friction (Skipping)
 If a user skips a habit, open a glassmorphic bottom sheet requiring a text input (Journal Entry). The UI must visually reflect the penalty (extending the journey map).

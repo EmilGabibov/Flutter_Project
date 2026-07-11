@@ -29,7 +29,9 @@ Both the local Drift (SQLite) database and the remote Cloudflare D1 (SQL) databa
 * **`habits` table:** `id` (UUID, PK), `user_id` (FK), `title` (String), `target_duration` (Int), `color_hex` (String), `status` (Enum: active, abandoned), `created_at` (Timestamp), `updated_at` (Timestamp).
 * **`habit_logs` table:** `id` (UUID, PK), `user_id` (FK), `habit_id` (FK), `status` (Enum), `logged_at` (Timestamp).
 * **`habit_progress` table:** `user_id` (FK), `habit_id` (FK), `current_duration` (Int).
-* **`partnerships` table:** `user_id` (FK), `partner_id` (FK), `habit_id` (FK) (Junction mapping friends to shared habits).
+* **`partnerships` table:** `user_id` (FK), `partner_id` (FK), `habit_id` (FK), `role` (Enum: `owner`, `partner`, `supporter`). This is a directed graph over one shared habit: self-rows (`user_id = partner_id`) represent the participant's own role, and non-self rows drive which other participants they can see in daily sync.
+* **`user_score_events` table:** `user_id`, `source_event_id`, `points`, `reason`, `created_at`, with `(user_id, source_event_id)` as the idempotency key for backend-owned score awards.
+* **`user_achievements` table:** `user_id`, `achievement_id`, `unlocked_at`, `source_event_id`, with `(user_id, achievement_id)` as the idempotency key for backend-owned badge unlocks.
 * **`friend_requests` table:** `id` (PK), `requester_id` (FK), `recipient_id` (FK), `status` (Enum), `created_at` (Timestamp).
 * **`habit_invitations` table:** `id` (PK), `requester_id`, `recipient_id`, `habit_id`, `status`, `created_at`. Pending duplicates for the same requester/recipient/habit are idempotent.
 * **`accepted_friends` table:** Drift-only cache of accepted friends (`friend_user_id`, `username`, `avatar_url`) populated from daily sync for offline habit-invite pickers.
@@ -42,9 +44,9 @@ Both the local Drift (SQLite) database and the remote Cloudflare D1 (SQL) databa
 ## 3. API Endpoints (Cloudflare Workers - TypeScript/Hono)
 
 * `POST /api/auth/register` & `/api/auth/login` - Authenticates users and issues JWTs.
-* `POST /api/sync/habit` - Initializes or updates habit metadata and color.
-* `POST /api/sync/log` - Submits a daily completion or a skip.
-* `GET /api/sync/daily` - A single payload fetched silently in background to populate partner snapshots, nudges, and friend invitations.
+* `POST /api/sync/habit` - Initializes or updates habit metadata and color. Only the habit owner may update/archive an existing habit; the route also ensures the owner self-row exists in `partnerships`.
+* `POST /api/sync/log` - Submits a daily completion or a skip. Only `owner` and `partner` roles may create logs. New completed logs award backend-owned progression points and badges; duplicate `log_id` replays do not re-award.
+* `GET /api/sync/daily` - A single payload fetched silently in background to populate partner snapshots, nudges, friend invitations, and the authoritative `gamification` object.
 * `GET /api/social/search` & `GET /api/social/leaderboard` - Used by the Social Hub UI.
 * `POST /api/social/friend-request` & `/accept` & `GET /api/social/friend-request` - Friend request lifecycle.
-* `POST /api/social/habit-invitation`, `/accept`, and `/decline` - Habit partner invitation lifecycle. Creating an invitation requires an accepted friendship and requester ownership of the habit.
+* `POST /api/social/habit-invitation`, `/accept`, and `/decline` - Habit partner invitation lifecycle. Creating an invitation requires an accepted friendship and requester ownership of the habit. Accepting an invite adds the recipient as `partner` and fans out directed partnership rows to existing participants.

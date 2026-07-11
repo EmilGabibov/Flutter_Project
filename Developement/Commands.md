@@ -3,8 +3,7 @@
 ### Web Deployment
 Deploy the web version of the Flutter app to Cloudflare Pages:
 ```bash
-flutter build web
-npx wrangler pages deploy build/web --project-name=hable
+flutter build web && npx wrangler pages deploy build/web --project-name=hable
 ```
 
 ### Build Android APKs

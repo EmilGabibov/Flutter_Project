@@ -313,6 +313,410 @@
 
 **Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
 
+
+<a id="add-partnership-roles-and-enforce-habit-permissions-in-backend"></a>
+### [x] Add Partnership Roles And Enforce Habit Permissions In Backend
+
+**Raw source:** 1. Database Roles & Relationships (High Priority Blocker)
+* **Objective:** Expand the D1 `partnerships` table to support Role-Based Access Control (RBAC) via a `role` enum to prevent client-side state conflicts.
+* **Owner:** Can edit/delete the habit, complete/skip, and nudge participants.
+* **Partner:** Can complete/skip, view details, and nudge others. Cannot edit/delete the habit.
+* **Supporter:** Read-only view of progress, can send encouragement/nudges. by pressing and holding the habit ring and completing it (with same difficulty as owner/partner). Cannot complete/skip or edit.
+* **Relationship Types:** Sole creator, mutual friendships (send/accept), and multi-partner habits.
+* **Action:** Engineer a D1 schema migration and update the Cloudflare Worker to enforce these permissions before updating the Flutter UI.
+
+**Issue:** Hable currently treats `partnerships` as a simple `(user_id, partner_id, habit_id)` visibility junction. Worker routes authorize many actions by accepted friendship or partnership existence, so clients can drift into conflicting behavior: owners, partners, and future supporters are not distinguishable at the backend boundary. This blocks later UI work because edit/delete, complete/skip, nudge, and supporter encouragement permissions need a server-enforced source of truth.
+
+**Ponytail triage:**
+- *Should exist:* Yes, authorization must be enforced by D1/Worker before client UI can safely expose roles.
+- *Smallest safe scope:* Add a role field to partnerships, backfill existing rows as `partner`, ensure habit creators are represented as `owner`, and centralize Worker permission checks for habit update/archive, log completion/skip, invitation acceptance, daily sync, profile habit visibility, and nudge/encouragement.
+- *Skipped scope:* Full UI redesign, role-management screens, supporter invitation UX, granular per-field permissions, audit logs, admin tooling, realtime updates, and gamification badges tied to supporters.
+- *Boundaries:* This is backend/schema-first. Flutter should only receive/cache role data where needed for later UI tasks; it should not add new role-specific screens or broad visual polish in this pass.
+
+**Action:** Implement backend RBAC for habit relationships. Migrate D1 `partnerships` to include `role` constrained to `owner`, `partner`, and `supporter`; update Worker writes so habit creators and invite acceptances create correct role rows; enforce role checks before mutating habits/logs or sending nudges; and update sync payloads so the client can cache role-aware partner state without inventing permissions locally.
+
+**Hable perspective:** The app stays offline-first, but backend authorization remains authoritative. Flutter can optimistically write local actions, yet failed sync must not be hidden when the backend rejects a role-disallowed mutation. `PartnerSnapshots` and any local partnership cache should carry enough role metadata for future UI decisions, while Home/Profile continue reading Drift streams.
+
+**Implementation scope:**
+- D1 schema in `backend/schema.sql`: add `role TEXT NOT NULL DEFAULT 'partner'` to `partnerships`, add indexes for `(user_id, habit_id, role)` and `(partner_id, habit_id)`, and define migration/backfill notes for existing local and remote D1 databases.
+- Backend route helpers in `backend/src/index.ts`: add small shared permission helpers such as owner check, partner-or-owner check, supporter-readable check, and accepted-friend check where still needed.
+- Habit ownership: ensure `POST /api/sync/habit` creates or maintains an owner relationship for the authenticated creator and rejects update/archive attempts unless the user is owner.
+- Habit logging: ensure `POST /api/sync/log` accepts completion/skip from owner or partner only; supporter attempts must be rejected or treated as encouragement through a separate allowed path.
+- Invitation flow: update `POST /api/social/habit-invitation` and `/accept` so accepted partner invites create recipient role `partner`, keep creator role `owner`, and never create supporter rows unless a future endpoint explicitly does so.
+- Nudge/encouragement: keep partner/owner nudges authorized for shared habits; if supporter encouragement is represented in this pass, make it a clearly separate backend-allowed action that does not create habit logs or progress.
+- Daily sync/profile routes: include role in partnership-derived payloads and keep privacy masking intact; supporters can view only allowed habit progress fields and never private journal data.
+- Drift schema in `lib/database/tables.dart` and sync merge in `lib/services/sync_service.dart`: add/cache role metadata only if the backend payload now returns it; avoid UI behavior changes beyond not crashing on the new field.
+- Test surface: direct Worker/API smoke tests for owner edit/archive, partner complete/skip, partner edit rejection, supporter complete/skip rejection, supporter/partner nudge or encouragement authorization, and daily sync role payloads.
+- Documentation: update `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `04_Social_and_Analytics.md`, `07_Multi_User_Social_Features.md`, `TWIN_TEST_HARNESS.md`, and `08_Testing.md` if schema, auth behavior, sync payloads, or smoke procedures change.
+
+**Scalability considerations:** Role checks must use indexed D1 lookups and should stay centralized so adding more social routes does not duplicate authorization SQL. If partnerships grow large, daily sync should keep querying by `user_id` and `habit_id` with role indexes rather than scanning friend graphs.
+
+**Future split guidance:** The existing raw UI-polish/gamification tasks should consume this role foundation later. Defer role management UI, supporter invite UX, role-change flows, ownership transfer, audit logging, and conflict-resolution UI to separate tasks.
+
+**Edge cases:** Existing partnership rows without roles, creator missing an owner row, duplicate owner rows, accepted friend but no habit role, partner trying to edit/archive, supporter trying to complete/skip, owner archiving a habit while partners have pending local logs, habit invite accepted before habit sync creates the habit row, stale client cached role after backend change, daily sync missing role for old rows, and backend route accidentally authorizing by friendship alone.
+
+**Acceptance criteria:**
+- D1 `partnerships` supports a role value of `owner`, `partner`, or `supporter`, with existing rows backfilled safely.
+- Habit creators are represented as `owner` for their habits.
+- Accepted habit partner invites create/maintain recipient `partner` role and creator `owner` role.
+- Owner can update/archive/delete-as-archive a habit; partner and supporter cannot.
+- Owner and partner can complete/skip a shared habit when authorized; supporter cannot create completion/skip logs.
+- Nudge or encouragement authorization matches the role policy and does not allow arbitrary users to nudge private habit participants.
+- `/api/sync/daily` and any friend profile/shared habit payload include role where role-aware UI will need it, without exposing private journals or non-shared habit data.
+- Flutter sync/cache handles the role field without breaking existing Home/Profile/Social Hub rendering.
+- Focused API smoke tests or documented curl checks prove allowed and rejected paths for owner, partner, and supporter roles.
+- Dependency docs are verified and updated if schema, backend permissions, sync payloads, or testing guidance change.
+
+**Dependencies:** `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `04_Social_and_Analytics.md`, `07_Multi_User_Social_Features.md`, `TWIN_TEST_HARNESS.md`, `08_Testing.md`
+
+**Completion notes:**
+- Touched files: `backend/schema.sql`, `backend/src/index.ts`, `lib/database/tables.dart`, `lib/database/database.dart`, `lib/database/database.g.dart`, `lib/services/sync_service.dart`, `Developement/01_Schema_and_Core_Logic.md`, `Developement/02_Offline_Architecture.md`, `Developement/04_Social_and_Analytics.md`, `Developement/07_Multi_User_Social_Features.md`, `Developement/TWIN_TEST_HARNESS.md`, and `Developement/08_Testing.md`.
+- Behavior verified: habit creators now get/retain `owner` membership rows; accepted invites create role-aware participant rows; owner-only habit update/archive is enforced; partner log is allowed; supporter log is rejected; nudge authorization now requires shared-habit participation instead of friendship alone; `/api/sync/daily` includes the role field and Flutter caches it into `PartnerSnapshots`.
+- Verification run: `npx tsc --noEmit`, `flutter pub run build_runner build`, `flutter analyze`, `npm run db:setup`, and a local Worker RBAC smoke against `http://127.0.0.1:8787` covering owner, partner, and supporter cases.
+- Docs verified/updated: `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `04_Social_and_Analytics.md`, `07_Multi_User_Social_Features.md`, `TWIN_TEST_HARNESS.md`, and `08_Testing.md` were updated to reflect the role model, permission rules, and local D1 migration note.
+- Completed At: 2026-07-11 02:56 CEST
+
+<a id="add-server-side-gamification-progression-to-daily-sync"></a>
+### [x] Add Server-Side Gamification Progression To Daily Sync
+
+**Raw source:** 2. Gamification: Achievements, Badges & Points
+* **Objective:** Implement a server-side progression system returned via the `/api/sync/daily` payload to keep the Flutter client lightweight and prevent spoofing.
+* **Points System:** Award 5 points per check-in. Award bonus points when all partners in a shared habit check in.
+* **Levels:** Map total points to named tiers (e.g., "Newbie") to replace raw numbers on the user profile.
+* **Badges:** Track milestones (first check-in, 10/100/1000 streaks, first nudge, first supporter) entirely on the backend.
+* **Action:** Update the Cloudflare Worker to calculate and append unlocked achievements to the user payload during the `SyncQueue` flush.
+
+**Issue:** Hable currently has local/client score logic in `ScoringEngine`, optimistic score updates in Home, and a client-writable `/api/sync/score` endpoint. D1 also stores `users.total_score` and Social Hub reads leaderboards from it, but `/api/sync/daily` does not return an authoritative level or badge payload. This makes profile points spoofable, keeps old `+10` scoring docs in conflict with the new `+5` raw requirement, and blocks later UI polish that needs stable server-owned progression data.
+
+**Ponytail triage:**
+- *Should exist:* Yes, score and badge state affect leaderboard/profile trust and must be owned by the backend.
+- *Smallest safe scope:* Award points and unlock badges inside Worker routes that already process logs, nudges, and accepted role/supporter events; persist unlocks idempotently in D1; return a compact `gamification` object from `/api/sync/daily`; and let Flutter cache/display only the server values needed to avoid regressions.
+- *Skipped scope:* New achievements gallery, badge animations, seasonal ranks, anti-cheat analytics, push notifications, complex streak calendars, profile/card redesign, and marketplace-style habit following.
+- *Boundaries:* Do not keep `/api/sync/score` as a client-authoritative score source. Do not broaden the next raw UI polish item into this task. Do not award duplicate points when the same offline log is replayed.
+
+**Action:** Move progression authority to Cloudflare Workers and D1. Add backend achievement storage, calculate 5 points for accepted completed check-ins, grant an idempotent shared-habit bonus when all active owner/partner participants complete the same habit for the same day, unlock milestone badges on backend events, and append current total points, level name, unlocked badges, and newly unlocked badges to the daily sync payload. Update Flutter sync/cache code only enough to consume the payload and stop treating local score math as authoritative.
+
+**Hable perspective:** The app remains offline-first. Flutter can optimistically show local completion, but final point totals, level names, leaderboard ranking, and badges must come from `/api/sync/daily` and Drift/Riverpod read models. Home should not block on network scoring, and Profile should not run local achievement inference as the source of truth once server progression exists.
+
+**Implementation scope:**
+- D1 schema in `backend/schema.sql`: add an achievement unlock table such as `user_achievements(user_id, achievement_id, unlocked_at, source_event_id)` with a unique key on `(user_id, achievement_id)`, add any needed progression-event table or columns to make point awards idempotent, and index log/progression lookups by `user_id`, `habit_id`, `logged_at`, and `status`.
+- Backend `backend/src/index.ts`: define small scoring constants and tier mapping in one place, starting with `5` points per completed check-in and named levels derived from `users.total_score`.
+- `/api/sync/log`: after a log insert actually succeeds, award check-in points only for `completed` logs, update `habit_progress`, unlock `first_check_in` and streak badges, and never double-award duplicate `log_id` replays.
+- Shared-habit bonus: when all active owner/partner participants for a habit have a completed log for the same local date, award the bonus once per eligible participant and source it to a unique event key.
+- `/api/social/nudge`: unlock `first_nudge` for the sender when the nudge is authorized and accepted.
+- Partnership/supporter integration: unlock `first_supporter` when a supporter role is created after the role task exists; if supporter creation is not yet implemented, leave a guarded no-op and document the dependency instead of faking it client-side.
+- `/api/sync/daily`: return `gamification` with current `total_points`, derived `level`, all unlocked `badges`, and a bounded `newly_unlocked_badges` list for the current sync window or pending unacknowledged unlocks.
+- Flutter Drift in `lib/database/tables.dart` and generated database code: cache server-owned total score and achievement unlocks if needed for Profile/Social Hub offline reads. Use the smallest schema change that preserves local-first rendering.
+- Flutter sync in `lib/services/sync_service.dart`: parse `gamification` during `pullDailySync`, update local user score/level/badge cache, and stop relying on `SyncAction.syncScore` for authoritative scoring. Keep backward compatibility if older Worker responses omit `gamification`.
+- Flutter UI/providers: remove or demote local `ScoringEngine` use from authoritative score updates. Profile may show the server-derived level and badges in the existing layout, but new visual polish belongs to the next raw task.
+- Documentation: update `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `07_Multi_User_Social_Features.md`, and `08_Testing.md` so score values, sync ownership, payload shape, and smoke commands match the implementation.
+- Test surface: focused Worker/API checks for duplicate log replay, completed vs skipped logs, shared bonus once all partners complete, badge unlock idempotency, nudge badge unlock, daily sync payload shape, and Flutter sync parsing of the payload.
+
+**Scalability considerations:** Point awards must be event/idempotency-key based so large offline sync queues do not recompute all history or double count. Daily sync should read indexed aggregates and achievement rows, not scan every habit log. Badge unlocks should use unique constraints, and shared-habit bonus checks should query one habit/date participant set rather than the whole friend graph.
+
+**Future split guidance:** Rich achievement UI, badge reveal animations, profile card redesign, social celebration feeds, seasonal leaderboards, notification copy, and supporter invitation UX should be separate tasks. The next raw `Habit Card & Profile UI Polish` item can consume the `gamification` payload after this backend contract exists.
+
+**Edge cases:** Duplicate offline log replay, two devices syncing the same completion, skipped logs, log timestamps around local midnight, archived habits, partner removed before bonus calculation, supporter role not yet available, accepted friend with no shared habit, user with old local `syncScore` queue entries, backend response without `gamification`, partial D1 migration with existing `total_score`, stale Profile score before next daily sync, leaderboard rows during migration, badge unlock generated but daily sync fails, and shared-habit bonus race when participants sync at different times.
+
+**Acceptance criteria:**
+- Backend awards exactly 5 base points for each newly accepted completed check-in and no points for skipped logs unless a future spec changes that explicitly.
+- Duplicate `log_id` or duplicate source event replays do not increase `users.total_score` or duplicate badge rows.
+- Shared-habit all-partner bonus is awarded once per eligible participant when all active owner/partner participants complete the habit for the same date.
+- `first_check_in`, `10_streak`, `100_streak`, `1000_streak`, `first_nudge`, and `first_supporter` badges are unlocked idempotently by backend events.
+- `/api/sync/daily` returns a compact `gamification` payload with total points, level name, unlocked badges, and newly unlocked badges.
+- Flutter daily sync caches the server progression payload for local-first Profile/Social Hub reads and handles missing payloads without crashing.
+- Client-side score sync is no longer authoritative; `/api/sync/score` is removed, deprecated, or ignored safely so users cannot spoof leaderboard totals by posting arbitrary totals.
+- Existing Home completion flow still works offline and queues log sync without blocking on network scoring.
+- Profile no longer has to infer achievements from completed local habits as the source of truth, though full visual polish is deferred.
+- Focused backend/API tests or documented curl checks prove scoring, bonus, badge, idempotency, and daily payload behavior.
+- Dependency docs are verified and updated if schema, sync payloads, scoring constants, UI expectations, or smoke procedures change.
+
+**Dependencies:** `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `07_Multi_User_Social_Features.md`, `08_Testing.md`
+
+**Completion notes:**
+- Touched files: `backend/schema.sql`, `backend/src/index.ts`, `lib/database/tables.dart`, `lib/database/database.dart`, `lib/database/database.g.dart`, `lib/services/sync_service.dart`, `lib/screens/home_screen.dart`, `lib/screens/profile_screen.dart`, `lib/providers/habit_providers.dart`, `lib/providers/scoring_provider.dart`, `Developement/01_Schema_and_Core_Logic.md`, `Developement/02_Offline_Architecture.md`, `Developement/03_UI_UX_and_Animations.md`, `Developement/04_Social_and_Analytics.md`, `Developement/07_Multi_User_Social_Features.md`, and `Developement/08_Testing.md`.
+- Behavior verified: Worker-owned score events now award 5 points per newly accepted completed check-in, award a 5-point shared-habit bonus once all active owner/partner participants complete the same habit/date, unlock backend-owned achievements idempotently, return `gamification` from `/api/sync/daily`, and reject client-authored `/api/sync/score` with HTTP `410`.
+- Flutter behavior verified: Home no longer updates score totals locally, stale `syncScore` queue items are ignored instead of posted, daily sync caches server total points, level name, and achievement unlocks into Drift, and Profile reads the cached level/badges without inferring achievements from completed local habits.
+- Verification run: `npx tsc --noEmit`, `flutter pub run build_runner build`, `dart format`, `flutter analyze`, `npm run db:setup`, and a local Worker smoke against `http://127.0.0.1:8787` covering duplicate log replay, completed vs skipped logs, shared bonus, nudge badge unlock, daily payload shape, and deprecated score sync.
+- Docs verified/updated: `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `07_Multi_User_Social_Features.md`, and `08_Testing.md` were updated to reflect schema, payload, scoring constants, UI expectations, and smoke procedure.
+- Completed At: 2026-07-11 03:05 CEST
+
+<a id="polish-habit-cards-and-profile-with-role-aware-progression-data"></a>
+### [x] Polish Habit Cards And Profile With Role-Aware Progression Data
+
+**Raw source:** 3. Habit Card & Profile UI Polish
+* **Objective:** Update the client UI to reflect the new roles and gamification data (Strictly blocked by Item 1).
+* **User Card:** Compact the profile view to show the profile picture, name, username, and the dynamic Level Name.
+* **Habit Card Data:** Display habit title, icon, current streak, target days, and a horizontal progress line along the bottom border.
+* **Social Ring:** Show the habit icon inside a color-coded ring. Fill the ring upon completion; leave it empty for active/skipped states.
+* **Partner Visibility:** Display a maximum of 4 partner/supporter avatars per card, adding a status ring around their profile pictures to indicate daily completion.
+
+**Issue:** Home and Profile already render useful pieces, but the surfaces are not yet aligned with the upcoming role and server-side gamification contracts. `_HabitCard` currently centers the mud button and shows title, streak, and a challenge label, while partner status is mostly handled by a separate `PartnerTicker`. `ProfileScreen` shows raw points and locally inferred achievement chips, not a compact server-derived level card. Once backend roles and the `/api/sync/daily` gamification payload exist, the UI needs one cohesive polish pass that consumes those read models without adding a second source of truth.
+
+**Ponytail triage:**
+- *Should exist:* Yes, the UI needs to reflect role-aware partners/supporters and server-owned progression after the backend contracts land.
+- *Smallest safe scope:* Reuse `_HabitCard`, `PartnerTicker`/avatar styling, `UserAvatar`, `habitPartnersProvider`, `currentUserProvider`, and the existing Profile layout. Add only the fields/providers needed to read role, daily partner completion, and server level/badges from Drift.
+- *Skipped scope:* Full visual redesign, new navigation, 3D environment, animated badge gallery, public friend feed, role management screens, global leaderboard redesign, and custom chart rewrites.
+- *Boundaries:* This task is blocked until `Add Partnership Roles And Enforce Habit Permissions In Backend` and `Add Server-Side Gamification Progression To Daily Sync` define payload fields. Do not infer roles or levels in UI if backend data is missing; use safe fallbacks.
+
+**Action:** Polish the existing Home habit card and Profile user card to consume role-aware partner snapshots and server-side progression. Compact the Profile header around avatar, username, and dynamic level name; update Home cards to show habit title/icon, streak, target progress, bottom progress line, and up to four role/status-aware partner avatars; and keep all UI reads local-first through Drift/Riverpod.
+
+**Hable perspective:** Home remains the daily action surface and must stay calm, fast, and local-first. Profile remains the historical/progression surface. Daily sync and Drift should supply role, completion, score, level, and badge fields; Flutter widgets should render those fields, not calculate permissions or progression policy. The mud long-press button can remain the primary completion affordance, but the card around it should become clearer and more social.
+
+**Implementation scope:**
+- `lib/screens/profile_screen.dart`: replace the raw points-first score card with a compact user card showing `UserAvatar`, username/name, dynamic server level name, and points as secondary text. Use cached server gamification fields when available and keep a non-crashing fallback for older local data.
+- `lib/screens/profile_screen.dart`: replace completed-habit-derived achievement chips with server badge data after the gamification task adds a Drift cache/provider. Preserve the existing card shape and avoid a new achievements screen.
+- `lib/screens/home_screen.dart`: polish `_HabitCard` to show habit title, optional icon/emoji, current streak, target days, and a bottom horizontal progress line computed from local `Habit.currentDuration`/`targetDuration` or the accepted server progress field.
+- `lib/screens/home_screen.dart`: render a compact social row inside each `_HabitCard` using `habitPartnersProvider(habit.habitId)`, capped at four avatars with a `+N` overflow indicator.
+- Partner/supporter avatars: reuse or extract styling from `PartnerTicker` and `UserAvatar`; add status rings for completed today, active/not completed, skipped, and supporter read-only where the backend role/status fields exist.
+- Role handling: use backend-provided `owner`, `partner`, and `supporter` values from the role task. Hide or disable completion/nudge affordances according to cached role metadata instead of deriving permissions in widgets.
+- Drift/Riverpod: extend `PartnerSnapshots` or adjacent read models only as needed for role, today status, and display fields; keep provider watches scoped per habit to avoid rebuilding the whole Home list.
+- `lib/widgets/partner_ticker.dart`: keep the global ticker if still useful, but remove duplicated partner semantics where per-card avatars now carry the primary role/status information.
+- Accessibility: add semantics labels that distinguish habit progress, completion state, partner role, partner daily status, and overflow avatar count.
+- Responsive/mobile validation: keep cards stable on narrow Android screens and Flutter web widths; avoid horizontal overflow from avatar rows or long habit titles.
+- Documentation: update `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `07_Multi_User_Social_Features.md`, and `08_Testing.md` if card/profile placement, role displays, progression labels, or smoke steps change.
+- Test surface: widget/provider tests or documented device/web smoke for compact Profile card, server level fallback, habit-card progress line, max-four partner avatars, overflow count, role-disabled affordances, and no overflow on narrow screens.
+
+**Scalability considerations:** Home can contain many active habits and each card can have many partners. Watch partners by habit with `habitPartnersProvider(habitId)`, cap visible avatars at four, and avoid querying all partners for every card. Progress rendering should be simple arithmetic in build or precomputed provider state; no heavy chart or badge computation belongs on the Home render path.
+
+**Future split guidance:** 3D habit environments, badge reveal animations, custom icon libraries, role-management screens, supporter invitation UX, leaderboard visual redesign, and social celebration feeds should stay separate. If this polish reveals missing backend payload fields, append raw backend/data tasks rather than fabricating UI-only state.
+
+**Edge cases:** Backend role/gamification payload missing during migration, older Drift rows without role or level fields, no avatar URL, emoji avatar, long username, long habit title, zero or invalid target duration, completed habit with stale partner status, more than four partners, supporter mixed with partners, user has no badges, offline after role change, local completion before daily sync returns server score, friend removed from habit, archived habit still cached, Flutter web narrow viewport, Android text scaling, and screen readers reading avatar-only status.
+
+**Acceptance criteria:**
+- Profile user card shows avatar, username/display name, server-derived level name, and points as secondary text using local Drift/Riverpod data.
+- Profile achievements render backend-provided badge data when available and fall back gracefully when not yet synced.
+- Each Home habit card shows habit title, icon or safe placeholder, current streak, target/progress text, and a bottom horizontal progress line.
+- Per-card partner/supporter avatars render inside the relevant habit card, capped at four visible users with a clear `+N` overflow indicator.
+- Avatar rings distinguish completed today from active/not completed and show supporter/partner role state when backend data provides it.
+- Completion, skip, edit, and nudge affordances respect cached backend role metadata; unsupported actions are hidden or disabled without inventing permissions client-side.
+- Home and Profile continue to render from local Drift streams and do not make direct network calls for card/profile polish.
+- The global `PartnerTicker` no longer duplicates or conflicts with per-card partner status semantics.
+- Long text, empty data, no partners, many partners, and narrow mobile layouts do not overflow.
+- Semantics labels describe habit progress, partner role/status, and avatar overflow clearly.
+- Focused widget/provider tests or documented web/Android smoke verify the compact profile card, progress line, avatar cap/overflow, role-based disabled states, and missing-payload fallback.
+- Dependency docs are verified and updated if UI layout, role display, progression labels, or smoke procedures change.
+
+**Dependencies:** `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `07_Multi_User_Social_Features.md`, `08_Testing.md`
+
+**Completion notes:**
+- Touched files: `backend/src/index.ts`, `lib/services/sync_service.dart`, `lib/screens/home_screen.dart`, `lib/screens/profile_screen.dart`, `lib/widgets/habit_partner_row.dart`, `lib/data/standard_habits.dart`, `test/habit_partner_row_test.dart`, `Developement/02_Offline_Architecture.md`, `Developement/03_UI_UX_and_Animations.md`, `Developement/04_Social_and_Analytics.md`, `Developement/07_Multi_User_Social_Features.md`, and `Developement/08_Testing.md`.
+- Behavior verified: `/api/sync/daily` now exposes `has_completed_today` for partner snapshots; Home habit cards render habit emoji/title, streak, challenge progress, bottom progress line, and a per-card role-aware partner row capped at four visible avatars plus `+N` overflow; supporter roles disable completion/skip affordances locally; Profile uses a compact avatar/username/level card and disables edit/archive/restore controls for non-owner shared habits.
+- Verification run: `npx tsc --noEmit`, `flutter analyze`, and `flutter test test/habit_partner_row_test.dart`.
+- Docs verified/updated: `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `07_Multi_User_Social_Features.md`, and `08_Testing.md` were updated to reflect per-card partner status, role-gated affordances, and the focused widget smoke coverage.
+- Completed At: 2026-07-11 03:22 CEST
+
+<a id="add-revocable-ical-feed-for-native-calendar-subscriptions"></a>
+### [ ] Add Revocable iCal Feed For Native Calendar Subscriptions
+
+**Raw source:** 4. Edge-Native Calendar Integration (iCal)
+* **Objective:** Allow users to view daily habits in their native phone calendar without adding heavy, permission-bloated Flutter calendar dependencies.
+* **Architecture:** Create a Cloudflare Worker route that generates a dynamic, read-only `.ics` (iCalendar) feed subscription link per user.
+* **Event Title:** Generate dynamic motivational messages based on progress. Group multiple daily habits into a single summary event to prevent calendar app clutter.
+* **Event Description:** Keep descriptions highly concise. Include partner names and the current target fraction (e.g., 3/5 days).
+
+**Issue:** Hable currently keeps habit state in Drift and syncs to Cloudflare Workers, but there is no native-calendar integration. Adding mobile calendar plugins would add OS permissions and platform-specific write behavior that conflicts with the raw requirement. The lightweight path is a server-generated, read-only calendar subscription feed that native calendar apps can consume through a URL while Hable remains the source of truth.
+
+**Ponytail triage:**
+- *Should exist:* Yes, it gives users calendar visibility without owning native calendar permissions or duplicate local calendar state.
+- *Smallest safe scope:* Add a revocable per-user feed token, a public `.ics` route that returns a compact rolling habit summary, and a Flutter profile/settings surface that copies the subscription URL. Avoid direct calendar writes.
+- *Skipped scope:* Calendar plugin integration, two-way sync, per-habit event editing, reminders/notifications, OAuth calendar APIs, timezone preference UI, recurring rule editors, and full calendar management screens.
+- *Boundaries:* The feed is read-only and server-generated. Calendar clients cannot send Bearer tokens, so the URL token must be unguessable and revocable. Do not expose journal entries, private friend data, pending invites, or arbitrary user identifiers in the feed.
+
+**Action:** Build an edge-native iCal subscription path. Add a protected Worker route to create/read/rotate the current user's calendar feed token, add a public tokenized `.ics` route that summarizes the user's active daily habits into a small rolling event set, and add a minimal Flutter UI affordance to copy the feed URL for native calendar subscription.
+
+**Hable perspective:** Hable remains offline-first for in-app UI, but calendar apps are external pull clients. The Worker must generate the feed from D1 as the authoritative synced state, not from the device. Flutter only displays/copies the feed URL after authentication; it does not need calendar permissions or a local calendar database table unless a cached link improves UX.
+
+**Implementation scope:**
+- D1 schema in `backend/schema.sql`: add a table such as `calendar_feed_tokens(user_id TEXT PRIMARY KEY, token_hash TEXT NOT NULL, created_at DATETIME, rotated_at DATETIME, revoked_at DATETIME)` or an equivalent token model that supports rotation/revocation without storing plain tokens when practical.
+- Backend `backend/src/index.ts`: add protected routes under the existing JWT middleware, for example `GET /api/user/calendar-feed` to return/create the user's feed URL and `POST /api/user/calendar-feed/rotate` to revoke the old token and issue a new one.
+- Backend public route: add a non-JWT route such as `GET /calendar/:token.ics` or `GET /api/calendar/:token.ics` before protected middleware so native calendar clients can fetch it without app auth headers.
+- ICS generation: emit valid `text/calendar; charset=utf-8` with CRLF line endings, `VCALENDAR`, `VERSION:2.0`, `PRODID`, stable `UID`s, `DTSTAMP`, `DTSTART`/`DTEND` or all-day `VALUE=DATE`, escaped text fields, and deterministic ordering.
+- Feed content: group daily active habits into one concise summary event per day for a bounded rolling window, such as today plus the next 14 or 30 days, instead of creating one event per habit.
+- Event copy: title should be short and motivational without inventing private data; description should include compact habit names, partner names only where the user is authorized to see them, and current target fractions such as `3/5 days`.
+- Privacy: exclude journal notes, private messages, pending invitations, raw auth identifiers, email addresses, and non-shared friend data. Treat anyone with the feed URL as able to read the summary until the user rotates the token.
+- Flutter UI: add a small "Calendar subscription" card or action in `ProfileScreen` or the nearest settings surface using existing auth/API infrastructure. Provide copy-to-clipboard behavior with `Clipboard` from Flutter services; add `url_launcher` only if a one-tap subscribe/open flow is explicitly required after the copy-link MVP.
+- Flutter providers/services: add a minimal authenticated request helper/provider for fetching/rotating the feed link. Do not block Home rendering and do not introduce a background sync table for the calendar feed unless the UI needs cached display.
+- Deployment/base URL: generate absolute HTTPS feed URLs using production origin where possible and support local development via `apiBaseUrl`/request origin so curl and ADB smoke tests can verify local feeds.
+- Documentation: update `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `TWIN_TEST_HARNESS.md`, and `08_Testing.md` if routes, schema, UX placement, privacy semantics, or smoke commands change.
+- Test surface: backend curl checks for create link, fetch `.ics`, rotate token, invalid token, no private data leakage, and valid ICS headers/body; Flutter widget/provider or documented smoke for copy-link and rotate actions.
+
+**Scalability considerations:** Calendar clients may poll feeds repeatedly, so the public route should do indexed user/habit/partnership lookups and return a bounded rolling window. Avoid per-request full history scans. If traffic grows, add cache headers with a short safe TTL and consider Cloudflare cache only if token privacy and revocation behavior remain correct.
+
+**Future split guidance:** Native one-tap calendar launching, user-configurable event times, reminder alarms, per-habit calendar selection, Google/Apple OAuth integrations, two-way completion from calendar, and localized motivational copy should be separate tasks. This task should only ship a secure read-only feed subscription.
+
+**Edge cases:** Calendar client cannot send auth headers, leaked feed URL, token rotation while a calendar app caches the old URL, invalid token, revoked token, user with no active habits, archived habits, habit with zero/invalid duration, many active habits, long habit names, emoji habit titles, partner names with special characters, local timezone vs UTC all-day dates, DST boundaries, duplicate UIDs causing calendar churn, stale D1 state before local sync flush, production URL generated from local origin, calendar clients caching aggressively, and ICS line escaping/line folding errors.
+
+**Acceptance criteria:**
+- Authenticated users can generate or retrieve a stable calendar subscription URL.
+- Users can rotate/revoke the feed token so the old `.ics` URL stops returning habit data.
+- Public `.ics` route works without JWT headers and returns `text/calendar` with valid iCalendar structure.
+- Feed events are grouped into concise daily summary events rather than one event per habit.
+- Event titles are short and motivational; descriptions include authorized habit names, partner names where allowed, and target fractions.
+- Feed excludes journal entries, private messages, pending invite data, emails, raw auth identifiers, and non-authorized social data.
+- Flutter exposes a minimal calendar subscription action that copies the URL without requiring native calendar permissions or heavy calendar dependencies.
+- Missing network/auth failures in the Flutter calendar-link UI are handled with clear non-crashing states.
+- Backend queries are bounded and indexed enough for repeated calendar polling.
+- Curl or backend tests verify valid token, rotated token, invalid token, empty feed, and no private-data leakage.
+- Web/Android smoke or widget/provider tests verify the copy-link/rotate UI.
+- Dependency docs are verified and updated if schema, routes, privacy model, UI placement, or test procedure changes.
+
+**Dependencies:** `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `TWIN_TEST_HARNESS.md`, `08_Testing.md`
+
+**Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+
+<a id="add-code-native-mermaid-architecture-diagrams-for-schema-and-sync-flow"></a>
+### [ ] Add Code-Native Mermaid Architecture Diagrams For Schema And Sync Flow
+
+**Raw source:** 5. System Architecture Documentation
+* **Objective:** Replace manual, text-heavy documentation tasks with maintainable, code-native diagrams.
+* **Database Schema:** Generate a `Mermaid.js` Entity-Relationship (ER) diagram mapping D1 tables, columns, and relationships.
+* **System Flow:** Create a `Mermaid.js` sequence diagram illustrating the offline-first sync architecture, showing interactions between Flutter, Riverpod, Drift, and Cloudflare Workers.
+
+**Issue:** The development docs describe Hable's architecture in prose, but there is no concise, code-adjacent diagram that shows the current D1/Drift tables or the offline-first sync path. Existing docs are already known to drift as tasks add auth, partner snapshots, invitations, gamification, role metadata, and calendar feeds. Future agents need a faster way to understand the system without re-reading every table and service manually.
+
+**Ponytail triage:**
+- *Should exist:* Yes, architecture diagrams reduce repeated manual discovery and make schema/sync drift easier to spot.
+- *Smallest safe scope:* Add Mermaid ER and sequence diagrams generated from the current checked-in schema/service code, plus short notes about how to refresh them. Keep prose minimal and link to source files as the authority.
+- *Skipped scope:* Building a custom documentation generator, adding a docs website, image exports, PlantUML, CI publishing, exhaustive API reference docs, and rewriting every development document.
+- *Boundaries:* Do not change runtime Flutter, backend, Drift schema, generated database files, or Worker behavior. If source code and docs disagree, document the disagreement as a follow-up raw task instead of silently inventing schema.
+
+**Action:** Create or update a system architecture documentation page with code-native Mermaid diagrams. The ER diagram should map the current D1 schema and important Drift-only cache/queue tables. The sequence diagram should show the normal offline-first mutation and daily sync flow from Flutter UI through Riverpod, Drift, `SyncQueue`, `SyncService`, Cloudflare Worker routes, D1, and KV.
+
+**Hable perspective:** Hable's source of truth is split by concern: Flutter UI renders from Drift/Riverpod, `SyncService` pushes queued mutations and pulls daily sync, Cloudflare Workers enforce auth/privacy and persist to D1/KV, and docs must explain that separation clearly. The diagrams should help implementers avoid direct Home-screen network reads, duplicate sync paths, and privacy leaks in social payloads.
+
+**Implementation scope:**
+- Add or update a focused architecture document, preferably `Developement/09_System_Architecture.md` or an equivalent clearly named file, with Mermaid blocks and a short "source files" section.
+- ER diagram: include D1 tables from `backend/schema.sql` such as `users`, `auth_pins`, `habits`, `habit_logs`, `habit_progress`, `partnerships`, `friend_requests`, `habit_invitations`, `private_messages`, and `milestone_events`.
+- Drift-only diagram notes: include local-only or cache/queue tables from `lib/database/tables.dart`, including `SyncQueue`, `CachedQuotes`, `SearchDocuments`, `PartnerSnapshots`, `AcceptedFriends`, and any other Drift tables not mirrored exactly in D1.
+- Relationship mapping: represent real foreign-key relationships where they exist and label inferred/application-level relationships separately when D1 lacks explicit FK constraints.
+- Sequence diagram: show habit creation/completion/skip/nudge/invitation as local Drift writes first, then `SyncQueue`, `SyncService.flushPending`, authenticated Worker route, D1/KV persistence, and `GET /api/sync/daily` returning partner snapshots, nudges, messages, invitations, accepted friends, and future progression/role/calendar payloads.
+- Auth boundary: show JWT storage/use at a high level without documenting secrets or token values.
+- Privacy boundary: call out that partner/friend/profile payloads are privacy-scoped and journal notes/private messages must not leak into social/calendar feeds.
+- Maintainability: add a short refresh checklist that names the source commands/files to inspect, such as `backend/schema.sql`, `lib/database/tables.dart`, `lib/database/database.dart`, `lib/services/sync_service.dart`, `backend/src/index.ts`, and `rg -n "app\\.(get|post|put|delete)" backend/src/index.ts`.
+- Documentation alignment: update `01_Schema_and_Core_Logic.md` and `02_Offline_Architecture.md` to link to the new diagrams instead of duplicating long diagram prose. Update `08_Testing.md` only if a diagram validation command or doc review checklist is added.
+- Validation: run a lightweight Markdown/Mermaid sanity check where available, or at minimum verify fenced Mermaid syntax, anchors, and source references with `rg`/`sed`. Do not add new dependencies just to render Mermaid unless the repo already has a doc tool.
+
+**Scalability considerations:** Documentation grows stale as table and route count grows. Keep diagrams high-signal and source-linked rather than exhaustive prose. Mermaid source blocks scale better than committed screenshots because they remain diffable and easy to update during schema or sync changes.
+
+**Future split guidance:** A generated ER diagram script, CI doc validation, OpenAPI-style route documentation, exported PNG/SVG diagrams, or a hosted documentation site should be separate tasks if the manual Mermaid blocks start drifting. This task should only establish maintainable architecture diagrams and update links.
+
+**Edge cases:** D1 schema and Drift schema disagree, generated Drift code differs from hand-written tables, backend `src/index.ts` and compiled `src/index.js` diverge, app-level relationships lack FK constraints, role/gamification/calendar tasks are engineered but not implemented yet, Mermaid syntax unsupported by a viewer, diagrams become too dense to read, docs include future tables as if implemented, stale route names, privacy-sensitive fields shown in diagrams, and dirty user edits in docs.
+
+**Acceptance criteria:**
+- A Mermaid ER diagram exists in the development docs and maps current D1 tables, primary keys, key columns, and relationships.
+- Drift-only/cache/queue tables are documented clearly without pretending they are all D1 tables.
+- A Mermaid sequence diagram shows the offline-first flow through Flutter UI, Riverpod, Drift, `SyncQueue`, `SyncService`, Cloudflare Workers, D1, KV, and daily sync back to Drift.
+- The diagrams distinguish real database constraints from inferred application-level relationships.
+- The diagrams do not expose secrets, raw JWT values, private journal content, or unauthorized social data.
+- `01_Schema_and_Core_Logic.md` and `02_Offline_Architecture.md` link to the diagram document or embed the diagrams without duplicating large stale prose.
+- The architecture docs call out current implemented state separately from engineered-but-not-yet-implemented role, gamification, and calendar-feed changes.
+- A refresh checklist names the exact source files/commands future agents should inspect before updating diagrams.
+- Lightweight syntax/link checks are run or documented if no Mermaid renderer is available.
+- Dependency docs are verified and updated if diagram placement, schema notes, sync flow notes, or testing guidance changes.
+
+**Dependencies:** `00_Agent_Directives.md`, `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `04_Social_and_Analytics.md`, `TWIN_TEST_HARNESS.md`, `08_Testing.md`, `backend/schema.sql`, `lib/database/tables.dart`, `lib/services/sync_service.dart`, `backend/src/index.ts`
+
+**Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+
+<a id="repair-signup-signin-and-forgot-password-network-failures"></a>
+### [ ] Repair SignUp SignIn And Forgot Password Network Failures
+
+**Raw source:** Continue developement of SignUp, SignIn, and Forgot Password process. You can look and inspire from email authentitcation from VibeCoding/campusweb (the sign in and sign up just says 'Network error'). Previous transfer note referenced **Implement Email Authentication And PIN Reset Flow**, but no matching engineered task anchor currently exists in `Task1_Engineered.md`.
+
+**Issue:** The `AuthScreen` already exposes login, registration, PIN request, and password reset views, and `AuthNotifier` calls `/api/auth/login`, `/api/auth/register`, `/api/auth/request-pin`, and `/api/auth/reset-password`. The user-reported symptom is that SignUp and SignIn only show `Network error`, which means the current client/backend/deployment path is hiding the real failure. The backend also currently logs reset PINs server-side instead of sending email in production, so Forgot Password cannot be considered complete for normal users.
+
+**Ponytail triage:**
+- *Should exist:* Yes, auth is a trust boundary and a core app gate. The task should fix the root network/auth path rather than only changing the visible error string.
+- *Smallest safe scope:* Trace the exact failing HTTP path for web and Android, surface useful backend/client errors, align D1 schema and deployed Worker/Pages Functions for auth, and add a minimal production-capable email PIN delivery path inspired by `campusweb`.
+- *Skipped scope:* OAuth, passkeys, refresh tokens, account deletion, full email verification for registration, multi-account switching, biometric unlock, custom auth service extraction, and a redesigned onboarding/auth UI.
+- *Boundaries:* Keep Hable's current username/password plus email reset model. Do not replace the app gate, Drift user cache, JWT middleware, or existing twin-harness seed login unless they are directly causing the network failure.
+
+**Action:** Repair the existing auth flow end to end. Reproduce the SignUp/SignIn/Forgot Password failures against the selected backend target, identify whether the failure is client base URL, Cloudflare routing, D1 schema drift, stale generated Worker output, CORS/same-origin mismatch, or backend exception, then make the smallest code and deployment changes needed for normal login/register/reset to work with actionable errors.
+
+**Hable perspective:** `main.dart` gates the app through `AuthNotifier` state and the local Drift user cache. `AuthScreen` is a live-network exception to the local-first UI rule because authentication must obtain a JWT before background sync can operate. After auth succeeds, the app should persist the token in secure storage, upsert the current user into Drift, and let Home/Profile/Social Hub continue reading local state through Riverpod.
+
+**Implementation scope:**
+- Client diagnostics in `lib/providers/auth_provider.dart`: preserve server error messages, log useful debug details in debug builds, handle malformed/non-JSON responses safely, and avoid collapsing every exception into undifferentiated `Network error`.
+- Client routing in `lib/config/api_config.dart`: verify debug Android, debug web, production web, and optional `HABLE_API_BASE_URL` behavior so normal app builds hit the intended backend (`127.0.0.1`, emulator host, ADB-reversed physical device, or `https://hable.pages.dev`) without stale localhost calls in release.
+- UI in `lib/screens/auth_screen.dart`: keep the current views, validation, and navigation, but ensure the user sees precise failed-auth/reset messages and that reset success returns to login without clearing needed email/PIN state too early.
+- Backend auth routes in `backend/src/index.ts`: harden `/api/auth/register`, `/api/auth/login`, `/api/auth/request-pin`, and `/api/auth/reset-password` for validation, duplicate username/email, missing schema columns, expired/invalid PINs, and consistent JSON errors.
+- D1 schema/deploy alignment in `backend/schema.sql`, `wrangler.toml`, and Pages/Worker output: ensure `users.email`, `users.password_hash`, `auth_pins`, indexes, and JWT secret bindings exist locally and remotely; remove or regenerate stale compiled files only if they are actually used by the deploy path.
+- Email PIN delivery: adapt the smallest useful concept from `../../campusweb/src/routes/api/auth/request-pin/+server.ts`, `../../campusweb/src/routes/api/auth/verify-pin/+server.ts`, and `../../campusweb/src/lib/server/auth/email.ts`: dev may log the PIN, production must send an email or return a clear delivery error instead of pretending the email was sent.
+- Security basics: keep PINs hashed, expire PINs, reject weak missing fields, avoid leaking whether unrelated accounts exist beyond the current product decision, rate-limit or add a follow-up raw task if the current backend lacks any abuse control.
+- Test surface: add focused provider/backend tests where practical, then verify with `flutter analyze`, `flutter test`, backend TypeScript checks, direct `curl`/HTTP checks for auth endpoints, and a documented web or Android smoke for register, login, request PIN, reset password, and login with the new password.
+- Documentation: update `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `08_Testing.md`, and `Commands.md` if schema, auth routing, UI behavior, or test commands change.
+
+**Scalability considerations:** Auth endpoints must stay cheap and indexed by `username` and `email`. PIN request and verification need rate limiting before public traffic grows; if not implemented in the smallest fix, append a separate raw task for abuse controls. Email delivery should use one Cloudflare-native path rather than adding a new third-party dependency.
+
+**Future split guidance:** Email verification at signup, refresh/session rotation, account deletion, passkeys/OAuth, remote logout, multi-device session management, and full abuse/rate-limit telemetry should be separate tasks after the basic username/password/reset flow works reliably.
+
+**Edge cases:** Physical Android device cannot reach `127.0.0.1` without `adb reverse`, emulator needs a different host, Flutter web release accidentally calls localhost, deployed Pages Functions lack the new D1 schema, `JWT_SECRET` is missing, `backend/src/index.js` is stale while deploy uses TypeScript, response body is HTML or empty instead of JSON, duplicate username/email, invalid email format, PIN requested for unknown email, PIN expired, wrong PIN, email provider unavailable, reset password succeeds but login still uses old hash, secure storage contains stale credentials, and local Drift user upsert fails after token save.
+
+**Acceptance criteria:**
+- The original SignUp and SignIn flows no longer report a generic `Network error` for normal backend validation or deployment failures; they show actionable messages and log useful debug detail in debug builds.
+- `POST /api/auth/register` creates a user with username, email, password hash, avatar URL, and JWT on the selected backend target.
+- `POST /api/auth/login` accepts the newly registered credentials and rejects invalid credentials with a stable JSON error.
+- Forgot Password can request a PIN, verify/reset the password, and then log in with the new password; dev PIN logging is allowed only for local development.
+- Production reset PIN delivery either sends email through the configured Cloudflare email path or returns a clear delivery failure instead of a fake success.
+- Local and remote D1 schemas include the auth fields and `auth_pins` table required by the implemented routes.
+- `AuthNotifier` saves JWT/user identity only after successful responses and upserts the local Drift user without leaving the app in a half-authenticated state.
+- Normal auth works on the intended web target and one Android/debug target, or the missing target is documented with the exact blocker.
+- `flutter analyze`, `flutter test`, backend TypeScript checks, and direct auth endpoint checks pass, or failures are documented as unrelated with evidence.
+- Dependency docs are verified and updated if schema, routing, UI copy, email delivery, or test procedure changes.
+
+**Dependencies:** `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `08_Testing.md`, `Commands.md`, `../../campusweb/src/routes/api/auth/request-pin/+server.ts`, `../../campusweb/src/routes/api/auth/verify-pin/+server.ts`, `../../campusweb/src/lib/server/auth/email.ts`
+
+**Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+
+<a id="show-accepted-partner-habits-on-recipient-home-after-invite-acceptance"></a>
+### [ ] Show Accepted Partner Habits On Recipient Home After Invite Acceptance
+
+**Raw source:** UX Major Matter: the habit partner up should get first accepted from partners, and then it should show up at the homepage of partners. currenlty it gets accepted, but not show up in the partner's homepage, just in creator's homepage.
+
+**Issue:** Habit partner invites must be private while pending, then become visible to the recipient only after acceptance. Current docs and earlier smoke notes say accepted invites should create symmetric partnerships and daily sync should expose the shared habit, but the reported behavior is that the accepted partnered habit remains visible only on the creator's Home. The likely gap is in the accept/flush/pull path or in how `/api/sync/daily` shared habit metadata is merged into the recipient's local `Habits` table watched by `activeHabitsProvider`.
+
+**Ponytail triage:**
+- *Should exist:* Yes, this is the core permission boundary for habit partnerships and the current behavior breaks the partner UX.
+- *Smallest safe scope:* Fix the accepted-invite path so a recipient sees the shared active habit on Home only after the backend accepts the invitation and daily sync pulls authorized metadata into Drift.
+- *Skipped scope:* Role-based partnership permissions, supporter mode, public friend habit feeds, realtime sockets, broad Home redesign, habit cloning, push notifications, and new social graph UI.
+- *Boundaries:* Do not show pending invites as active habits. Do not expose non-partner habits. Keep Home reading Drift through Riverpod; network work belongs in `SyncService` and backend routes.
+
+**Action:** Trace and repair the accepted habit-partner visibility flow. Verify that `POST /api/social/habit-invitation/accept` creates symmetric partnership rows, `GET /api/sync/daily` returns the accepted shared habit metadata for the recipient, `SyncService.pullDailySync` upserts the recipient-local active habit correctly, and `HomeScreen` rebuilds from `activeHabitsProvider` without requiring app restart or manual local edits.
+
+**Hable perspective:** The recipient Home should render the partnered habit from local Drift state, not directly from the invitation response. Accepting an invite can optimistically hide the pending banner, but the habit card should appear only after the queued accept action reaches the backend and the inbound daily sync confirms authorized partnership data. Creator and recipient may both hold a local row with the same `habit_id`, scoped by their own `userId`, so the sync merge must preserve the current user's ownership/view semantics.
+
+**Implementation scope:**
+- Backend route in `backend/src/index.ts`: verify `/api/social/habit-invitation/accept` updates only the recipient's pending invite and inserts both `(creator, recipient, habit)` and `(recipient, creator, habit)` rows idempotently.
+- Backend daily sync in `backend/src/index.ts`: verify `/api/sync/daily` returns habit `id`, `title`, `target_duration`, `color_hex`, `status`, partner identity, and current progress for accepted partnerships where `p.user_id` is the current recipient.
+- Drift schema and DAO in `lib/database/tables.dart` and `lib/database/database.dart`: confirm shared accepted habits can be upserted for the current user without corrupting creator-owned rows, target duration, status, color, or local progress.
+- Sync layer in `lib/services/sync_service.dart`: fix the partner metadata merge if needed, avoid inserting pending invites as active habits, remove stale partner snapshots when partnerships disappear if that is already represented by sync data, and invalidate or naturally refresh relevant Riverpod streams after pull.
+- Riverpod/UI in `lib/providers/habit_providers.dart`, `lib/providers/social_providers.dart`, `lib/screens/home_screen.dart`, and `lib/widgets/invitation_banner.dart`: keep Home and the invitation banner driven by Drift streams; ensure accepting an invite flushes then pulls daily sync for the current user and does not leave the UI in a stale accepted-but-hidden state.
+- Tests/smoke: add the smallest backend/API or Dart test that catches missing recipient visibility, then run a twin-harness or documented web smoke where Alice creates a habit with Bob selected, Bob accepts, Bob sees the habit on Home, Alice still sees it, and Bob did not see it before acceptance.
+- Documentation: update `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `07_Multi_User_Social_Features.md`, `TWIN_TEST_HARNESS.md`, and `08_Testing.md` if the accepted-invite flow, sync payload, or test runbook changes.
+
+**Scalability considerations:** Daily sync should remain scoped to accepted partnered habits for the current user and indexed through `partnerships(user_id, habit_id)` and `habit_invitations(recipient_id, status)`. If shared-habit counts grow, pagination or updated-since sync belongs in a separate task.
+
+**Future split guidance:** Partnership roles (`owner`, `partner`, `supporter`), edit/delete permissions, conflict-resolution UI, push notifications for accepted invites, and realtime shared habit updates should remain separate follow-up tasks after this acceptance visibility bug is fixed.
+
+**Edge cases:** Accept tapped twice, accept queued offline, accept succeeds but daily sync fails, stale pending invite remains in Drift, declined invite later appears as active, recipient sees the habit before acceptance, creator habit archived before acceptance, backend habit row missing because habit sync has not flushed before invite sync, duplicate partnership rows, same `habit_id` upserted under the wrong local `userId`, target duration reset to the fallback value, partner progress overwrites recipient progress, and Home does not rebuild after the pull completes.
+
+**Acceptance criteria:**
+- Pending habit invitations do not appear as active Home habits for the recipient.
+- Accepting a habit invitation reaches the backend and creates symmetric partnership rows idempotently.
+- After accepted daily sync, the recipient's Drift `Habits` table contains the shared active habit scoped to the recipient user and `activeHabitsProvider(recipientId)` emits it.
+- The creator still sees the original habit after the recipient accepts.
+- The recipient sees the shared habit on Home without reinstalling, force-stopping, or manually editing local data.
+- Declining an invite does not create a partnership row and does not show the habit on recipient Home.
+- Shared habit metadata preserves title, color, target duration, and active/archive status from the backend payload.
+- Partner snapshots and nudges remain scoped to accepted partnered habits.
+- A focused test or documented twin-harness/web smoke proves before-accept hidden, after-accept visible for the recipient, and still-visible for the creator.
+- Dependency docs are verified and updated if backend payloads, Drift merge behavior, Home UX, or smoke commands change.
+
+**Dependencies:** `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `07_Multi_User_Social_Features.md`, `TWIN_TEST_HARNESS.md`, `08_Testing.md`
+
+**Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+
 <a id="verify-normal-android-account-creation-login-and-logout-flow"></a>
 ### [ ] Verify Normal Android Account Creation Login And Logout Flow
 
@@ -412,5 +816,56 @@
 - Required development docs are verified and updated if the implementation changes schema, sync, UI, social behavior, or test procedure.
 
 **Dependencies:** `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `07_Multi_User_Social_Features.md`, `08_Testing.md`, `../../campusweb/src/routes/api/notifications/+server.ts`, `../../campusweb/src/lib/stores/notificationsStore.ts`, `../../campusweb/src/lib/server/push/broadcast.ts`
+
+**Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+
+
+<a id="add-friend-profile-drilldown-and-habit-scoped-nudge-actions"></a>
+### [ ] Add Friend Profile Drilldown And Habit-Scoped Nudge Actions
+
+**Raw source:** work on seeing friends profile by tapping on their name at homepage, and the nudging is exclusively for partners on the partnered habits cards (inside the card). Follow-up detail: you can see friends profile, and their active habbits, and able to follow their habits and nudge them without being partner in that habbit.
+
+**Issue:** Home currently renders `PartnerTicker` from local `PartnerSnapshots`, and `PartnerTicker` has split behavior: avatar tap enqueues a nudge while username tap opens `ProfileScreen(userId: partner.partnerUserId)`. Friend profile rendering already exists in `ProfileScreen`, but the active-habit list uses a local-only "Nudged" snackbar and a follow button that only pre-fills `HabitFormSheet`. This makes profile navigation hard to discover, nudge behavior too global, and friend-profile encouragement/follow actions inconsistent with the real sync queue and privacy model.
+
+**Ponytail triage:**
+- *Should exist:* Yes, the current UI mixes profile navigation and nudge action in the Home partner ticker, and friend-profile actions do not match backend behavior.
+- *Smallest safe scope:* Reuse the existing `ProfileScreen`, `friendProfileProvider`, `PartnerTicker`, `habitPartnersProvider`, `HabitFormSheet`, and nudge sync queue. Make Home partner names/avatars clearly open friend profiles, move real nudge controls into partnered habit cards, and make friend-profile follow use the existing habit creation sheet.
+- *Skipped scope:* Public habit marketplace, recommendations, follow-feed persistence, push notifications, realtime presence, comments, non-friend profile browsing, full social graph redesign, and new backend tables for "following" habits.
+- *Boundaries:* Do not expose private habit journals or non-allowed habit metadata. Do not let global Home partner widgets send ambiguous nudges. If friend-profile nudge remains allowed for accepted friends, label it as encouragement and keep backend authorization explicit.
+
+**Action:** Tighten the friend drilldown and nudge UX. Make tapping a friend identity on Home open their profile consistently. Remove or demote the global partner-ticker nudge affordance. Add per-habit partner controls inside `_HabitCard` using `habitPartnersProvider(habit.habitId)` so nudges are sent from the specific partnered habit context. On friend profiles, keep the active habits list privacy-scoped, make "Follow" prefill a local habit creation flow, and replace local-only nudge feedback with the real queue-backed nudge action only when backend authorization permits it.
+
+**Hable perspective:** Home remains the daily action surface and reads Drift/Riverpod state. Partner snapshots are local read models from `/api/sync/daily`. Friend profile loading may use the existing authenticated network provider because it is a deliberate drilldown, but the profile must only show fields the backend is allowed to expose. Nudge writes should be queued through `SyncQueue` and flushed by `SyncService`, not simulated with a snackbar.
+
+**Implementation scope:**
+- `lib/widgets/partner_ticker.dart`: make the primary tap target open `ProfileScreen` for the friend; remove the avatar-tap nudge side effect or replace it with a clearly separate profile-only affordance.
+- `lib/screens/home_screen.dart`: stop wiring global `allPartnersProvider` nudges from the bottom ticker; render habit-specific partners inside `_HabitCard` using `habitPartnersProvider(habit.habitId)` and expose a small nudge action per partner on that card.
+- `lib/providers/social_providers.dart`: reuse `enqueueNudge` for habit-card partner nudges and friend-profile encouragement; avoid creating a second nudge path.
+- `lib/screens/profile_screen.dart`: keep `_buildFriendProfile` and `_FriendHabitListTile`, but make active habit rows show safe data only, make `Follow` open `HabitFormSheet.show(context, prefilledTitle: title)` with no hidden network mutation, and make any nudge/encourage button enqueue a real `sendNudge` item or be hidden/disabled when the viewer is not authorized.
+- Backend route `backend/src/index.ts`: verify `GET /api/social/user/:id/profile` is authenticated and privacy-scoped to accepted friends or allowed relationships before returning active habits; verify `POST /api/social/nudge` matches the intended friend-vs-partner authorization rule.
+- Drift/Riverpod: use existing `PartnerSnapshots`, `AcceptedFriends`, and stream providers; add only tiny DAO/provider helpers if needed to map partners by habit efficiently.
+- Accessibility: update semantics so friend identity tap says it opens profile, and nudge buttons say which friend and habit they affect.
+- Test surface: focused widget/provider test or documented smoke for profile navigation from Home, habit-card nudge enqueue, friend-profile follow prefill, and backend rejection/disable behavior for unauthorized nudges.
+- Documentation: update `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `07_Multi_User_Social_Features.md`, and `08_Testing.md` if interaction placement, privacy rules, or smoke steps change.
+
+**Scalability considerations:** Keep partner rendering per habit bounded; `habitPartnersProvider(habitId)` should watch one habit's partner snapshots rather than rebuilding Home from every partner row for every card. Friend profile active-habit lists should stay small and privacy-scoped; pagination can be a future task if profiles become large.
+
+**Future split guidance:** A durable "follow habit" model, friend activity feed, profile privacy settings, public habit templates, richer encouragement messages, notifications for encouragement, and recommendation algorithms should be separate tasks. This task should only make existing friend profile, follow-prefill, and nudge mechanics coherent.
+
+**Edge cases:** No partners on a habit, multiple partners on one habit, same partner appears on many habits, tapping a friend with stale profile data, friend profile network failure, accepted friend without shared habits, backend authorizes friend-level nudge but product wants partner-only nudge, user follows their own habit from their profile, duplicate follow-created habit titles, nudge queued offline, nudge button tapped repeatedly, stale partner snapshots after partnership removal, and screen readers confusing profile taps with nudge buttons.
+
+**Acceptance criteria:**
+- Tapping a friend identity from Home opens the existing friend profile screen with username, avatar, score, and allowed active habits.
+- The global Home partner ticker no longer sends ambiguous nudges from the same tap target used for profile discovery.
+- Partner nudge actions appear inside the relevant partnered habit card and enqueue `SyncAction.sendNudge` with the selected partner user id.
+- Friend profile active-habit rows show only privacy-safe fields returned by the backend.
+- Friend profile `Follow` opens the existing habit creation sheet with the friend's habit title prefilled and does not create remote follow state.
+- Friend profile nudge/encourage action either enqueues a real nudge through the existing sync queue when authorized or is hidden/disabled with a clear non-crashing state when unauthorized.
+- Backend profile and nudge routes do not expose private habit data or allow unauthorized users to inspect/nudge arbitrary users.
+- Semantics labels distinguish "open profile" from "nudge partner".
+- A focused test or documented smoke covers Home profile tap, habit-card nudge, friend-profile follow prefill, and unauthorized nudge handling.
+- Dependency docs are verified and updated if UX placement, backend privacy rules, or smoke procedures change.
+
+**Dependencies:** `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `07_Multi_User_Social_Features.md`, `08_Testing.md`
 
 **Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]

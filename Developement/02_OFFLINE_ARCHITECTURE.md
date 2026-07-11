@@ -28,12 +28,15 @@ Implement a reliable synchronization queue using packages like `connectivity_plu
   * Treat `connectivity_plus` as a retry hint, not a hard gate. ADB-reversed local development can report no Wi-Fi/mobile network while `http://127.0.0.1:8787` is reachable, so foreground sync attempts should rely on the HTTP result and retry failures later.
 * **Inbound Sync (Social & Quotes):** To handle partner nudges, accepted friends, habit invitations, and feeds, poll the Cloudflare `GET /api/sync/daily` endpoint silently in the background when the app is opened, updating the local database. Riverpod will dynamically refresh the UI.
   * `HomeScreen` initializes the sync service and pulls daily sync after login so accepted-friend chips, invitation banners, and partner snapshots are populated from Drift without direct Home-screen network reads.
+  * Partner snapshots now cache the backend `role` field as well. Flutter may render optimistically, but the Worker remains authoritative: an owner-only mutation that reaches the sync queue from a stale client must fail visibly instead of being inferred locally as allowed.
+  * Server progression also arrives through `/api/sync/daily`. Flutter caches `total_points`, `level`, and achievement unlocks in Drift; client-side `syncScore` queue items are deprecated and ignored locally so stale score posts cannot block newer mutations.
 
 ## 3. State Management (Riverpod)
 
 * **Stream Providers:** Use Riverpod `StreamProvider` to listen directly to Drift database queries. When the background sync engine updates data, Riverpod automatically pushes the update to the UI.
 * **Accepted Friend Picker:** Habit creation watches the local Drift accepted-friends cache through Riverpod. It must not block on a live network search from Home/Profile.
 * **Home Creation Entry:** Home opens the shared `HabitFormSheet` only. It must not insert habits directly or create a second mutation path; new habits still flow through `habitActionsProvider`, Drift, and the sync queue.
+* **Role-Aware Card Reads:** Per-habit partner/supporter rows and Profile habit-management affordances should read cached `PartnerSnapshots` through habit-scoped Riverpod providers. Role/status polish must stay local-first and must not trigger direct card-level network calls.
 * **The Resistance State Isolation:** Create a specific `StateNotifier` to handle the `current_day` math. **This isolates the logic for the "Mud" animation coefficient so the UI thread doesn't calculate physics.** The UI widget will only read the final scalar outputs from this notifier.
 
 ## 4. Conflict Resolution

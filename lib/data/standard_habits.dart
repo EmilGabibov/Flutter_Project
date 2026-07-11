@@ -54,3 +54,13 @@ const standardHabits = [
     colorHex: 'FFFBBF24',
   ),
 ];
+
+StandardHabit? standardHabitForTitle(String title) {
+  final normalized = title.trim().toLowerCase();
+  for (final habit in standardHabits) {
+    if (habit.title.trim().toLowerCase() == normalized) {
+      return habit;
+    }
+  }
+  return null;
+}

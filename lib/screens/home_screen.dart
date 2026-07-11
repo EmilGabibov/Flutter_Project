@@ -3,23 +3,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import 'package:drift/drift.dart' hide Column;
 import '../database/database.dart';
-import '../database/tables.dart' show HabitStatus, LogStatus, SyncAction;
+import '../database/tables.dart'
+    show HabitStatus, LogStatus, PartnershipRole, SyncAction;
 import '../providers/database_provider.dart';
 import '../providers/habit_providers.dart';
 import '../providers/resistance_provider.dart';
-import '../providers/scoring_provider.dart';
 import '../providers/quote_provider.dart';
 import '../providers/social_providers.dart';
 import '../providers/sync_provider.dart';
 import '../theme/app_theme.dart';
+import '../data/standard_habits.dart';
+import '../widgets/habit_partner_row.dart';
 import '../widgets/mud_long_press_button.dart';
 import '../widgets/skip_bottom_sheet.dart';
-import '../widgets/partner_ticker.dart';
 import '../widgets/invitation_banner.dart';
 import '../widgets/3d/habit_environment_visualizer.dart';
 import '../widgets/habit_form_sheet.dart';
 import '../widgets/milestone_wish_carousel.dart';
-import '../data/standard_habits.dart';
 import 'profile_screen.dart';
 import 'social/social_hub_screen.dart';
 
@@ -264,33 +264,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               childCount: habits.length,
             ),
           ),
-
-        // Partner ticker — reads Drift, never network
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Consumer(
-              builder: (context, ref, _) {
-                final partnersAsync = ref.watch(allPartnersProvider);
-                return partnersAsync.when(
-                  data: (partners) => PartnerTicker(
-                    partners: partners,
-                    onNudgeTap: (targetUserId) async {
-                      final db = ref.read(databaseProvider);
-                      await enqueueNudge(
-                        db: db,
-                        senderUserId: widget.userId,
-                        targetUserId: targetUserId,
-                      );
-                    },
-                  ),
-                  loading: () => const SizedBox.shrink(),
-                  error: (_, _) => const SizedBox.shrink(),
-                );
-              },
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -403,95 +376,235 @@ class _HabitCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final todaysLogAsync = ref.watch(todaysLogProvider(habit.habitId));
     final streakAsync = ref.watch(streakProvider(habit.habitId));
+    final partnersAsync = ref.watch(habitPartnersProvider(habit.habitId));
+    final habitMeta = standardHabitForTitle(habit.title);
+    final habitColor = _hexToColor(habit.colorHex);
 
     // Calculate resistance
-    final currentDay = habit.targetDuration - habit.currentDuration + 1;
+    final challengeDay = _challengeDay(habit);
+    final progressFraction = _progressFraction(habit);
+    final targetDays = habit.targetDuration > 0 ? habit.targetDuration : 1;
     final resistance = ref.watch(
       resistanceProvider((
-        currentDay: currentDay.clamp(0, habit.currentDuration),
-        totalDuration: habit.currentDuration,
+        currentDay: challengeDay.clamp(0, targetDays),
+        totalDuration: targetDays,
       )),
     );
 
     final isCompletedToday = todaysLogAsync.when(
-      data: (log) => log != null,
+      data: (log) => log?.status == LogStatus.completed,
+      loading: () => false,
+      error: (_, _) => false,
+    );
+    final isSkippedToday = todaysLogAsync.when(
+      data: (log) => log?.status == LogStatus.skipped,
       loading: () => false,
       error: (_, _) => false,
     );
 
-    return Card(
-      margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
+    final viewerRole = partnersAsync.when(
+      data: _viewerRoleForPartners,
+      loading: () => PartnershipRole.owner,
+      error: (_, _) => PartnershipRole.owner,
+    );
+    final canLogProgress = viewerRole != PartnershipRole.supporter;
+
+    return Semantics(
+      label:
+          '${habit.title}. Challenge day $challengeDay of $targetDays. ${isCompletedToday
+              ? "Completed today."
+              : isSkippedToday
+              ? "Skipped today."
+              : "Not completed today."}',
+      child: Card(
+        margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+        clipBehavior: Clip.antiAlias,
         child: Column(
           children: [
-            // Habit title and streak
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    habit.title,
-                    style: Theme.of(context).textTheme.titleLarge,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: habitColor.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          habitMeta?.emoji ?? '●',
+                          style: TextStyle(
+                            fontSize: habitMeta?.emoji != null ? 22 : 18,
+                            color: habitMeta?.emoji != null ? null : habitColor,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              habit.title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Challenge: Day $challengeDay of $targetDays',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      streakAsync.when(
+                        data: (streak) => Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: habitColor.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(
+                            '🔥 $streak',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: habitColor,
+                            ),
+                          ),
+                        ),
+                        loading: () => const SizedBox.shrink(),
+                        error: (_, _) => const SizedBox.shrink(),
+                      ),
+                    ],
                   ),
-                ),
-                streakAsync.when(
-                  data: (streak) => Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
+                  const SizedBox(height: 16),
+                  partnersAsync.when(
+                    data: (partners) => HabitPartnerRow(
+                      partners: partners,
+                      habitColor: habitColor,
+                      onPartnerTap: (partner) async {
+                        final db = ref.read(databaseProvider);
+                        await enqueueNudge(
+                          db: db,
+                          senderUserId: userId,
+                          targetUserId: partner.partnerUserId,
+                        );
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Nudge sent to ${partner.username}.'),
+                            behavior: SnackBarBehavior.floating,
+                            backgroundColor: habitColor.withValues(alpha: 0.92),
+                          ),
+                        );
+                      },
                     ),
-                    decoration: BoxDecoration(
-                      color: AppTheme.sageGreen.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '🔥 $streak',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.sageGreen,
+                    loading: () => const SizedBox.shrink(),
+                    error: (_, _) => const SizedBox.shrink(),
+                  ),
+                  const SizedBox(height: 20),
+                  Center(
+                    child: Opacity(
+                      opacity: canLogProgress ? 1 : 0.45,
+                      child: IgnorePointer(
+                        ignoring: !canLogProgress,
+                        child: MudLongPressButton(
+                          resistanceCoefficient:
+                              resistance.resistanceCoefficient,
+                          calculatedDurationMs: resistance.calculatedDurationMs,
+                          isCompleted: isCompletedToday,
+                          habitColor: habitColor,
+                          onCompletion: () => _handleCompletion(
+                            context,
+                            ref,
+                            habit,
+                            challengeDay,
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                  loading: () => const SizedBox.shrink(),
-                  error: (_, _) => const SizedBox.shrink(),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Challenge: Day $currentDay of ${habit.currentDuration}',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 24),
-
-            // Mud button
-            Center(
-              child: MudLongPressButton(
-                resistanceCoefficient: resistance.resistanceCoefficient,
-                calculatedDurationMs: resistance.calculatedDurationMs,
-                isCompleted: isCompletedToday,
-                habitColor: _hexToColor(habit.colorHex),
-                onCompletion: () =>
-                    _handleCompletion(context, ref, habit, currentDay),
+                  const SizedBox(height: 12),
+                  if (!canLogProgress)
+                    Text(
+                      'Supporters can follow progress and send nudges.',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    )
+                  else if (!isCompletedToday)
+                    Align(
+                      alignment: Alignment.center,
+                      child: TextButton(
+                        onPressed: () => _handleSkip(context, ref, habit),
+                        child: Text(
+                          isSkippedToday ? 'Skipped today' : 'Skip today',
+                          style: TextStyle(
+                            color: AppTheme.warmGray,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
-            const SizedBox(height: 20),
-
-            // Skip button
-            if (!isCompletedToday)
-              TextButton(
-                onPressed: () => _handleSkip(context, ref, habit),
-                child: Text(
-                  'Skip today',
-                  style: TextStyle(color: AppTheme.warmGray, fontSize: 14),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Semantics(
+                label:
+                    'Progress ${((progressFraction * 100).round())} percent.',
+                child: Container(
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: habitColor.withValues(alpha: 0.12),
+                  ),
+                  child: FractionallySizedBox(
+                    widthFactor: progressFraction,
+                    alignment: Alignment.centerLeft,
+                    child: Container(color: habitColor),
+                  ),
                 ),
               ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  int _challengeDay(Habit habit) {
+    final total = habit.targetDuration > 0 ? habit.targetDuration : 1;
+    final raw = total - habit.currentDuration + 1;
+    return raw.clamp(1, total);
+  }
+
+  double _progressFraction(Habit habit) {
+    final total = habit.targetDuration > 0 ? habit.targetDuration : 1;
+    final day = _challengeDay(habit);
+    return (day / total).clamp(0.0, 1.0);
+  }
+
+  PartnershipRole _viewerRoleForPartners(List<PartnerSnapshot> partners) {
+    if (partners.isEmpty) return PartnershipRole.owner;
+    if (partners.any((partner) => partner.role == PartnershipRole.owner)) {
+      return PartnershipRole.owner;
+    }
+    if (partners.any((partner) => partner.role == PartnershipRole.partner)) {
+      return PartnershipRole.partner;
+    }
+    return PartnershipRole.supporter;
   }
 
   Future<void> _handleCompletion(
@@ -516,18 +629,7 @@ class _HabitCard extends ConsumerWidget {
       ),
     );
 
-    // 2. Calculate and update score
-    final streak = await db.getStreak(habit.habitId);
-    final points = ScoringEngine.calculateCompletionPoints(
-      currentStreak: streak,
-      currentDay: currentDay,
-    );
-    final user = await db.getUser(userId);
-    if (user != null) {
-      await db.updateUserScore(userId, user.totalScore + points);
-    }
-
-    // 3. Enqueue sync
+    // 2. Enqueue sync. Server-side gamification owns final score totals.
     await db.enqueueSync(
       SyncQueueCompanion(
         action: Value(SyncAction.logHabit),
@@ -538,7 +640,7 @@ class _HabitCard extends ConsumerWidget {
       ),
     );
 
-    // 4. Check if habit is complete
+    // 3. Check if habit is complete
     if (currentDay >= habit.currentDuration) {
       await db.updateHabitStatus(habit.habitId, HabitStatus.completed);
     }

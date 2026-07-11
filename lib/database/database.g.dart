@@ -43,6 +43,18 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _levelNameMeta = const VerificationMeta(
+    'levelName',
+  );
+  @override
+  late final GeneratedColumn<String> levelName = GeneratedColumn<String>(
+    'level_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('Newbie'),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -99,6 +111,7 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
     userId,
     username,
     avatarUrl,
+    levelName,
     createdAt,
     updatedAt,
     totalScore,
@@ -136,6 +149,12 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
       context.handle(
         _avatarUrlMeta,
         avatarUrl.isAcceptableOrUnknown(data['avatar_url']!, _avatarUrlMeta),
+      );
+    }
+    if (data.containsKey('level_name')) {
+      context.handle(
+        _levelNameMeta,
+        levelName.isAcceptableOrUnknown(data['level_name']!, _levelNameMeta),
       );
     }
     if (data.containsKey('created_at')) {
@@ -183,6 +202,10 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
         DriftSqlType.string,
         data['${effectivePrefix}avatar_url'],
       ),
+      levelName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}level_name'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -212,6 +235,7 @@ class User extends DataClass implements Insertable<User> {
   final String userId;
   final String username;
   final String? avatarUrl;
+  final String levelName;
   final DateTime createdAt;
   final DateTime updatedAt;
   final int totalScore;
@@ -220,6 +244,7 @@ class User extends DataClass implements Insertable<User> {
     required this.userId,
     required this.username,
     this.avatarUrl,
+    required this.levelName,
     required this.createdAt,
     required this.updatedAt,
     required this.totalScore,
@@ -233,6 +258,7 @@ class User extends DataClass implements Insertable<User> {
     if (!nullToAbsent || avatarUrl != null) {
       map['avatar_url'] = Variable<String>(avatarUrl);
     }
+    map['level_name'] = Variable<String>(levelName);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     map['total_score'] = Variable<int>(totalScore);
@@ -247,6 +273,7 @@ class User extends DataClass implements Insertable<User> {
       avatarUrl: avatarUrl == null && nullToAbsent
           ? const Value.absent()
           : Value(avatarUrl),
+      levelName: Value(levelName),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
       totalScore: Value(totalScore),
@@ -263,6 +290,7 @@ class User extends DataClass implements Insertable<User> {
       userId: serializer.fromJson<String>(json['userId']),
       username: serializer.fromJson<String>(json['username']),
       avatarUrl: serializer.fromJson<String?>(json['avatarUrl']),
+      levelName: serializer.fromJson<String>(json['levelName']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       totalScore: serializer.fromJson<int>(json['totalScore']),
@@ -276,6 +304,7 @@ class User extends DataClass implements Insertable<User> {
       'userId': serializer.toJson<String>(userId),
       'username': serializer.toJson<String>(username),
       'avatarUrl': serializer.toJson<String?>(avatarUrl),
+      'levelName': serializer.toJson<String>(levelName),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'totalScore': serializer.toJson<int>(totalScore),
@@ -287,6 +316,7 @@ class User extends DataClass implements Insertable<User> {
     String? userId,
     String? username,
     Value<String?> avatarUrl = const Value.absent(),
+    String? levelName,
     DateTime? createdAt,
     DateTime? updatedAt,
     int? totalScore,
@@ -295,6 +325,7 @@ class User extends DataClass implements Insertable<User> {
     userId: userId ?? this.userId,
     username: username ?? this.username,
     avatarUrl: avatarUrl.present ? avatarUrl.value : this.avatarUrl,
+    levelName: levelName ?? this.levelName,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
     totalScore: totalScore ?? this.totalScore,
@@ -305,6 +336,7 @@ class User extends DataClass implements Insertable<User> {
       userId: data.userId.present ? data.userId.value : this.userId,
       username: data.username.present ? data.username.value : this.username,
       avatarUrl: data.avatarUrl.present ? data.avatarUrl.value : this.avatarUrl,
+      levelName: data.levelName.present ? data.levelName.value : this.levelName,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       totalScore: data.totalScore.present
@@ -320,6 +352,7 @@ class User extends DataClass implements Insertable<User> {
           ..write('userId: $userId, ')
           ..write('username: $username, ')
           ..write('avatarUrl: $avatarUrl, ')
+          ..write('levelName: $levelName, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('totalScore: $totalScore, ')
@@ -333,6 +366,7 @@ class User extends DataClass implements Insertable<User> {
     userId,
     username,
     avatarUrl,
+    levelName,
     createdAt,
     updatedAt,
     totalScore,
@@ -345,6 +379,7 @@ class User extends DataClass implements Insertable<User> {
           other.userId == this.userId &&
           other.username == this.username &&
           other.avatarUrl == this.avatarUrl &&
+          other.levelName == this.levelName &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
           other.totalScore == this.totalScore &&
@@ -355,6 +390,7 @@ class UsersCompanion extends UpdateCompanion<User> {
   final Value<String> userId;
   final Value<String> username;
   final Value<String?> avatarUrl;
+  final Value<String> levelName;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> totalScore;
@@ -364,6 +400,7 @@ class UsersCompanion extends UpdateCompanion<User> {
     this.userId = const Value.absent(),
     this.username = const Value.absent(),
     this.avatarUrl = const Value.absent(),
+    this.levelName = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.totalScore = const Value.absent(),
@@ -374,6 +411,7 @@ class UsersCompanion extends UpdateCompanion<User> {
     required String userId,
     required String username,
     this.avatarUrl = const Value.absent(),
+    this.levelName = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.totalScore = const Value.absent(),
@@ -385,6 +423,7 @@ class UsersCompanion extends UpdateCompanion<User> {
     Expression<String>? userId,
     Expression<String>? username,
     Expression<String>? avatarUrl,
+    Expression<String>? levelName,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? totalScore,
@@ -395,6 +434,7 @@ class UsersCompanion extends UpdateCompanion<User> {
       if (userId != null) 'user_id': userId,
       if (username != null) 'username': username,
       if (avatarUrl != null) 'avatar_url': avatarUrl,
+      if (levelName != null) 'level_name': levelName,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (totalScore != null) 'total_score': totalScore,
@@ -407,6 +447,7 @@ class UsersCompanion extends UpdateCompanion<User> {
     Value<String>? userId,
     Value<String>? username,
     Value<String?>? avatarUrl,
+    Value<String>? levelName,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<int>? totalScore,
@@ -417,6 +458,7 @@ class UsersCompanion extends UpdateCompanion<User> {
       userId: userId ?? this.userId,
       username: username ?? this.username,
       avatarUrl: avatarUrl ?? this.avatarUrl,
+      levelName: levelName ?? this.levelName,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       totalScore: totalScore ?? this.totalScore,
@@ -436,6 +478,9 @@ class UsersCompanion extends UpdateCompanion<User> {
     }
     if (avatarUrl.present) {
       map['avatar_url'] = Variable<String>(avatarUrl.value);
+    }
+    if (levelName.present) {
+      map['level_name'] = Variable<String>(levelName.value);
     }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
@@ -461,6 +506,7 @@ class UsersCompanion extends UpdateCompanion<User> {
           ..write('userId: $userId, ')
           ..write('username: $username, ')
           ..write('avatarUrl: $avatarUrl, ')
+          ..write('levelName: $levelName, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('totalScore: $totalScore, ')
@@ -1625,6 +1671,16 @@ class $PartnershipsTable extends Partnerships
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  @override
+  late final GeneratedColumnWithTypeConverter<PartnershipRole, String> role =
+      GeneratedColumn<String>(
+        'role',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('partner'),
+      ).withConverter<PartnershipRole>($PartnershipsTable.$converterrole);
   static const VerificationMeta _updatedAtMeta = const VerificationMeta(
     'updatedAt',
   );
@@ -1657,6 +1713,7 @@ class $PartnershipsTable extends Partnerships
     partnershipId,
     habitId,
     partnerUserId,
+    role,
     updatedAt,
     isSynced,
   ];
@@ -1735,6 +1792,12 @@ class $PartnershipsTable extends Partnerships
         DriftSqlType.string,
         data['${effectivePrefix}partner_user_id'],
       )!,
+      role: $PartnershipsTable.$converterrole.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}role'],
+        )!,
+      ),
       updatedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}updated_at'],
@@ -1750,18 +1813,23 @@ class $PartnershipsTable extends Partnerships
   $PartnershipsTable createAlias(String alias) {
     return $PartnershipsTable(attachedDatabase, alias);
   }
+
+  static JsonTypeConverter2<PartnershipRole, String, String> $converterrole =
+      const EnumNameConverter<PartnershipRole>(PartnershipRole.values);
 }
 
 class Partnership extends DataClass implements Insertable<Partnership> {
   final String partnershipId;
   final String habitId;
   final String partnerUserId;
+  final PartnershipRole role;
   final DateTime updatedAt;
   final bool isSynced;
   const Partnership({
     required this.partnershipId,
     required this.habitId,
     required this.partnerUserId,
+    required this.role,
     required this.updatedAt,
     required this.isSynced,
   });
@@ -1771,6 +1839,11 @@ class Partnership extends DataClass implements Insertable<Partnership> {
     map['partnership_id'] = Variable<String>(partnershipId);
     map['habit_id'] = Variable<String>(habitId);
     map['partner_user_id'] = Variable<String>(partnerUserId);
+    {
+      map['role'] = Variable<String>(
+        $PartnershipsTable.$converterrole.toSql(role),
+      );
+    }
     map['updated_at'] = Variable<DateTime>(updatedAt);
     map['is_synced'] = Variable<bool>(isSynced);
     return map;
@@ -1781,6 +1854,7 @@ class Partnership extends DataClass implements Insertable<Partnership> {
       partnershipId: Value(partnershipId),
       habitId: Value(habitId),
       partnerUserId: Value(partnerUserId),
+      role: Value(role),
       updatedAt: Value(updatedAt),
       isSynced: Value(isSynced),
     );
@@ -1795,6 +1869,9 @@ class Partnership extends DataClass implements Insertable<Partnership> {
       partnershipId: serializer.fromJson<String>(json['partnershipId']),
       habitId: serializer.fromJson<String>(json['habitId']),
       partnerUserId: serializer.fromJson<String>(json['partnerUserId']),
+      role: $PartnershipsTable.$converterrole.fromJson(
+        serializer.fromJson<String>(json['role']),
+      ),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       isSynced: serializer.fromJson<bool>(json['isSynced']),
     );
@@ -1806,6 +1883,9 @@ class Partnership extends DataClass implements Insertable<Partnership> {
       'partnershipId': serializer.toJson<String>(partnershipId),
       'habitId': serializer.toJson<String>(habitId),
       'partnerUserId': serializer.toJson<String>(partnerUserId),
+      'role': serializer.toJson<String>(
+        $PartnershipsTable.$converterrole.toJson(role),
+      ),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'isSynced': serializer.toJson<bool>(isSynced),
     };
@@ -1815,12 +1895,14 @@ class Partnership extends DataClass implements Insertable<Partnership> {
     String? partnershipId,
     String? habitId,
     String? partnerUserId,
+    PartnershipRole? role,
     DateTime? updatedAt,
     bool? isSynced,
   }) => Partnership(
     partnershipId: partnershipId ?? this.partnershipId,
     habitId: habitId ?? this.habitId,
     partnerUserId: partnerUserId ?? this.partnerUserId,
+    role: role ?? this.role,
     updatedAt: updatedAt ?? this.updatedAt,
     isSynced: isSynced ?? this.isSynced,
   );
@@ -1833,6 +1915,7 @@ class Partnership extends DataClass implements Insertable<Partnership> {
       partnerUserId: data.partnerUserId.present
           ? data.partnerUserId.value
           : this.partnerUserId,
+      role: data.role.present ? data.role.value : this.role,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       isSynced: data.isSynced.present ? data.isSynced.value : this.isSynced,
     );
@@ -1844,6 +1927,7 @@ class Partnership extends DataClass implements Insertable<Partnership> {
           ..write('partnershipId: $partnershipId, ')
           ..write('habitId: $habitId, ')
           ..write('partnerUserId: $partnerUserId, ')
+          ..write('role: $role, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('isSynced: $isSynced')
           ..write(')'))
@@ -1851,8 +1935,14 @@ class Partnership extends DataClass implements Insertable<Partnership> {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(partnershipId, habitId, partnerUserId, updatedAt, isSynced);
+  int get hashCode => Object.hash(
+    partnershipId,
+    habitId,
+    partnerUserId,
+    role,
+    updatedAt,
+    isSynced,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1860,6 +1950,7 @@ class Partnership extends DataClass implements Insertable<Partnership> {
           other.partnershipId == this.partnershipId &&
           other.habitId == this.habitId &&
           other.partnerUserId == this.partnerUserId &&
+          other.role == this.role &&
           other.updatedAt == this.updatedAt &&
           other.isSynced == this.isSynced);
 }
@@ -1868,6 +1959,7 @@ class PartnershipsCompanion extends UpdateCompanion<Partnership> {
   final Value<String> partnershipId;
   final Value<String> habitId;
   final Value<String> partnerUserId;
+  final Value<PartnershipRole> role;
   final Value<DateTime> updatedAt;
   final Value<bool> isSynced;
   final Value<int> rowid;
@@ -1875,6 +1967,7 @@ class PartnershipsCompanion extends UpdateCompanion<Partnership> {
     this.partnershipId = const Value.absent(),
     this.habitId = const Value.absent(),
     this.partnerUserId = const Value.absent(),
+    this.role = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1883,6 +1976,7 @@ class PartnershipsCompanion extends UpdateCompanion<Partnership> {
     required String partnershipId,
     required String habitId,
     required String partnerUserId,
+    this.role = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1893,6 +1987,7 @@ class PartnershipsCompanion extends UpdateCompanion<Partnership> {
     Expression<String>? partnershipId,
     Expression<String>? habitId,
     Expression<String>? partnerUserId,
+    Expression<String>? role,
     Expression<DateTime>? updatedAt,
     Expression<bool>? isSynced,
     Expression<int>? rowid,
@@ -1901,6 +1996,7 @@ class PartnershipsCompanion extends UpdateCompanion<Partnership> {
       if (partnershipId != null) 'partnership_id': partnershipId,
       if (habitId != null) 'habit_id': habitId,
       if (partnerUserId != null) 'partner_user_id': partnerUserId,
+      if (role != null) 'role': role,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (isSynced != null) 'is_synced': isSynced,
       if (rowid != null) 'rowid': rowid,
@@ -1911,6 +2007,7 @@ class PartnershipsCompanion extends UpdateCompanion<Partnership> {
     Value<String>? partnershipId,
     Value<String>? habitId,
     Value<String>? partnerUserId,
+    Value<PartnershipRole>? role,
     Value<DateTime>? updatedAt,
     Value<bool>? isSynced,
     Value<int>? rowid,
@@ -1919,6 +2016,7 @@ class PartnershipsCompanion extends UpdateCompanion<Partnership> {
       partnershipId: partnershipId ?? this.partnershipId,
       habitId: habitId ?? this.habitId,
       partnerUserId: partnerUserId ?? this.partnerUserId,
+      role: role ?? this.role,
       updatedAt: updatedAt ?? this.updatedAt,
       isSynced: isSynced ?? this.isSynced,
       rowid: rowid ?? this.rowid,
@@ -1936,6 +2034,11 @@ class PartnershipsCompanion extends UpdateCompanion<Partnership> {
     }
     if (partnerUserId.present) {
       map['partner_user_id'] = Variable<String>(partnerUserId.value);
+    }
+    if (role.present) {
+      map['role'] = Variable<String>(
+        $PartnershipsTable.$converterrole.toSql(role.value),
+      );
     }
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
@@ -1955,6 +2058,7 @@ class PartnershipsCompanion extends UpdateCompanion<Partnership> {
           ..write('partnershipId: $partnershipId, ')
           ..write('habitId: $habitId, ')
           ..write('partnerUserId: $partnerUserId, ')
+          ..write('role: $role, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('isSynced: $isSynced, ')
           ..write('rowid: $rowid')
@@ -3102,6 +3206,16 @@ class $PartnerSnapshotsTable extends PartnerSnapshots
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  @override
+  late final GeneratedColumnWithTypeConverter<PartnershipRole, String> role =
+      GeneratedColumn<String>(
+        'role',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('partner'),
+      ).withConverter<PartnershipRole>($PartnerSnapshotsTable.$converterrole);
   static const VerificationMeta _currentDurationMeta = const VerificationMeta(
     'currentDuration',
   );
@@ -3173,6 +3287,7 @@ class $PartnerSnapshotsTable extends PartnerSnapshots
     partnerUserId,
     username,
     avatarUrl,
+    role,
     currentDuration,
     hasCompletedToday,
     lastNudgeAt,
@@ -3288,6 +3403,12 @@ class $PartnerSnapshotsTable extends PartnerSnapshots
         DriftSqlType.string,
         data['${effectivePrefix}avatar_url'],
       ),
+      role: $PartnerSnapshotsTable.$converterrole.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}role'],
+        )!,
+      ),
       currentDuration: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}current_duration'],
@@ -3315,6 +3436,9 @@ class $PartnerSnapshotsTable extends PartnerSnapshots
   $PartnerSnapshotsTable createAlias(String alias) {
     return $PartnerSnapshotsTable(attachedDatabase, alias);
   }
+
+  static JsonTypeConverter2<PartnershipRole, String, String> $converterrole =
+      const EnumNameConverter<PartnershipRole>(PartnershipRole.values);
 }
 
 class PartnerSnapshot extends DataClass implements Insertable<PartnerSnapshot> {
@@ -3322,6 +3446,7 @@ class PartnerSnapshot extends DataClass implements Insertable<PartnerSnapshot> {
   final String partnerUserId;
   final String username;
   final String? avatarUrl;
+  final PartnershipRole role;
   final int currentDuration;
   final bool hasCompletedToday;
   final DateTime? lastNudgeAt;
@@ -3332,6 +3457,7 @@ class PartnerSnapshot extends DataClass implements Insertable<PartnerSnapshot> {
     required this.partnerUserId,
     required this.username,
     this.avatarUrl,
+    required this.role,
     required this.currentDuration,
     required this.hasCompletedToday,
     this.lastNudgeAt,
@@ -3346,6 +3472,11 @@ class PartnerSnapshot extends DataClass implements Insertable<PartnerSnapshot> {
     map['username'] = Variable<String>(username);
     if (!nullToAbsent || avatarUrl != null) {
       map['avatar_url'] = Variable<String>(avatarUrl);
+    }
+    {
+      map['role'] = Variable<String>(
+        $PartnerSnapshotsTable.$converterrole.toSql(role),
+      );
     }
     map['current_duration'] = Variable<int>(currentDuration);
     map['has_completed_today'] = Variable<bool>(hasCompletedToday);
@@ -3365,6 +3496,7 @@ class PartnerSnapshot extends DataClass implements Insertable<PartnerSnapshot> {
       avatarUrl: avatarUrl == null && nullToAbsent
           ? const Value.absent()
           : Value(avatarUrl),
+      role: Value(role),
       currentDuration: Value(currentDuration),
       hasCompletedToday: Value(hasCompletedToday),
       lastNudgeAt: lastNudgeAt == null && nullToAbsent
@@ -3385,6 +3517,9 @@ class PartnerSnapshot extends DataClass implements Insertable<PartnerSnapshot> {
       partnerUserId: serializer.fromJson<String>(json['partnerUserId']),
       username: serializer.fromJson<String>(json['username']),
       avatarUrl: serializer.fromJson<String?>(json['avatarUrl']),
+      role: $PartnerSnapshotsTable.$converterrole.fromJson(
+        serializer.fromJson<String>(json['role']),
+      ),
       currentDuration: serializer.fromJson<int>(json['currentDuration']),
       hasCompletedToday: serializer.fromJson<bool>(json['hasCompletedToday']),
       lastNudgeAt: serializer.fromJson<DateTime?>(json['lastNudgeAt']),
@@ -3400,6 +3535,9 @@ class PartnerSnapshot extends DataClass implements Insertable<PartnerSnapshot> {
       'partnerUserId': serializer.toJson<String>(partnerUserId),
       'username': serializer.toJson<String>(username),
       'avatarUrl': serializer.toJson<String?>(avatarUrl),
+      'role': serializer.toJson<String>(
+        $PartnerSnapshotsTable.$converterrole.toJson(role),
+      ),
       'currentDuration': serializer.toJson<int>(currentDuration),
       'hasCompletedToday': serializer.toJson<bool>(hasCompletedToday),
       'lastNudgeAt': serializer.toJson<DateTime?>(lastNudgeAt),
@@ -3413,6 +3551,7 @@ class PartnerSnapshot extends DataClass implements Insertable<PartnerSnapshot> {
     String? partnerUserId,
     String? username,
     Value<String?> avatarUrl = const Value.absent(),
+    PartnershipRole? role,
     int? currentDuration,
     bool? hasCompletedToday,
     Value<DateTime?> lastNudgeAt = const Value.absent(),
@@ -3423,6 +3562,7 @@ class PartnerSnapshot extends DataClass implements Insertable<PartnerSnapshot> {
     partnerUserId: partnerUserId ?? this.partnerUserId,
     username: username ?? this.username,
     avatarUrl: avatarUrl.present ? avatarUrl.value : this.avatarUrl,
+    role: role ?? this.role,
     currentDuration: currentDuration ?? this.currentDuration,
     hasCompletedToday: hasCompletedToday ?? this.hasCompletedToday,
     lastNudgeAt: lastNudgeAt.present ? lastNudgeAt.value : this.lastNudgeAt,
@@ -3437,6 +3577,7 @@ class PartnerSnapshot extends DataClass implements Insertable<PartnerSnapshot> {
           : this.partnerUserId,
       username: data.username.present ? data.username.value : this.username,
       avatarUrl: data.avatarUrl.present ? data.avatarUrl.value : this.avatarUrl,
+      role: data.role.present ? data.role.value : this.role,
       currentDuration: data.currentDuration.present
           ? data.currentDuration.value
           : this.currentDuration,
@@ -3458,6 +3599,7 @@ class PartnerSnapshot extends DataClass implements Insertable<PartnerSnapshot> {
           ..write('partnerUserId: $partnerUserId, ')
           ..write('username: $username, ')
           ..write('avatarUrl: $avatarUrl, ')
+          ..write('role: $role, ')
           ..write('currentDuration: $currentDuration, ')
           ..write('hasCompletedToday: $hasCompletedToday, ')
           ..write('lastNudgeAt: $lastNudgeAt, ')
@@ -3473,6 +3615,7 @@ class PartnerSnapshot extends DataClass implements Insertable<PartnerSnapshot> {
     partnerUserId,
     username,
     avatarUrl,
+    role,
     currentDuration,
     hasCompletedToday,
     lastNudgeAt,
@@ -3487,6 +3630,7 @@ class PartnerSnapshot extends DataClass implements Insertable<PartnerSnapshot> {
           other.partnerUserId == this.partnerUserId &&
           other.username == this.username &&
           other.avatarUrl == this.avatarUrl &&
+          other.role == this.role &&
           other.currentDuration == this.currentDuration &&
           other.hasCompletedToday == this.hasCompletedToday &&
           other.lastNudgeAt == this.lastNudgeAt &&
@@ -3499,6 +3643,7 @@ class PartnerSnapshotsCompanion extends UpdateCompanion<PartnerSnapshot> {
   final Value<String> partnerUserId;
   final Value<String> username;
   final Value<String?> avatarUrl;
+  final Value<PartnershipRole> role;
   final Value<int> currentDuration;
   final Value<bool> hasCompletedToday;
   final Value<DateTime?> lastNudgeAt;
@@ -3510,6 +3655,7 @@ class PartnerSnapshotsCompanion extends UpdateCompanion<PartnerSnapshot> {
     this.partnerUserId = const Value.absent(),
     this.username = const Value.absent(),
     this.avatarUrl = const Value.absent(),
+    this.role = const Value.absent(),
     this.currentDuration = const Value.absent(),
     this.hasCompletedToday = const Value.absent(),
     this.lastNudgeAt = const Value.absent(),
@@ -3522,6 +3668,7 @@ class PartnerSnapshotsCompanion extends UpdateCompanion<PartnerSnapshot> {
     required String partnerUserId,
     required String username,
     this.avatarUrl = const Value.absent(),
+    this.role = const Value.absent(),
     this.currentDuration = const Value.absent(),
     this.hasCompletedToday = const Value.absent(),
     this.lastNudgeAt = const Value.absent(),
@@ -3536,6 +3683,7 @@ class PartnerSnapshotsCompanion extends UpdateCompanion<PartnerSnapshot> {
     Expression<String>? partnerUserId,
     Expression<String>? username,
     Expression<String>? avatarUrl,
+    Expression<String>? role,
     Expression<int>? currentDuration,
     Expression<bool>? hasCompletedToday,
     Expression<DateTime>? lastNudgeAt,
@@ -3548,6 +3696,7 @@ class PartnerSnapshotsCompanion extends UpdateCompanion<PartnerSnapshot> {
       if (partnerUserId != null) 'partner_user_id': partnerUserId,
       if (username != null) 'username': username,
       if (avatarUrl != null) 'avatar_url': avatarUrl,
+      if (role != null) 'role': role,
       if (currentDuration != null) 'current_duration': currentDuration,
       if (hasCompletedToday != null) 'has_completed_today': hasCompletedToday,
       if (lastNudgeAt != null) 'last_nudge_at': lastNudgeAt,
@@ -3562,6 +3711,7 @@ class PartnerSnapshotsCompanion extends UpdateCompanion<PartnerSnapshot> {
     Value<String>? partnerUserId,
     Value<String>? username,
     Value<String?>? avatarUrl,
+    Value<PartnershipRole>? role,
     Value<int>? currentDuration,
     Value<bool>? hasCompletedToday,
     Value<DateTime?>? lastNudgeAt,
@@ -3574,6 +3724,7 @@ class PartnerSnapshotsCompanion extends UpdateCompanion<PartnerSnapshot> {
       partnerUserId: partnerUserId ?? this.partnerUserId,
       username: username ?? this.username,
       avatarUrl: avatarUrl ?? this.avatarUrl,
+      role: role ?? this.role,
       currentDuration: currentDuration ?? this.currentDuration,
       hasCompletedToday: hasCompletedToday ?? this.hasCompletedToday,
       lastNudgeAt: lastNudgeAt ?? this.lastNudgeAt,
@@ -3597,6 +3748,11 @@ class PartnerSnapshotsCompanion extends UpdateCompanion<PartnerSnapshot> {
     }
     if (avatarUrl.present) {
       map['avatar_url'] = Variable<String>(avatarUrl.value);
+    }
+    if (role.present) {
+      map['role'] = Variable<String>(
+        $PartnerSnapshotsTable.$converterrole.toSql(role.value),
+      );
     }
     if (currentDuration.present) {
       map['current_duration'] = Variable<int>(currentDuration.value);
@@ -3626,6 +3782,7 @@ class PartnerSnapshotsCompanion extends UpdateCompanion<PartnerSnapshot> {
           ..write('partnerUserId: $partnerUserId, ')
           ..write('username: $username, ')
           ..write('avatarUrl: $avatarUrl, ')
+          ..write('role: $role, ')
           ..write('currentDuration: $currentDuration, ')
           ..write('hasCompletedToday: $hasCompletedToday, ')
           ..write('lastNudgeAt: $lastNudgeAt, ')
@@ -5531,6 +5688,435 @@ class AcceptedFriendsCompanion extends UpdateCompanion<AcceptedFriend> {
   }
 }
 
+class $AchievementUnlocksTable extends AchievementUnlocks
+    with TableInfo<$AchievementUnlocksTable, AchievementUnlock> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AchievementUnlocksTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _achievementIdMeta = const VerificationMeta(
+    'achievementId',
+  );
+  @override
+  late final GeneratedColumn<String> achievementId = GeneratedColumn<String>(
+    'achievement_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceEventIdMeta = const VerificationMeta(
+    'sourceEventId',
+  );
+  @override
+  late final GeneratedColumn<String> sourceEventId = GeneratedColumn<String>(
+    'source_event_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _unlockedAtMeta = const VerificationMeta(
+    'unlockedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> unlockedAt = GeneratedColumn<DateTime>(
+    'unlocked_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _isSyncedMeta = const VerificationMeta(
+    'isSynced',
+  );
+  @override
+  late final GeneratedColumn<bool> isSynced = GeneratedColumn<bool>(
+    'is_synced',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_synced" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    achievementId,
+    userId,
+    sourceEventId,
+    unlockedAt,
+    updatedAt,
+    isSynced,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'achievement_unlocks';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AchievementUnlock> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('achievement_id')) {
+      context.handle(
+        _achievementIdMeta,
+        achievementId.isAcceptableOrUnknown(
+          data['achievement_id']!,
+          _achievementIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_achievementIdMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('source_event_id')) {
+      context.handle(
+        _sourceEventIdMeta,
+        sourceEventId.isAcceptableOrUnknown(
+          data['source_event_id']!,
+          _sourceEventIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceEventIdMeta);
+    }
+    if (data.containsKey('unlocked_at')) {
+      context.handle(
+        _unlockedAtMeta,
+        unlockedAt.isAcceptableOrUnknown(data['unlocked_at']!, _unlockedAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    if (data.containsKey('is_synced')) {
+      context.handle(
+        _isSyncedMeta,
+        isSynced.isAcceptableOrUnknown(data['is_synced']!, _isSyncedMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {userId, achievementId};
+  @override
+  AchievementUnlock map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AchievementUnlock(
+      achievementId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}achievement_id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      sourceEventId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_event_id'],
+      )!,
+      unlockedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}unlocked_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      isSynced: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_synced'],
+      )!,
+    );
+  }
+
+  @override
+  $AchievementUnlocksTable createAlias(String alias) {
+    return $AchievementUnlocksTable(attachedDatabase, alias);
+  }
+}
+
+class AchievementUnlock extends DataClass
+    implements Insertable<AchievementUnlock> {
+  final String achievementId;
+  final String userId;
+  final String sourceEventId;
+  final DateTime unlockedAt;
+  final DateTime updatedAt;
+  final bool isSynced;
+  const AchievementUnlock({
+    required this.achievementId,
+    required this.userId,
+    required this.sourceEventId,
+    required this.unlockedAt,
+    required this.updatedAt,
+    required this.isSynced,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['achievement_id'] = Variable<String>(achievementId);
+    map['user_id'] = Variable<String>(userId);
+    map['source_event_id'] = Variable<String>(sourceEventId);
+    map['unlocked_at'] = Variable<DateTime>(unlockedAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['is_synced'] = Variable<bool>(isSynced);
+    return map;
+  }
+
+  AchievementUnlocksCompanion toCompanion(bool nullToAbsent) {
+    return AchievementUnlocksCompanion(
+      achievementId: Value(achievementId),
+      userId: Value(userId),
+      sourceEventId: Value(sourceEventId),
+      unlockedAt: Value(unlockedAt),
+      updatedAt: Value(updatedAt),
+      isSynced: Value(isSynced),
+    );
+  }
+
+  factory AchievementUnlock.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AchievementUnlock(
+      achievementId: serializer.fromJson<String>(json['achievementId']),
+      userId: serializer.fromJson<String>(json['userId']),
+      sourceEventId: serializer.fromJson<String>(json['sourceEventId']),
+      unlockedAt: serializer.fromJson<DateTime>(json['unlockedAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      isSynced: serializer.fromJson<bool>(json['isSynced']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'achievementId': serializer.toJson<String>(achievementId),
+      'userId': serializer.toJson<String>(userId),
+      'sourceEventId': serializer.toJson<String>(sourceEventId),
+      'unlockedAt': serializer.toJson<DateTime>(unlockedAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'isSynced': serializer.toJson<bool>(isSynced),
+    };
+  }
+
+  AchievementUnlock copyWith({
+    String? achievementId,
+    String? userId,
+    String? sourceEventId,
+    DateTime? unlockedAt,
+    DateTime? updatedAt,
+    bool? isSynced,
+  }) => AchievementUnlock(
+    achievementId: achievementId ?? this.achievementId,
+    userId: userId ?? this.userId,
+    sourceEventId: sourceEventId ?? this.sourceEventId,
+    unlockedAt: unlockedAt ?? this.unlockedAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    isSynced: isSynced ?? this.isSynced,
+  );
+  AchievementUnlock copyWithCompanion(AchievementUnlocksCompanion data) {
+    return AchievementUnlock(
+      achievementId: data.achievementId.present
+          ? data.achievementId.value
+          : this.achievementId,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      sourceEventId: data.sourceEventId.present
+          ? data.sourceEventId.value
+          : this.sourceEventId,
+      unlockedAt: data.unlockedAt.present
+          ? data.unlockedAt.value
+          : this.unlockedAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      isSynced: data.isSynced.present ? data.isSynced.value : this.isSynced,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AchievementUnlock(')
+          ..write('achievementId: $achievementId, ')
+          ..write('userId: $userId, ')
+          ..write('sourceEventId: $sourceEventId, ')
+          ..write('unlockedAt: $unlockedAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('isSynced: $isSynced')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    achievementId,
+    userId,
+    sourceEventId,
+    unlockedAt,
+    updatedAt,
+    isSynced,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AchievementUnlock &&
+          other.achievementId == this.achievementId &&
+          other.userId == this.userId &&
+          other.sourceEventId == this.sourceEventId &&
+          other.unlockedAt == this.unlockedAt &&
+          other.updatedAt == this.updatedAt &&
+          other.isSynced == this.isSynced);
+}
+
+class AchievementUnlocksCompanion extends UpdateCompanion<AchievementUnlock> {
+  final Value<String> achievementId;
+  final Value<String> userId;
+  final Value<String> sourceEventId;
+  final Value<DateTime> unlockedAt;
+  final Value<DateTime> updatedAt;
+  final Value<bool> isSynced;
+  final Value<int> rowid;
+  const AchievementUnlocksCompanion({
+    this.achievementId = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.sourceEventId = const Value.absent(),
+    this.unlockedAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.isSynced = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AchievementUnlocksCompanion.insert({
+    required String achievementId,
+    required String userId,
+    required String sourceEventId,
+    this.unlockedAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.isSynced = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : achievementId = Value(achievementId),
+       userId = Value(userId),
+       sourceEventId = Value(sourceEventId);
+  static Insertable<AchievementUnlock> custom({
+    Expression<String>? achievementId,
+    Expression<String>? userId,
+    Expression<String>? sourceEventId,
+    Expression<DateTime>? unlockedAt,
+    Expression<DateTime>? updatedAt,
+    Expression<bool>? isSynced,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (achievementId != null) 'achievement_id': achievementId,
+      if (userId != null) 'user_id': userId,
+      if (sourceEventId != null) 'source_event_id': sourceEventId,
+      if (unlockedAt != null) 'unlocked_at': unlockedAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (isSynced != null) 'is_synced': isSynced,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AchievementUnlocksCompanion copyWith({
+    Value<String>? achievementId,
+    Value<String>? userId,
+    Value<String>? sourceEventId,
+    Value<DateTime>? unlockedAt,
+    Value<DateTime>? updatedAt,
+    Value<bool>? isSynced,
+    Value<int>? rowid,
+  }) {
+    return AchievementUnlocksCompanion(
+      achievementId: achievementId ?? this.achievementId,
+      userId: userId ?? this.userId,
+      sourceEventId: sourceEventId ?? this.sourceEventId,
+      unlockedAt: unlockedAt ?? this.unlockedAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      isSynced: isSynced ?? this.isSynced,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (achievementId.present) {
+      map['achievement_id'] = Variable<String>(achievementId.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (sourceEventId.present) {
+      map['source_event_id'] = Variable<String>(sourceEventId.value);
+    }
+    if (unlockedAt.present) {
+      map['unlocked_at'] = Variable<DateTime>(unlockedAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (isSynced.present) {
+      map['is_synced'] = Variable<bool>(isSynced.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AchievementUnlocksCompanion(')
+          ..write('achievementId: $achievementId, ')
+          ..write('userId: $userId, ')
+          ..write('sourceEventId: $sourceEventId, ')
+          ..write('unlockedAt: $unlockedAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('isSynced: $isSynced, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -5558,6 +6144,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $AcceptedFriendsTable acceptedFriends = $AcceptedFriendsTable(
     this,
   );
+  late final $AchievementUnlocksTable achievementUnlocks =
+      $AchievementUnlocksTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -5575,6 +6163,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     habitInvitations,
     milestoneEvents,
     acceptedFriends,
+    achievementUnlocks,
   ];
 }
 
@@ -5583,6 +6172,7 @@ typedef $$UsersTableCreateCompanionBuilder =
       required String userId,
       required String username,
       Value<String?> avatarUrl,
+      Value<String> levelName,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<int> totalScore,
@@ -5594,6 +6184,7 @@ typedef $$UsersTableUpdateCompanionBuilder =
       Value<String> userId,
       Value<String> username,
       Value<String?> avatarUrl,
+      Value<String> levelName,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<int> totalScore,
@@ -5644,6 +6235,11 @@ class $$UsersTableFilterComposer extends Composer<_$AppDatabase, $UsersTable> {
 
   ColumnFilters<String> get avatarUrl => $composableBuilder(
     column: $table.avatarUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get levelName => $composableBuilder(
+    column: $table.levelName,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5717,6 +6313,11 @@ class $$UsersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get levelName => $composableBuilder(
+    column: $table.levelName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -5755,6 +6356,9 @@ class $$UsersTableAnnotationComposer
 
   GeneratedColumn<String> get avatarUrl =>
       $composableBuilder(column: $table.avatarUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get levelName =>
+      $composableBuilder(column: $table.levelName, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -5827,6 +6431,7 @@ class $$UsersTableTableManager
                 Value<String> userId = const Value.absent(),
                 Value<String> username = const Value.absent(),
                 Value<String?> avatarUrl = const Value.absent(),
+                Value<String> levelName = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> totalScore = const Value.absent(),
@@ -5836,6 +6441,7 @@ class $$UsersTableTableManager
                 userId: userId,
                 username: username,
                 avatarUrl: avatarUrl,
+                levelName: levelName,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 totalScore: totalScore,
@@ -5847,6 +6453,7 @@ class $$UsersTableTableManager
                 required String userId,
                 required String username,
                 Value<String?> avatarUrl = const Value.absent(),
+                Value<String> levelName = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> totalScore = const Value.absent(),
@@ -5856,6 +6463,7 @@ class $$UsersTableTableManager
                 userId: userId,
                 username: username,
                 avatarUrl: avatarUrl,
+                levelName: levelName,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 totalScore: totalScore,
@@ -6868,6 +7476,7 @@ typedef $$PartnershipsTableCreateCompanionBuilder =
       required String partnershipId,
       required String habitId,
       required String partnerUserId,
+      Value<PartnershipRole> role,
       Value<DateTime> updatedAt,
       Value<bool> isSynced,
       Value<int> rowid,
@@ -6877,6 +7486,7 @@ typedef $$PartnershipsTableUpdateCompanionBuilder =
       Value<String> partnershipId,
       Value<String> habitId,
       Value<String> partnerUserId,
+      Value<PartnershipRole> role,
       Value<DateTime> updatedAt,
       Value<bool> isSynced,
       Value<int> rowid,
@@ -6921,6 +7531,12 @@ class $$PartnershipsTableFilterComposer
   ColumnFilters<String> get partnerUserId => $composableBuilder(
     column: $table.partnerUserId,
     builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<PartnershipRole, PartnershipRole, String>
+  get role => $composableBuilder(
+    column: $table.role,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
@@ -6976,6 +7592,11 @@ class $$PartnershipsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get role => $composableBuilder(
+    column: $table.role,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
@@ -7028,6 +7649,9 @@ class $$PartnershipsTableAnnotationComposer
     column: $table.partnerUserId,
     builder: (column) => column,
   );
+
+  GeneratedColumnWithTypeConverter<PartnershipRole, String> get role =>
+      $composableBuilder(column: $table.role, builder: (column) => column);
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
@@ -7090,6 +7714,7 @@ class $$PartnershipsTableTableManager
                 Value<String> partnershipId = const Value.absent(),
                 Value<String> habitId = const Value.absent(),
                 Value<String> partnerUserId = const Value.absent(),
+                Value<PartnershipRole> role = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -7097,6 +7722,7 @@ class $$PartnershipsTableTableManager
                 partnershipId: partnershipId,
                 habitId: habitId,
                 partnerUserId: partnerUserId,
+                role: role,
                 updatedAt: updatedAt,
                 isSynced: isSynced,
                 rowid: rowid,
@@ -7106,6 +7732,7 @@ class $$PartnershipsTableTableManager
                 required String partnershipId,
                 required String habitId,
                 required String partnerUserId,
+                Value<PartnershipRole> role = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -7113,6 +7740,7 @@ class $$PartnershipsTableTableManager
                 partnershipId: partnershipId,
                 habitId: habitId,
                 partnerUserId: partnerUserId,
+                role: role,
                 updatedAt: updatedAt,
                 isSynced: isSynced,
                 rowid: rowid,
@@ -7791,6 +8419,7 @@ typedef $$PartnerSnapshotsTableCreateCompanionBuilder =
       required String partnerUserId,
       required String username,
       Value<String?> avatarUrl,
+      Value<PartnershipRole> role,
       Value<int> currentDuration,
       Value<bool> hasCompletedToday,
       Value<DateTime?> lastNudgeAt,
@@ -7804,6 +8433,7 @@ typedef $$PartnerSnapshotsTableUpdateCompanionBuilder =
       Value<String> partnerUserId,
       Value<String> username,
       Value<String?> avatarUrl,
+      Value<PartnershipRole> role,
       Value<int> currentDuration,
       Value<bool> hasCompletedToday,
       Value<DateTime?> lastNudgeAt,
@@ -7839,6 +8469,12 @@ class $$PartnerSnapshotsTableFilterComposer
   ColumnFilters<String> get avatarUrl => $composableBuilder(
     column: $table.avatarUrl,
     builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<PartnershipRole, PartnershipRole, String>
+  get role => $composableBuilder(
+    column: $table.role,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 
   ColumnFilters<int> get currentDuration => $composableBuilder(
@@ -7896,6 +8532,11 @@ class $$PartnerSnapshotsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get role => $composableBuilder(
+    column: $table.role,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get currentDuration => $composableBuilder(
     column: $table.currentDuration,
     builder: (column) => ColumnOrderings(column),
@@ -7944,6 +8585,9 @@ class $$PartnerSnapshotsTableAnnotationComposer
 
   GeneratedColumn<String> get avatarUrl =>
       $composableBuilder(column: $table.avatarUrl, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<PartnershipRole, String> get role =>
+      $composableBuilder(column: $table.role, builder: (column) => column);
 
   GeneratedColumn<int> get currentDuration => $composableBuilder(
     column: $table.currentDuration,
@@ -8008,6 +8652,7 @@ class $$PartnerSnapshotsTableTableManager
                 Value<String> partnerUserId = const Value.absent(),
                 Value<String> username = const Value.absent(),
                 Value<String?> avatarUrl = const Value.absent(),
+                Value<PartnershipRole> role = const Value.absent(),
                 Value<int> currentDuration = const Value.absent(),
                 Value<bool> hasCompletedToday = const Value.absent(),
                 Value<DateTime?> lastNudgeAt = const Value.absent(),
@@ -8019,6 +8664,7 @@ class $$PartnerSnapshotsTableTableManager
                 partnerUserId: partnerUserId,
                 username: username,
                 avatarUrl: avatarUrl,
+                role: role,
                 currentDuration: currentDuration,
                 hasCompletedToday: hasCompletedToday,
                 lastNudgeAt: lastNudgeAt,
@@ -8032,6 +8678,7 @@ class $$PartnerSnapshotsTableTableManager
                 required String partnerUserId,
                 required String username,
                 Value<String?> avatarUrl = const Value.absent(),
+                Value<PartnershipRole> role = const Value.absent(),
                 Value<int> currentDuration = const Value.absent(),
                 Value<bool> hasCompletedToday = const Value.absent(),
                 Value<DateTime?> lastNudgeAt = const Value.absent(),
@@ -8043,6 +8690,7 @@ class $$PartnerSnapshotsTableTableManager
                 partnerUserId: partnerUserId,
                 username: username,
                 avatarUrl: avatarUrl,
+                role: role,
                 currentDuration: currentDuration,
                 hasCompletedToday: hasCompletedToday,
                 lastNudgeAt: lastNudgeAt,
@@ -9065,6 +9713,244 @@ typedef $$AcceptedFriendsTableProcessedTableManager =
       AcceptedFriend,
       PrefetchHooks Function()
     >;
+typedef $$AchievementUnlocksTableCreateCompanionBuilder =
+    AchievementUnlocksCompanion Function({
+      required String achievementId,
+      required String userId,
+      required String sourceEventId,
+      Value<DateTime> unlockedAt,
+      Value<DateTime> updatedAt,
+      Value<bool> isSynced,
+      Value<int> rowid,
+    });
+typedef $$AchievementUnlocksTableUpdateCompanionBuilder =
+    AchievementUnlocksCompanion Function({
+      Value<String> achievementId,
+      Value<String> userId,
+      Value<String> sourceEventId,
+      Value<DateTime> unlockedAt,
+      Value<DateTime> updatedAt,
+      Value<bool> isSynced,
+      Value<int> rowid,
+    });
+
+class $$AchievementUnlocksTableFilterComposer
+    extends Composer<_$AppDatabase, $AchievementUnlocksTable> {
+  $$AchievementUnlocksTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get achievementId => $composableBuilder(
+    column: $table.achievementId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceEventId => $composableBuilder(
+    column: $table.sourceEventId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get unlockedAt => $composableBuilder(
+    column: $table.unlockedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isSynced => $composableBuilder(
+    column: $table.isSynced,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AchievementUnlocksTableOrderingComposer
+    extends Composer<_$AppDatabase, $AchievementUnlocksTable> {
+  $$AchievementUnlocksTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get achievementId => $composableBuilder(
+    column: $table.achievementId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceEventId => $composableBuilder(
+    column: $table.sourceEventId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get unlockedAt => $composableBuilder(
+    column: $table.unlockedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isSynced => $composableBuilder(
+    column: $table.isSynced,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AchievementUnlocksTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AchievementUnlocksTable> {
+  $$AchievementUnlocksTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get achievementId => $composableBuilder(
+    column: $table.achievementId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get sourceEventId => $composableBuilder(
+    column: $table.sourceEventId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get unlockedAt => $composableBuilder(
+    column: $table.unlockedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get isSynced =>
+      $composableBuilder(column: $table.isSynced, builder: (column) => column);
+}
+
+class $$AchievementUnlocksTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AchievementUnlocksTable,
+          AchievementUnlock,
+          $$AchievementUnlocksTableFilterComposer,
+          $$AchievementUnlocksTableOrderingComposer,
+          $$AchievementUnlocksTableAnnotationComposer,
+          $$AchievementUnlocksTableCreateCompanionBuilder,
+          $$AchievementUnlocksTableUpdateCompanionBuilder,
+          (
+            AchievementUnlock,
+            BaseReferences<
+              _$AppDatabase,
+              $AchievementUnlocksTable,
+              AchievementUnlock
+            >,
+          ),
+          AchievementUnlock,
+          PrefetchHooks Function()
+        > {
+  $$AchievementUnlocksTableTableManager(
+    _$AppDatabase db,
+    $AchievementUnlocksTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AchievementUnlocksTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AchievementUnlocksTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AchievementUnlocksTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> achievementId = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<String> sourceEventId = const Value.absent(),
+                Value<DateTime> unlockedAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> isSynced = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AchievementUnlocksCompanion(
+                achievementId: achievementId,
+                userId: userId,
+                sourceEventId: sourceEventId,
+                unlockedAt: unlockedAt,
+                updatedAt: updatedAt,
+                isSynced: isSynced,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String achievementId,
+                required String userId,
+                required String sourceEventId,
+                Value<DateTime> unlockedAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> isSynced = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AchievementUnlocksCompanion.insert(
+                achievementId: achievementId,
+                userId: userId,
+                sourceEventId: sourceEventId,
+                unlockedAt: unlockedAt,
+                updatedAt: updatedAt,
+                isSynced: isSynced,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AchievementUnlocksTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AchievementUnlocksTable,
+      AchievementUnlock,
+      $$AchievementUnlocksTableFilterComposer,
+      $$AchievementUnlocksTableOrderingComposer,
+      $$AchievementUnlocksTableAnnotationComposer,
+      $$AchievementUnlocksTableCreateCompanionBuilder,
+      $$AchievementUnlocksTableUpdateCompanionBuilder,
+      (
+        AchievementUnlock,
+        BaseReferences<
+          _$AppDatabase,
+          $AchievementUnlocksTable,
+          AchievementUnlock
+        >,
+      ),
+      AchievementUnlock,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -9092,4 +9978,6 @@ class $AppDatabaseManager {
       $$MilestoneEventsTableTableManager(_db, _db.milestoneEvents);
   $$AcceptedFriendsTableTableManager get acceptedFriends =>
       $$AcceptedFriendsTableTableManager(_db, _db.acceptedFriends);
+  $$AchievementUnlocksTableTableManager get achievementUnlocks =>
+      $$AchievementUnlocksTableTableManager(_db, _db.achievementUnlocks);
 }

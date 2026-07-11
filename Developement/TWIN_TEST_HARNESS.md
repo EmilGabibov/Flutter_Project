@@ -66,6 +66,7 @@ With both apps installed, you can now test the social features:
 6. **Habit Completion**: Complete the habit in one app. After sync, the other app should reflect the completed status (e.g., the partner avatar will have a glowing border).
 7. **Preset Habit Invite**: In Alice's app, create a new habit from a preset and select Bob in the partner picker. Let the sync queue send the habit and invite.
 8. **Invite Acceptance**: In Bob's app, run/open daily sync, verify the invitation banner appears, accept it, then verify the partnership appears only after acceptance.
+9. **Role Checks**: Verify Alice can still edit/archive the shared habit, Bob can complete/skip it but cannot edit/archive it, and only shared-habit participants can send nudges.
 
 ## Troubleshooting
 
@@ -73,3 +74,4 @@ With both apps installed, you can now test the social features:
 - **Connection refused**: Run `adb reverse tcp:8787 tcp:8787` again if the emulator loses the port mapping.
 - **Stale data**: To reset, uninstall both apps from the device to wipe the local Drift databases, and restart the Cloudflare local worker to reset the in-memory D1 data.
 - **No partner chips**: Confirm `npm run db:setup` has applied `schema.sql`, run `adb reverse tcp:8787 tcp:8787`, and check logcat for `[SyncService] GET /api/sync/daily successful`. Open Alice after the accepted friendship exists so `/api/sync/daily` can populate the local accepted-friends cache before testing habit invites.
+- **Old local D1 state**: If `schema.sql` fails with `no such column: role`, run `npx wrangler d1 execute hable_db --local --command "ALTER TABLE partnerships ADD COLUMN role TEXT NOT NULL DEFAULT 'partner';"` once, then rerun `npm run db:setup`.

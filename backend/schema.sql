@@ -28,8 +28,15 @@ CREATE TABLE IF NOT EXISTS partnerships (
     user_id TEXT NOT NULL,
     partner_id TEXT NOT NULL,
     habit_id TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'partner' CHECK (role IN ('owner', 'partner', 'supporter')),
     PRIMARY KEY (user_id, partner_id, habit_id)
 );
+
+CREATE INDEX IF NOT EXISTS idx_partnerships_user_habit_role
+ON partnerships(user_id, habit_id, role);
+
+CREATE INDEX IF NOT EXISTS idx_partnerships_partner_habit
+ON partnerships(partner_id, habit_id);
 
 CREATE TABLE IF NOT EXISTS friend_requests (
     id TEXT PRIMARY KEY,
@@ -87,6 +94,32 @@ CREATE TABLE IF NOT EXISTS habit_logs (
     logged_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE INDEX IF NOT EXISTS idx_habit_logs_user_habit_status_date
+ON habit_logs(user_id, habit_id, status, logged_at);
+
+CREATE TABLE IF NOT EXISTS user_score_events (
+    user_id TEXT NOT NULL,
+    source_event_id TEXT NOT NULL,
+    points INTEGER NOT NULL,
+    reason TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, source_event_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_score_events_user_created
+ON user_score_events(user_id, created_at);
+
+CREATE TABLE IF NOT EXISTS user_achievements (
+    user_id TEXT NOT NULL,
+    achievement_id TEXT NOT NULL,
+    unlocked_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    source_event_id TEXT NOT NULL,
+    PRIMARY KEY (user_id, achievement_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_achievements_user_unlocked
+ON user_achievements(user_id, unlocked_at);
+
 -- Insert some dummy data for local testing
 INSERT OR IGNORE INTO users (id, username, avatar_url) VALUES 
 ('local-user-1', 'Alice', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alice'),
@@ -95,6 +128,8 @@ INSERT OR IGNORE INTO users (id, username, avatar_url) VALUES
 INSERT OR IGNORE INTO habit_progress (user_id, habit_id, current_duration) VALUES
 ('local-user-2', 'shared-habit-1', 45);
 
-INSERT OR IGNORE INTO partnerships (user_id, partner_id, habit_id) VALUES
-('local-user-1', 'local-user-2', 'shared-habit-1'),
-('local-user-2', 'local-user-1', 'shared-habit-1');
+INSERT OR IGNORE INTO partnerships (user_id, partner_id, habit_id, role) VALUES
+('local-user-1', 'local-user-1', 'shared-habit-1', 'owner'),
+('local-user-1', 'local-user-2', 'shared-habit-1', 'owner'),
+('local-user-2', 'local-user-2', 'shared-habit-1', 'partner'),
+('local-user-2', 'local-user-1', 'shared-habit-1', 'partner');

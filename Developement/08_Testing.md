@@ -26,6 +26,7 @@ Because Hable involves mutual habit tracking and a offline-first sync engine, it
 - **Friend Requests:** Use the "Find Friends" tab in the Social Hub to search for "Bob" (from Alice's app) and send a friend request.
 - **Acceptance:** In Bob's app, open Social Hub -> Requests, and accept Alice's request.
 - **Habit Sync:** Create a new habit in Alice's app. Verify it syncs to the Cloudflare Worker.
+- **Role Authorization:** After Bob accepts the habit invite, verify Alice can still edit/archive the shared habit, Bob can complete/skip it but cannot edit/archive it, and a future supporter account cannot complete/skip it.
 - **Home Habit Creation:** From Home, tap the header add button and verify it opens `HabitFormSheet`. In the empty state, tap **Add habit** and verify it opens the same sheet. After creating a habit, verify the suggested preset strip no longer crowds the active habit card.
 - **Preset Habit Partner Invite:** Create a preset habit in Alice's app, select Bob from the accepted-friend chips, verify the queued habit sync runs before `sendHabitInvitation`, then open Bob's app and accept/decline the invitation banner.
 - **Nudges:** Tap a partner avatar to enqueue a nudge. Wait for background sync and verify receipt on the twin app.
@@ -136,6 +137,51 @@ Because Hable involves mutual habit tracking and a offline-first sync engine, it
 **Notes:**
 - The first direct upload produced a preview URL, but the production alias updated after propagation.
 - Remote D1 schema had to be synchronized with `backend/schema.sql` before habit sync smoke tests passed.
+
+## 8. Local Worker RBAC Smoke
+
+**Date:** 2026-07-11  
+**Target:** Local Pages Functions Worker on `http://127.0.0.1:8787`
+
+**Pre-step for old local D1 state:** If `npm run db:setup` fails with `no such column: role`, run:
+`npx wrangler d1 execute hable_db --local --command "ALTER TABLE partnerships ADD COLUMN role TEXT NOT NULL DEFAULT 'partner';"`
+Then rerun `npm run db:setup`.
+
+**Executed checks:**
+1. Logged in seeded `local-user-1` and `local-user-2` through `POST /api/auth/login`.
+2. Sent and accepted a friend request, created `role-habit-1` as Alice, invited Bob, and accepted the invite as Bob.
+3. Verified Bob receives `403` on `POST /api/sync/habit` for the shared habit, while Alice can archive it successfully.
+4. Verified Bob receives `200` on `POST /api/sync/log` for the shared habit.
+5. Registered `CharlieRole`, inserted a `supporter` partnership row locally for the same habit, and verified Charlie receives `403` on `POST /api/sync/log` but `200` on `POST /api/social/nudge`.
+
+**Outcome:** Owner edit/archive, partner log, partner edit rejection, supporter log rejection, and supporter nudge authorization all matched the RBAC contract.
+
+## 9. Local Worker Gamification Smoke
+
+**Date:** 2026-07-11  
+**Target:** Local Pages Functions Worker on `http://127.0.0.1:8787`
+
+**Executed checks:**
+1. Logged in seeded `local-user-1` and `local-user-2`, captured each user's initial `/api/sync/daily.gamification.total_points`, then created a unique shared habit from Alice.
+2. Alice completed the habit once and replayed the same `log_id`; the replay returned `accepted: false`.
+3. Bob accepted the habit invite, completed the same habit for the same date, and replayed the same `log_id`; the replay returned `accepted: false`.
+4. Bob skipped the habit on a later date; skip was accepted but did not add points.
+5. Bob nudged Alice and received `first_nudge`; both users received `first_check_in`.
+6. Posting to deprecated `/api/sync/score` returned HTTP `410`.
+
+**Outcome:** Alice and Bob each gained exactly `10` points from one completed check-in plus one shared-habit bonus. Duplicate log replays did not change the score, and `/api/sync/daily` returned `gamification.level`, `badges`, and `newly_unlocked_badges`.
+
+## 10. Widget Smoke For Role-Aware Partner Row
+
+**Date:** 2026-07-11  
+**Target:** Flutter widget test
+
+**Executed checks:**
+1. Rendered `HabitPartnerRow` with five mixed-role partner snapshots.
+2. Verified only four visible partner chips render, with the fifth collapsed into a `+1` overflow chip.
+3. Verified visible role copy still renders (`owner`) so the chip exposes role state even when avatar-only space is tight.
+
+**Outcome:** The per-card partner row preserves the avatar cap and overflow behavior required for narrow layouts without depending on network state.
 
 ## 7. Android Web-Era Regression Smoke
 

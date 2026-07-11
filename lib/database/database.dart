@@ -22,6 +22,7 @@ part 'database.g.dart';
     HabitInvitations,
     MilestoneEvents,
     AcceptedFriends,
+    AchievementUnlocks,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -29,7 +30,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Bump this when the schema changes.
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -52,6 +53,14 @@ class AppDatabase extends _$AppDatabase {
       if (from < 5) {
         await m.createTable(acceptedFriends);
       }
+      if (from < 6) {
+        await m.addColumn(partnerships, partnerships.role);
+        await m.addColumn(partnerSnapshots, partnerSnapshots.role);
+      }
+      if (from < 7) {
+        await m.addColumn(users, users.levelName);
+        await m.createTable(achievementUnlocks);
+      }
     },
   );
 
@@ -65,8 +74,9 @@ class AppDatabase extends _$AppDatabase {
   Future<User?> getUser(String userId) =>
       (select(users)..where((u) => u.userId.equals(userId))).getSingleOrNull();
 
-  Stream<User?> watchUser(String userId) =>
-      (select(users)..where((u) => u.userId.equals(userId))).watchSingleOrNull();
+  Stream<User?> watchUser(String userId) => (select(
+    users,
+  )..where((u) => u.userId.equals(userId))).watchSingleOrNull();
 
   Stream<User?> watchCurrentUser() =>
       (select(users)..limit(1)).watchSingleOrNull();
@@ -79,6 +89,19 @@ class AppDatabase extends _$AppDatabase {
           isSynced: const Value(false),
         ),
       );
+
+  Future<void> updateServerGamification(
+    String userId, {
+    required int totalScore,
+    required String levelName,
+  }) => (update(users)..where((u) => u.userId.equals(userId))).write(
+    UsersCompanion(
+      totalScore: Value(totalScore),
+      levelName: Value(levelName),
+      updatedAt: Value(DateTime.now()),
+      isSynced: const Value(true),
+    ),
+  );
 
   // ---------------------------------------------------------------------------
   // Habit operations
@@ -546,6 +569,19 @@ class AppDatabase extends _$AppDatabase {
 
   Stream<List<AcceptedFriend>> watchAcceptedFriends() =>
       select(acceptedFriends).watch();
+
+  // ---------------------------------------------------------------------------
+  // Achievement operations
+  // ---------------------------------------------------------------------------
+
+  Future<void> upsertAchievementUnlock(AchievementUnlocksCompanion unlock) =>
+      into(achievementUnlocks).insertOnConflictUpdate(unlock);
+
+  Stream<List<AchievementUnlock>> watchAchievementUnlocks(String userId) =>
+      (select(achievementUnlocks)
+            ..where((a) => a.userId.equals(userId))
+            ..orderBy([(a) => OrderingTerm.desc(a.unlockedAt)]))
+          .watch();
 
   // ---------------------------------------------------------------------------
   // Habit color palette assignment

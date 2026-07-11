@@ -135,22 +135,7 @@ class SyncService {
         rethrow;
       }
     } else if (item.action == SyncAction.syncScore) {
-      try {
-        final response = await http.post(
-          Uri.parse('$apiBaseUrl/api/sync/score'),
-          headers: headers,
-          body: item.payload,
-        );
-        if (response.statusCode != 200) {
-          throw Exception(
-            'Failed to sync score: ${response.statusCode} - ${response.body}',
-          );
-        }
-        debugPrint('[SyncService] POST SYNC_SCORE successful');
-      } catch (e) {
-        debugPrint('[SyncService] Sync score failed: $e');
-        rethrow;
-      }
+      debugPrint('[SyncService] Ignoring deprecated client score sync');
     } else if (item.action == SyncAction.createHabit ||
         item.action == SyncAction.updateHabit) {
       try {
@@ -239,29 +224,47 @@ class SyncService {
               partnerUserId: Value(partnerUserId),
               username: Value(partner['username']?.toString() ?? 'Friend'),
               avatarUrl: Value(partner['avatar_url']?.toString()),
+              role: Value(
+                PartnershipRole.values.firstWhere(
+                  (value) => value.name == partner['role']?.toString(),
+                  orElse: () => PartnershipRole.partner,
+                ),
+              ),
               currentDuration: Value(
                 (partner['current_duration'] as num?)?.toInt() ?? 0,
+              ),
+              hasCompletedToday: Value(
+                partner['has_completed_today'] == true ||
+                    partner['has_completed_today'] == 1,
               ),
               updatedAt: Value(DateTime.now()),
             ),
           );
-          
-          // UX Fix: Upsert the shared habit into the local habits table 
+
+          // UX Fix: Upsert the shared habit into the local habits table
           // so it shows up on the recipient's home screen.
-          await _db.into(_db.habits).insertOnConflictUpdate(
-            HabitsCompanion(
-              habitId: Value(habitId),
-              userId: Value(userId),
-              title: Value(partner['title']?.toString() ?? 'Shared Habit'),
-              isCustom: const Value(false),
-              targetDuration: Value((partner['target_duration'] as num?)?.toInt() ?? 30),
-              currentDuration: const Value(0), // user's own current duration is fetched elsewhere or starts at 0
-              status: const Value(HabitStatus.active),
-              colorHex: Value(partner['color_hex']?.toString() ?? 'FF9CAF88'),
-              updatedAt: Value(DateTime.now()),
-              isSynced: const Value(true),
-            ),
-          );
+          await _db
+              .into(_db.habits)
+              .insertOnConflictUpdate(
+                HabitsCompanion(
+                  habitId: Value(habitId),
+                  userId: Value(userId),
+                  title: Value(partner['title']?.toString() ?? 'Shared Habit'),
+                  isCustom: const Value(false),
+                  targetDuration: Value(
+                    (partner['target_duration'] as num?)?.toInt() ?? 30,
+                  ),
+                  currentDuration: const Value(
+                    0,
+                  ), // user's own current duration is fetched elsewhere or starts at 0
+                  status: const Value(HabitStatus.active),
+                  colorHex: Value(
+                    partner['color_hex']?.toString() ?? 'FF9CAF88',
+                  ),
+                  updatedAt: Value(DateTime.now()),
+                  isSynced: const Value(true),
+                ),
+              );
 
           debugPrint(
             '[SyncService] Upserted partner ${partner['username']} for habit $habitId',
@@ -320,6 +323,45 @@ class SyncService {
               isSynced: const Value(true),
             ),
           );
+        }
+
+        final gamification = data['gamification'];
+        if (gamification is Map<String, dynamic>) {
+          final totalPoints =
+              (gamification['total_points'] as num?)?.toInt() ?? 0;
+          final levelName =
+              gamification['level']?.toString().trim().isNotEmpty == true
+              ? gamification['level'].toString()
+              : 'Newbie';
+          await _db.updateServerGamification(
+            userId,
+            totalScore: totalPoints,
+            levelName: levelName,
+          );
+
+          final badges = gamification['badges'];
+          if (badges is List) {
+            for (final badge in badges) {
+              if (badge is! Map<String, dynamic>) continue;
+              final achievementId = badge['achievement_id']?.toString() ?? '';
+              if (achievementId.isEmpty) continue;
+              final unlockedAt =
+                  DateTime.tryParse(badge['unlocked_at']?.toString() ?? '') ??
+                  DateTime.now();
+              await _db.upsertAchievementUnlock(
+                AchievementUnlocksCompanion(
+                  achievementId: Value(achievementId),
+                  userId: Value(userId),
+                  sourceEventId: Value(
+                    badge['source_event_id']?.toString() ?? achievementId,
+                  ),
+                  unlockedAt: Value(unlockedAt),
+                  updatedAt: Value(DateTime.now()),
+                  isSynced: const Value(true),
+                ),
+              );
+            }
+          }
         }
       } else {
         debugPrint(
