@@ -23,8 +23,8 @@ Because Hable involves mutual habit tracking and a offline-first sync engine, it
 
 ### Smoke Verification Checklist
 - **Unauthenticated State:** Ensure logged-out users are routed to `AuthScreen` and cannot access Home, Profile, or Social Hub.
-- **Friend Requests:** Use the "Find Friends" tab in the Social Hub to search for "Bob" (from Alice's app) and send a friend request.
-- **Acceptance:** In Bob's app, open Social Hub -> Requests, and accept Alice's request.
+- **Friend Requests:** Use the search icon in the Social Hub header to open the Find Friends sheet, search for "Bob" (from Alice's app), send a friend request, and verify duplicate taps stay idempotent.
+- **Request Actions:** In Bob's app, open Social Hub → Friends tab, verify inline pending request section shows Accept and Decline for incoming requests, and accept Alice's request for the main habit-sharing pass.
 - **Habit Sync:** Create a new habit in Alice's app. Verify it syncs to the Cloudflare Worker.
 - **Role Authorization:** After Bob accepts the habit invite, verify Alice can still edit/archive the shared habit, Bob can complete/skip it but cannot edit/archive it, and a future supporter account cannot complete/skip it.
 - **Three-Tab Shell:** Verify authenticated users land in a shell with exactly Home, Social, and Profile as primary destinations. Android back from Social/Profile should return to Home before exiting.
@@ -33,7 +33,7 @@ Because Hable involves mutual habit tracking and a offline-first sync engine, it
 - **Preset Habit Partner Invite:** Create a preset habit in Alice's app, select Bob from the accepted-friend chips, verify the queued habit sync runs before `sendHabitInvitation`, then open Bob's app and accept/decline the invitation banner.
 - **Shared Check-In Retention:** After Bob accepts Alice's habit invite, have Bob complete the shared habit on his app. Verify Bob's shared habit card remains visible on Home after check-in instead of disappearing from active habits.
 - **Nudges:** Tap the separate hand/nudge action on a partnered habit card to enqueue a habit-scoped nudge. Wait for background sync and verify the receiving twin app shows a card-local ring pulse/chip such as "Nudged by Alice" and also records the notification-center row.
-- **Notification Center:** After sending a nudge, message, invite, or friend request, verify the receiver's Home bell shows a local unread badge and the notification center lists the event even after reopening the app.
+- **Notification Center:** After sending a nudge, message, invite, or friend request, verify the receiver's Home bell switches to Social → Activity tab showing the event. Verify the unread badge clears after "Mark all read" is tapped.
 - **Daily Reminder:** From Profile, enable the daily reminder, grant OS permission, choose a time, restart the app, and verify the setting persists locally and restores scheduling without another prompt. Then disable it and verify the scheduled reminder is canceled.
 - **Friend Profile Drilldown:** From a habit card, tap a partner identity and verify it opens the friend's profile. Tap the separate hand/nudge action and verify a `sendNudge` queue item is created for that partner without navigating away. From the friend profile, tap `Follow` on an active habit and verify `HabitFormSheet` opens with the title prefilled; tap encourage and verify it uses the same queued nudge path.
 
@@ -80,9 +80,8 @@ Because Hable involves mutual habit tracking and a offline-first sync engine, it
 2. **3D Abstract Habit Environment:**
    - Evaluated the `HomeScreen` UI. The new `HabitEnvironmentVisualizer` is now successfully rendered on the homescreen above the invitation banner.
    - Rendering verified: The `CustomPainter` efficiently renders the pseudo-3D abstract space on the physical Android device without significant UI thread locking or jitter.
-3. **Inbox Tab Integration:**
-   - Navigated to the `SocialHubScreen`. The tab count successfully reflects `4` tabs.
-   - The newly added **Inbox** tab accurately pulls from the `privateMessagesProvider` local Drift state, successfully separating friend requests, leaderboard ranks, search, and private contextual wishes into distinct interfaces.
+    - The newly merged **Activity** tab (Social → Activity) serves as the unified notification and message feed. The former **Inbox** tab is no longer a standalone surface.
+   - The **Find Friends** search is now a bottom sheet triggered by the search icon in the Social header, no longer a separate tab.
 4. **Overall Pass:** 
    - All newly built features are integrated successfully into the primary app flow, meeting the multi-user social features acceptance criteria.
 
@@ -198,10 +197,12 @@ Then rerun `npm run db:setup`.
 1. Rendered `MainNavigationShell` with an in-memory Drift database.
 2. Verified the shell exposes Home, Social, and Profile in the primary `NavigationBar`.
 3. Verified the Home **Habit** FAB opens `HabitFormSheet`.
-4. Verified switching to Social exposes the Social Hub internal tabs.
-5. Verified switching to Profile exposes the settings gear.
+4. Verified switching to Social exposes three internal tabs: **Friends**, **Activity**, and **Leaderboard**.
+5. Verified the **Find Friends** search icon is present in the Social header.
+6. Verified switching to Profile exposes the settings gear.
+7. Verified Android back from non-Home returns to Home.
 
-**Outcome:** The refined three-tab IA is covered at the widget level without adding a fourth Settings tab or a duplicate habit-creation path.
+**Outcome:** The refined three-tab IA with reorganized Social (3 sub-tabs, inline requests, Activity feed, Find Friends sheet) is covered at the widget level.
 
 ## 12. Shared Habit Retention And Nudge State Smoke
 
@@ -215,6 +216,63 @@ Then rerun `npm run db:setup`.
 4. Type-checked the Cloudflare worker after adding optional `habit_id` nudge payload support.
 
 **Outcome:** Shared cards stay visible after partner check-in, received nudges have a durable local Home-card state, and repeated sender/habit nudges stay bounded.
+
+## 14. Local Worker Friend Request Smoke
+
+**Date:** 2026-07-11  
+**Target:** Local Pages Functions Worker on `http://127.0.0.1:8787`
+
+**Commands/Checks:**
+1. Ran `npm run db:setup` in `backend/`.
+2. Started local Worker with `npm run dev`.
+3. Ran `npm run smoke:social`.
+4. Ran `npm run smoke:lifecycle`.
+
+**Coverage verified:**
+- Fresh-user social smoke registered two users, verified privacy-safe search fields and relationship state, rejected self-request, kept duplicate pending sends idempotent, listed incoming requests, declined, resent, accepted, and verified accepted-state search.
+- Lifecycle smoke still passed after idempotent friend-request handling, including shared normal habit sync, shared multi-day habit sync, Bob-owned habit visibility, owner-only metadata update rejection, archive propagation, and private habit exclusion.
+- Flutter verification covered `friend_relationships` cache behavior with `test/friend_relationship_cache_test.dart`, plus the full `flutter test` suite.
+
+**Android twin-harness follow-up:** Later on 2026-07-11, `emulator-5554` became available through the SDK-local `adb` binary. Re-applied `adb reverse tcp:8787 tcp:8787`, rebuilt `app-primary-debug.apk` and `app-friend-debug.apk` with seeded Alice/Bob identities, installed both packages, and launched both flavors. Android UI hierarchy dumps confirmed Alice and Bob each reached Home with the reciprocal shared `Hydration` card, partner identity, FAB, and Home/Social/Profile shell. MobAI MCP tools were still not exposed, so validation used `adb` launch plus UI hierarchy evidence instead of MobAI DSL.
+
+## 15. Account And Social API Regression Smoke
+
+**Date:** 2026-07-11  
+**Target:** Local Pages Functions Worker on `http://127.0.0.1:8787`
+
+**Commands/Checks:**
+1. Ran `flutter analyze`.
+2. Ran `flutter test`.
+3. Ran `npx tsc --noEmit` in `backend/`.
+4. Ran `npm run db:setup` in `backend/`.
+5. Started local Worker with `npm run dev`.
+6. Ran `npm run smoke:regression`.
+
+**Coverage verified:**
+- Username/password registration returned JWT/user payloads, and case-insensitive username login returned the same user.
+- Authenticated Profile activation PIN request completed in local development and printed the PIN to Wrangler logs.
+- Emoji avatar update succeeded, and URL/non-emoji avatar update was rejected by the Worker.
+- Friend search returned privacy-safe state, friend request/accept worked, and leaderboard returned the current user plus accepted friend instead of hanging.
+- Created a shared habit, accepted the invite, sent a habit-scoped nudge, and verified the receiver's `/api/sync/daily` payload contained the nudge.
+
+**Outcome:** PASS. The route/method regressions covered by the task now resolve to successful data paths or clear 400/error responses instead of 405s, ambiguous API failures, or indefinite loading.
+
+## 16. Skeleton Empty State Widget Smoke
+
+**Date:** 2026-07-11  
+**Target:** Flutter widget tests
+
+**Commands/Checks:**
+1. Ran `flutter analyze`.
+2. Ran `flutter test test/skeletons_test.dart`.
+3. Ran full `flutter test`.
+
+**Coverage verified:**
+- Added reusable skeleton blocks/cards/lists and structured empty-state cards.
+- Verified the empty-state card scrolls instead of overflowing in a short viewport.
+- Existing shell, notification, profile CRUD, partner row, leaderboard, and app-launch tests all pass with the skeleton replacements.
+
+**Outcome:** PASS. Main loading states now preserve screen shape with skeletons or structured empty cards instead of abrupt full-screen spinners/blank gaps.
 
 ## 7. Android Web-Era Regression Smoke
 
@@ -336,3 +394,29 @@ All acceptance criteria met:
 - Verified `POST /api/auth/request-pin`, `POST /api/auth/reset-password`, and login with the changed password for the activated email.
 
 **Outcome:** PASS. Signup no longer requires email, username login is case-insensitive, Profile owns optional email/PIN activation, and password reset works after activation.
+
+## 13. Production Auth Deployment Repair
+
+**Date:** 2026-07-11
+**Target:** `https://hable.pages.dev`
+
+**Issue reproduced:**
+- `POST /api/auth/register` returned `405` with an empty body on production.
+- `POST /api/auth/login` returned `405` with an empty body on production.
+- `OPTIONS /api/auth/register` returned `405`, so browser CORS preflight could fail before app auth requests.
+- `POST /api/user/email/request-pin` reached the function after redeploy but returned `502` because production email delivery was not configured for Hable.
+
+**Repair:**
+- Ran `npx wrangler d1 execute hable_db --remote --file=./schema.sql`.
+- Ran `npm run deploy` from `backend/` so Pages Functions were deployed with the API bundle.
+- Added `EMAIL_WORKER` service binding to Hable's Pages config, pointing to the existing `campusweb-mailer` Worker.
+- Updated `sendPinEmail` so an `EMAIL_WORKER` binding can send PIN emails without requiring duplicate sender/API-token secrets in Hable.
+
+**Production checks:**
+- `POST https://hable.pages.dev/api/auth/register` returned `200` and a JWT/user payload.
+- `POST https://hable.pages.dev/api/auth/login` returned `200` and a JWT/user payload.
+- `OPTIONS https://hable.pages.dev/api/auth/register` returned `204` with `Access-Control-Allow-Methods: GET,POST,PUT,DELETE,OPTIONS`.
+- Authenticated `POST https://hable.pages.dev/api/user/email/request-pin` returned `200` with `Verification PIN sent`.
+- `POST https://hable.pages.dev/api/auth/request-pin` returned `200` with `Verification PIN sent` for an account with an attached email.
+
+**Outcome:** PASS. The reported production 405 auth failures and production PIN delivery failure are repaired.

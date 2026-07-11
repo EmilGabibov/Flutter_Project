@@ -5,6 +5,7 @@ import '../database/database.dart';
 import '../database/tables.dart';
 import '../providers/notification_providers.dart';
 import '../theme/app_theme.dart';
+import '../widgets/skeletons.dart';
 import '../widgets/usage_tracked_screen.dart';
 import 'profile_screen.dart';
 import 'social/social_hub_screen.dart';
@@ -39,33 +40,11 @@ class NotificationCenterScreen extends ConsumerWidget {
         body: notificationsAsync.when(
           data: (notifications) {
             if (notifications.isEmpty) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.notifications_none_rounded,
-                        size: 48,
-                        color: AppTheme.warmGray.withValues(alpha: 0.7),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'No notifications yet',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Friend requests, invites, nudges, and reminder updates will appear here.',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppTheme.warmGray.withValues(alpha: 0.85),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              return const HableEmptyStateCard(
+                icon: Icons.notifications_none_rounded,
+                title: 'No notifications yet',
+                description:
+                    'Friend requests, invites, nudges, and reminder updates will appear here.',
               );
             }
 
@@ -147,7 +126,7 @@ class NotificationCenterScreen extends ConsumerWidget {
               },
             );
           },
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const HableSkeletonList(itemCount: 5),
           error: (error, _) => Center(child: Text('Error: $error')),
         ),
       ),
@@ -161,23 +140,19 @@ class NotificationCenterScreen extends ConsumerWidget {
   ) async {
     switch (notification.actionRoute) {
       case 'social_friends':
+      case 'social_requests':
+        // Requests are now inline in the Friends tab (index 0).
         await Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => const SocialHubScreen(initialTabIndex: 0),
           ),
         );
         return;
-      case 'social_requests':
+      case 'social_inbox':
+        // Messages are now in the Activity tab (index 1).
         await Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => const SocialHubScreen(initialTabIndex: 1),
-          ),
-        );
-        return;
-      case 'social_inbox':
-        await Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => const SocialHubScreen(initialTabIndex: 4),
           ),
         );
         return;

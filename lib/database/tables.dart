@@ -209,6 +209,21 @@ class AcceptedFriends extends Table {
   Set<Column> get primaryKey => {friendUserId};
 }
 
+/// Local cache of friend/search relationship state.
+class FriendRelationships extends Table {
+  TextColumn get userId => text()();
+  TextColumn get username => text()();
+  TextColumn get avatarUrl => text().nullable()();
+  TextColumn get relationshipState =>
+      text().withDefault(const Constant('none'))();
+  TextColumn get requestId => text().nullable()();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+  BoolColumn get isSynced => boolean().withDefault(const Constant(true))();
+
+  @override
+  Set<Column> get primaryKey => {userId};
+}
+
 /// Server-owned achievement unlock cache from /api/sync/daily.
 class AchievementUnlocks extends Table {
   TextColumn get achievementId => text()();

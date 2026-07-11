@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/skeletons.dart';
 import '../widgets/usage_tracked_screen.dart';
 
 enum AuthView { login, register, forgotPasswordRequest, forgotPasswordVerify }
@@ -107,7 +108,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     final authState = ref.watch(authProvider);
 
     if (_isAutoLoggingIn) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(body: SafeArea(child: _AuthLoadingSkeleton()));
     }
 
     String title;
@@ -248,13 +249,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       ),
                     ElevatedButton(
                       onPressed: authState.isLoading ? null : _submit,
-                      child: authState.isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Text(buttonText),
+                      child: Text(
+                        authState.isLoading ? 'Working...' : buttonText,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     if (_currentView == AuthView.login ||
@@ -291,6 +288,31 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _AuthLoadingSkeleton extends StatelessWidget {
+  const _AuthLoadingSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: const [
+          HableSkeletonBlock(width: 180, height: 34),
+          SizedBox(height: 12),
+          HableSkeletonBlock(width: 240, height: 14),
+          SizedBox(height: 40),
+          HableSkeletonCard(height: 58),
+          HableSkeletonCard(height: 58),
+          SizedBox(height: 12),
+          HableSkeletonBlock(height: 48),
+        ],
       ),
     );
   }

@@ -69,12 +69,50 @@ async function ensureFriendship(aliceToken, bobToken) {
     'Bob missing from search results',
     search,
   );
+  const bobResult = search.results.find((user) => user.id === 'local-user-2');
+  assert(
+    ['none', 'pending_outgoing', 'pending_incoming', 'accepted'].includes(
+      bobResult.relationship_state,
+    ),
+    'Bob search result missing relationship state',
+    bobResult,
+  );
+  assert(!('total_score' in bobResult), 'Search leaked total_score', bobResult);
 
   const request = await expectResponse(
     'Alice sends Bob a friend request',
     await post('/api/social/friend-request', aliceToken, {
       target_user_id: 'local-user-2',
     }),
+  );
+  if (request.relationship_state === 'accepted') {
+    return;
+  }
+  if (request.relationship_state === 'pending_incoming') {
+    const aliceRequests = await expectResponse(
+      'Alice lists reciprocal friend requests',
+      await get('/api/social/friend-request', aliceToken),
+    );
+    const reciprocalRequest = aliceRequests.friend_requests.find(
+      (item) => item.requester_id === 'local-user-2',
+    );
+    assert(
+      reciprocalRequest,
+      'Alice could not see reciprocal Bob friend request',
+      aliceRequests,
+    );
+    await expectResponse(
+      'Alice accepts reciprocal Bob friend request',
+      await post('/api/social/friend-request/accept', aliceToken, {
+        request_id: reciprocalRequest.id,
+      }),
+    );
+    return;
+  }
+  assert(
+    request.relationship_state === 'pending_outgoing',
+    'Alice request should be pending_outgoing before Bob accepts',
+    request,
   );
   const bobRequests = await expectResponse(
     'Bob lists friend requests',

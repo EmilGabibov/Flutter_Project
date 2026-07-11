@@ -35,6 +35,7 @@ Both the local Drift (SQLite) database and the remote Cloudflare D1 (SQL) databa
 * **`friend_requests` table:** `id` (PK), `requester_id` (FK), `recipient_id` (FK), `status` (Enum), `created_at` (Timestamp).
 * **`habit_invitations` table:** `id` (PK), `requester_id`, `recipient_id`, `habit_id`, `status`, `created_at`. Pending duplicates for the same requester/recipient/habit are idempotent.
 * **`accepted_friends` table:** Drift-only cache of accepted friends (`friend_user_id`, `username`, `avatar_url`) populated from daily sync for offline habit-invite pickers.
+* **`friend_relationships` table:** Drift-only cache of safe friend/search state (`user_id`, `username`, `avatar_url`, `relationship_state`, optional `request_id`) used by Social Hub labels and pending incoming request rows. It must never store habit metadata, logs, journal text, or private message content.
 * **`notification_events` table:** Drift-only unified in-app notification read model keyed by a stable `notification_id`, with `user_id`, `type`, `source_type`, `source_id`, `title`, `body`, optional route/payload metadata, `created_at`, optional `expires_at`, optional `read_at`, and `updated_at`. Sync normalization must upsert this table idempotently instead of letting each feature surface parse raw event payloads on its own.
 * **`reminder_settings` table:** Drift-only per-user local reminder preference (`user_id`, `is_enabled`, `hour`, `minute`, `updated_at`) used to restore device-local reminders after relaunch/login without turning reminder preferences into a server push-subscription feature.
 * **`SearchDocuments` table:** Local Drift-only metadata for offline search (id, title, author, source, etc).
@@ -49,12 +50,14 @@ Both the local Drift (SQLite) database and the remote Cloudflare D1 (SQL) databa
 
 * `POST /api/auth/register` & `/api/auth/login` - Authenticates users and issues JWTs. Registration starts with username/password only; login matches usernames case-insensitively while preserving the stored display casing.
 * `POST /api/user/email/request-pin` & `/verify-pin` - Authenticated Profile activation flow for users who want a verified email for recoverable cloud progress and password reset support.
+* `PUT /api/user/avatar` - Authenticated emoji-only avatar update. The Worker must reject URL/data-upload values; uploaded profile photos belong to a separate future storage task.
 * `POST /api/auth/request-pin` & `/reset-password` - Password recovery for accounts with an attached email. Local development logs the PIN; production must send email or return a clear delivery failure.
 * `POST /api/sync/habit` - Initializes or updates habit metadata and color. Only the habit owner may update/archive an existing habit; the route also ensures the owner self-row exists in `partnerships`.
 * `POST /api/sync/log` - Submits a daily completion or a skip. Only `owner` and `partner` roles may create logs. New completed logs award backend-owned progression points and badges; duplicate `log_id` replays do not re-award.
 * `GET /api/sync/daily` - A single payload fetched silently in background to populate partner snapshots, nudges, friend invitations, notification-event normalization inputs, and the authoritative `gamification` object.
 * `GET /api/social/search` & `GET /api/social/leaderboard` - Used by the Social Hub UI.
-* `POST /api/social/friend-request` & `/accept` & `GET /api/social/friend-request` - Friend request lifecycle.
+* `POST /api/social/friend-request`, `/accept`, `/decline`, and `GET /api/social/friend-request` - Friend request lifecycle with self-request guards, idempotent duplicate handling, recipient-scoped accept/decline, and privacy-safe relationship state.
 * `POST /api/social/habit-invitation`, `/accept`, and `/decline` - Habit partner invitation lifecycle. Creating an invitation requires an accepted friendship and requester ownership of the habit. Accepting an invite adds the recipient as `partner` and fans out directed partnership rows to existing participants.
+* `POST /api/social/nudge` - Habit-scoped or legacy shared-habit nudge. Authorization requires a directed shared-habit participation row and optional `habit_id` narrows the permission check to that habit.
 * `POST /api/dev/usage-aggregate` - Development-only anonymous aggregate upsert endpoint. Accepts only allowlisted screen labels plus rounded counts/duration totals and must reject any user-linked dimensions.
 * `GET /api/dev/usage-report` - Development-only HTML/JSON report for aggregate buckets. It must show only coarse totals and hide low-volume buckets rather than exposing a user-level event stream.

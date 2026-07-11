@@ -23,8 +23,8 @@ import '../widgets/invitation_banner.dart';
 import '../widgets/3d/habit_environment_visualizer.dart';
 import '../widgets/habit_form_sheet.dart';
 import '../widgets/milestone_wish_carousel.dart';
+import '../widgets/skeletons.dart';
 import '../widgets/usage_tracked_screen.dart';
-import 'notification_center_screen.dart';
 import 'profile_screen.dart';
 
 const _nudgeVisibilityTtl = Duration(hours: 24);
@@ -45,7 +45,11 @@ class _QueuedNudgeFeedback {
 class HomeScreen extends ConsumerStatefulWidget {
   final String userId;
 
-  const HomeScreen({super.key, required this.userId});
+  /// Called when the user taps the notification bell.
+  /// The shell wires this to switch to the Social → Activity tab.
+  final VoidCallback? onOpenActivity;
+
+  const HomeScreen({super.key, required this.userId, this.onOpenActivity});
 
   @override
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
@@ -96,7 +100,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         body: SafeArea(
           child: habitsAsync.when(
             data: (habits) => _buildContent(context, habits, quoteAsync),
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const _HomeSkeleton(),
             error: (err, _) => Center(child: Text('Error: $err')),
           ),
         ),
@@ -136,7 +140,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               style: Theme.of(context).textTheme.headlineMedium,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            loading: () => const SizedBox.shrink(),
+                            loading: () => const Padding(
+                              padding: EdgeInsets.only(top: 4),
+                              child: HableSkeletonBlock(width: 128, height: 22),
+                            ),
                             error: (_, _) => const SizedBox.shrink(),
                           );
                         },
@@ -154,15 +161,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         final unreadCount = unreadAsync.value ?? 0;
                         return IconButton(
                           tooltip: 'Open notifications',
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => NotificationCenterScreen(
-                                  userId: widget.userId,
-                                ),
-                              ),
-                            );
-                          },
+                          onPressed: widget.onOpenActivity,
                           icon: Stack(
                             clipBehavior: Clip.none,
                             children: [
@@ -246,7 +245,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           color: AppTheme.deepCharcoal.withValues(alpha: 0.7),
                         ),
                       ),
-                      loading: () => const SizedBox.shrink(),
+                      loading: () => const HableSkeletonBlock(
+                        width: double.infinity,
+                        height: 14,
+                      ),
                       error: (_, _) => const SizedBox.shrink(),
                     ),
                   ),
@@ -388,6 +390,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             },
           ),
         ),
+      ],
+    );
+  }
+}
+
+class _HomeSkeleton extends StatelessWidget {
+  const _HomeSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 96),
+      children: const [
+        HableSkeletonBlock(width: 92, height: 12),
+        SizedBox(height: 8),
+        HableSkeletonBlock(width: 150, height: 26),
+        SizedBox(height: 24),
+        HableSkeletonCard(height: 86),
+        SizedBox(height: 16),
+        HableSkeletonBlock(width: 120, height: 18),
+        SizedBox(height: 16),
+        HableSkeletonCard(height: 180),
+        HableSkeletonCard(height: 180),
       ],
     );
   }

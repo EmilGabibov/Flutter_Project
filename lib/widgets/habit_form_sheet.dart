@@ -4,6 +4,7 @@ import '../database/database.dart';
 import '../providers/habit_actions_provider.dart';
 import '../providers/social_providers.dart';
 import '../theme/app_theme.dart';
+import 'skeletons.dart';
 import '../data/standard_habits.dart';
 import 'usage_tracked_screen.dart';
 
@@ -274,7 +275,15 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
                           }).toList(),
                         );
                       },
-                      loading: () => const CircularProgressIndicator(),
+                      loading: () => const Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          HableSkeletonBlock(width: 82, height: 36),
+                          HableSkeletonBlock(width: 96, height: 36),
+                          HableSkeletonBlock(width: 74, height: 36),
+                        ],
+                      ),
                       error: (err, _) => Text('Error: $err'),
                     );
                   },

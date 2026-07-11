@@ -407,8 +407,12 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<bool> updateAvatar(String avatarUrl) async {
     final token = state.token;
     final userId = state.userId;
-    if (token == null || userId == null) return false;
+    if (token == null || userId == null) {
+      state = state.copyWith(error: 'Log in before updating avatar');
+      return false;
+    }
 
+    state = state.copyWith(clearError: true);
     try {
       final response = await http
           .put(
@@ -422,20 +426,34 @@ class AuthNotifier extends Notifier<AuthState> {
           .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
-        // Update local database
-        await _db
-            .into(_db.users)
-            .insertOnConflictUpdate(
-              UsersCompanion(
-                userId: Value(userId),
-                avatarUrl: Value(avatarUrl),
-              ),
-            );
+        final updated = await (_db.update(
+          _db.users,
+        )..where((user) => user.userId.equals(userId))).write(
+          UsersCompanion(
+            avatarUrl: Value(avatarUrl),
+            updatedAt: Value(DateTime.now()),
+            isSynced: const Value(true),
+          ),
+        );
+
+        if (updated == 0) {
+          await _ensureUserInDb(
+            userId,
+            state.username ?? 'User',
+            avatarUrl,
+          );
+        }
         return true;
       }
+      state = state.copyWith(
+        error: _errorFromResponse(response, 'Failed to update avatar'),
+      );
+      return false;
+    } on TimeoutException {
+      state = state.copyWith(error: 'Request timed out');
       return false;
     } catch (e) {
-      debugPrint('Error updating avatar: $e');
+      state = state.copyWith(error: _networkErrorMessage(e));
       return false;
     }
   }

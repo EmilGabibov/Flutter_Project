@@ -5792,6 +5792,479 @@ class AcceptedFriendsCompanion extends UpdateCompanion<AcceptedFriend> {
   }
 }
 
+class $FriendRelationshipsTable extends FriendRelationships
+    with TableInfo<$FriendRelationshipsTable, FriendRelationship> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $FriendRelationshipsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _usernameMeta = const VerificationMeta(
+    'username',
+  );
+  @override
+  late final GeneratedColumn<String> username = GeneratedColumn<String>(
+    'username',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _avatarUrlMeta = const VerificationMeta(
+    'avatarUrl',
+  );
+  @override
+  late final GeneratedColumn<String> avatarUrl = GeneratedColumn<String>(
+    'avatar_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _relationshipStateMeta = const VerificationMeta(
+    'relationshipState',
+  );
+  @override
+  late final GeneratedColumn<String> relationshipState =
+      GeneratedColumn<String>(
+        'relationship_state',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('none'),
+      );
+  static const VerificationMeta _requestIdMeta = const VerificationMeta(
+    'requestId',
+  );
+  @override
+  late final GeneratedColumn<String> requestId = GeneratedColumn<String>(
+    'request_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _isSyncedMeta = const VerificationMeta(
+    'isSynced',
+  );
+  @override
+  late final GeneratedColumn<bool> isSynced = GeneratedColumn<bool>(
+    'is_synced',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_synced" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    userId,
+    username,
+    avatarUrl,
+    relationshipState,
+    requestId,
+    updatedAt,
+    isSynced,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'friend_relationships';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<FriendRelationship> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('username')) {
+      context.handle(
+        _usernameMeta,
+        username.isAcceptableOrUnknown(data['username']!, _usernameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_usernameMeta);
+    }
+    if (data.containsKey('avatar_url')) {
+      context.handle(
+        _avatarUrlMeta,
+        avatarUrl.isAcceptableOrUnknown(data['avatar_url']!, _avatarUrlMeta),
+      );
+    }
+    if (data.containsKey('relationship_state')) {
+      context.handle(
+        _relationshipStateMeta,
+        relationshipState.isAcceptableOrUnknown(
+          data['relationship_state']!,
+          _relationshipStateMeta,
+        ),
+      );
+    }
+    if (data.containsKey('request_id')) {
+      context.handle(
+        _requestIdMeta,
+        requestId.isAcceptableOrUnknown(data['request_id']!, _requestIdMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    if (data.containsKey('is_synced')) {
+      context.handle(
+        _isSyncedMeta,
+        isSynced.isAcceptableOrUnknown(data['is_synced']!, _isSyncedMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {userId};
+  @override
+  FriendRelationship map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return FriendRelationship(
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      username: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}username'],
+      )!,
+      avatarUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}avatar_url'],
+      ),
+      relationshipState: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}relationship_state'],
+      )!,
+      requestId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}request_id'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      isSynced: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_synced'],
+      )!,
+    );
+  }
+
+  @override
+  $FriendRelationshipsTable createAlias(String alias) {
+    return $FriendRelationshipsTable(attachedDatabase, alias);
+  }
+}
+
+class FriendRelationship extends DataClass
+    implements Insertable<FriendRelationship> {
+  final String userId;
+  final String username;
+  final String? avatarUrl;
+  final String relationshipState;
+  final String? requestId;
+  final DateTime updatedAt;
+  final bool isSynced;
+  const FriendRelationship({
+    required this.userId,
+    required this.username,
+    this.avatarUrl,
+    required this.relationshipState,
+    this.requestId,
+    required this.updatedAt,
+    required this.isSynced,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['user_id'] = Variable<String>(userId);
+    map['username'] = Variable<String>(username);
+    if (!nullToAbsent || avatarUrl != null) {
+      map['avatar_url'] = Variable<String>(avatarUrl);
+    }
+    map['relationship_state'] = Variable<String>(relationshipState);
+    if (!nullToAbsent || requestId != null) {
+      map['request_id'] = Variable<String>(requestId);
+    }
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['is_synced'] = Variable<bool>(isSynced);
+    return map;
+  }
+
+  FriendRelationshipsCompanion toCompanion(bool nullToAbsent) {
+    return FriendRelationshipsCompanion(
+      userId: Value(userId),
+      username: Value(username),
+      avatarUrl: avatarUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(avatarUrl),
+      relationshipState: Value(relationshipState),
+      requestId: requestId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(requestId),
+      updatedAt: Value(updatedAt),
+      isSynced: Value(isSynced),
+    );
+  }
+
+  factory FriendRelationship.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return FriendRelationship(
+      userId: serializer.fromJson<String>(json['userId']),
+      username: serializer.fromJson<String>(json['username']),
+      avatarUrl: serializer.fromJson<String?>(json['avatarUrl']),
+      relationshipState: serializer.fromJson<String>(json['relationshipState']),
+      requestId: serializer.fromJson<String?>(json['requestId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      isSynced: serializer.fromJson<bool>(json['isSynced']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'userId': serializer.toJson<String>(userId),
+      'username': serializer.toJson<String>(username),
+      'avatarUrl': serializer.toJson<String?>(avatarUrl),
+      'relationshipState': serializer.toJson<String>(relationshipState),
+      'requestId': serializer.toJson<String?>(requestId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'isSynced': serializer.toJson<bool>(isSynced),
+    };
+  }
+
+  FriendRelationship copyWith({
+    String? userId,
+    String? username,
+    Value<String?> avatarUrl = const Value.absent(),
+    String? relationshipState,
+    Value<String?> requestId = const Value.absent(),
+    DateTime? updatedAt,
+    bool? isSynced,
+  }) => FriendRelationship(
+    userId: userId ?? this.userId,
+    username: username ?? this.username,
+    avatarUrl: avatarUrl.present ? avatarUrl.value : this.avatarUrl,
+    relationshipState: relationshipState ?? this.relationshipState,
+    requestId: requestId.present ? requestId.value : this.requestId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    isSynced: isSynced ?? this.isSynced,
+  );
+  FriendRelationship copyWithCompanion(FriendRelationshipsCompanion data) {
+    return FriendRelationship(
+      userId: data.userId.present ? data.userId.value : this.userId,
+      username: data.username.present ? data.username.value : this.username,
+      avatarUrl: data.avatarUrl.present ? data.avatarUrl.value : this.avatarUrl,
+      relationshipState: data.relationshipState.present
+          ? data.relationshipState.value
+          : this.relationshipState,
+      requestId: data.requestId.present ? data.requestId.value : this.requestId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      isSynced: data.isSynced.present ? data.isSynced.value : this.isSynced,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FriendRelationship(')
+          ..write('userId: $userId, ')
+          ..write('username: $username, ')
+          ..write('avatarUrl: $avatarUrl, ')
+          ..write('relationshipState: $relationshipState, ')
+          ..write('requestId: $requestId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('isSynced: $isSynced')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    userId,
+    username,
+    avatarUrl,
+    relationshipState,
+    requestId,
+    updatedAt,
+    isSynced,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FriendRelationship &&
+          other.userId == this.userId &&
+          other.username == this.username &&
+          other.avatarUrl == this.avatarUrl &&
+          other.relationshipState == this.relationshipState &&
+          other.requestId == this.requestId &&
+          other.updatedAt == this.updatedAt &&
+          other.isSynced == this.isSynced);
+}
+
+class FriendRelationshipsCompanion extends UpdateCompanion<FriendRelationship> {
+  final Value<String> userId;
+  final Value<String> username;
+  final Value<String?> avatarUrl;
+  final Value<String> relationshipState;
+  final Value<String?> requestId;
+  final Value<DateTime> updatedAt;
+  final Value<bool> isSynced;
+  final Value<int> rowid;
+  const FriendRelationshipsCompanion({
+    this.userId = const Value.absent(),
+    this.username = const Value.absent(),
+    this.avatarUrl = const Value.absent(),
+    this.relationshipState = const Value.absent(),
+    this.requestId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.isSynced = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  FriendRelationshipsCompanion.insert({
+    required String userId,
+    required String username,
+    this.avatarUrl = const Value.absent(),
+    this.relationshipState = const Value.absent(),
+    this.requestId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.isSynced = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : userId = Value(userId),
+       username = Value(username);
+  static Insertable<FriendRelationship> custom({
+    Expression<String>? userId,
+    Expression<String>? username,
+    Expression<String>? avatarUrl,
+    Expression<String>? relationshipState,
+    Expression<String>? requestId,
+    Expression<DateTime>? updatedAt,
+    Expression<bool>? isSynced,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (userId != null) 'user_id': userId,
+      if (username != null) 'username': username,
+      if (avatarUrl != null) 'avatar_url': avatarUrl,
+      if (relationshipState != null) 'relationship_state': relationshipState,
+      if (requestId != null) 'request_id': requestId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (isSynced != null) 'is_synced': isSynced,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  FriendRelationshipsCompanion copyWith({
+    Value<String>? userId,
+    Value<String>? username,
+    Value<String?>? avatarUrl,
+    Value<String>? relationshipState,
+    Value<String?>? requestId,
+    Value<DateTime>? updatedAt,
+    Value<bool>? isSynced,
+    Value<int>? rowid,
+  }) {
+    return FriendRelationshipsCompanion(
+      userId: userId ?? this.userId,
+      username: username ?? this.username,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      relationshipState: relationshipState ?? this.relationshipState,
+      requestId: requestId ?? this.requestId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      isSynced: isSynced ?? this.isSynced,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (username.present) {
+      map['username'] = Variable<String>(username.value);
+    }
+    if (avatarUrl.present) {
+      map['avatar_url'] = Variable<String>(avatarUrl.value);
+    }
+    if (relationshipState.present) {
+      map['relationship_state'] = Variable<String>(relationshipState.value);
+    }
+    if (requestId.present) {
+      map['request_id'] = Variable<String>(requestId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (isSynced.present) {
+      map['is_synced'] = Variable<bool>(isSynced.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FriendRelationshipsCompanion(')
+          ..write('userId: $userId, ')
+          ..write('username: $username, ')
+          ..write('avatarUrl: $avatarUrl, ')
+          ..write('relationshipState: $relationshipState, ')
+          ..write('requestId: $requestId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('isSynced: $isSynced, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $AchievementUnlocksTable extends AchievementUnlocks
     with TableInfo<$AchievementUnlocksTable, AchievementUnlock> {
   @override
@@ -8031,6 +8504,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $AcceptedFriendsTable acceptedFriends = $AcceptedFriendsTable(
     this,
   );
+  late final $FriendRelationshipsTable friendRelationships =
+      $FriendRelationshipsTable(this);
   late final $AchievementUnlocksTable achievementUnlocks =
       $AchievementUnlocksTable(this);
   late final $NotificationEventsTable notificationEvents =
@@ -8057,6 +8532,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     habitInvitations,
     milestoneEvents,
     acceptedFriends,
+    friendRelationships,
     achievementUnlocks,
     notificationEvents,
     reminderSettings,
@@ -11650,6 +12126,262 @@ typedef $$AcceptedFriendsTableProcessedTableManager =
       AcceptedFriend,
       PrefetchHooks Function()
     >;
+typedef $$FriendRelationshipsTableCreateCompanionBuilder =
+    FriendRelationshipsCompanion Function({
+      required String userId,
+      required String username,
+      Value<String?> avatarUrl,
+      Value<String> relationshipState,
+      Value<String?> requestId,
+      Value<DateTime> updatedAt,
+      Value<bool> isSynced,
+      Value<int> rowid,
+    });
+typedef $$FriendRelationshipsTableUpdateCompanionBuilder =
+    FriendRelationshipsCompanion Function({
+      Value<String> userId,
+      Value<String> username,
+      Value<String?> avatarUrl,
+      Value<String> relationshipState,
+      Value<String?> requestId,
+      Value<DateTime> updatedAt,
+      Value<bool> isSynced,
+      Value<int> rowid,
+    });
+
+class $$FriendRelationshipsTableFilterComposer
+    extends Composer<_$AppDatabase, $FriendRelationshipsTable> {
+  $$FriendRelationshipsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get username => $composableBuilder(
+    column: $table.username,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get avatarUrl => $composableBuilder(
+    column: $table.avatarUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get relationshipState => $composableBuilder(
+    column: $table.relationshipState,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get requestId => $composableBuilder(
+    column: $table.requestId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isSynced => $composableBuilder(
+    column: $table.isSynced,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$FriendRelationshipsTableOrderingComposer
+    extends Composer<_$AppDatabase, $FriendRelationshipsTable> {
+  $$FriendRelationshipsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get username => $composableBuilder(
+    column: $table.username,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get avatarUrl => $composableBuilder(
+    column: $table.avatarUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get relationshipState => $composableBuilder(
+    column: $table.relationshipState,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get requestId => $composableBuilder(
+    column: $table.requestId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isSynced => $composableBuilder(
+    column: $table.isSynced,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$FriendRelationshipsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $FriendRelationshipsTable> {
+  $$FriendRelationshipsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get username =>
+      $composableBuilder(column: $table.username, builder: (column) => column);
+
+  GeneratedColumn<String> get avatarUrl =>
+      $composableBuilder(column: $table.avatarUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get relationshipState => $composableBuilder(
+    column: $table.relationshipState,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get requestId =>
+      $composableBuilder(column: $table.requestId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get isSynced =>
+      $composableBuilder(column: $table.isSynced, builder: (column) => column);
+}
+
+class $$FriendRelationshipsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $FriendRelationshipsTable,
+          FriendRelationship,
+          $$FriendRelationshipsTableFilterComposer,
+          $$FriendRelationshipsTableOrderingComposer,
+          $$FriendRelationshipsTableAnnotationComposer,
+          $$FriendRelationshipsTableCreateCompanionBuilder,
+          $$FriendRelationshipsTableUpdateCompanionBuilder,
+          (
+            FriendRelationship,
+            BaseReferences<
+              _$AppDatabase,
+              $FriendRelationshipsTable,
+              FriendRelationship
+            >,
+          ),
+          FriendRelationship,
+          PrefetchHooks Function()
+        > {
+  $$FriendRelationshipsTableTableManager(
+    _$AppDatabase db,
+    $FriendRelationshipsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$FriendRelationshipsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$FriendRelationshipsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$FriendRelationshipsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> userId = const Value.absent(),
+                Value<String> username = const Value.absent(),
+                Value<String?> avatarUrl = const Value.absent(),
+                Value<String> relationshipState = const Value.absent(),
+                Value<String?> requestId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> isSynced = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => FriendRelationshipsCompanion(
+                userId: userId,
+                username: username,
+                avatarUrl: avatarUrl,
+                relationshipState: relationshipState,
+                requestId: requestId,
+                updatedAt: updatedAt,
+                isSynced: isSynced,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String userId,
+                required String username,
+                Value<String?> avatarUrl = const Value.absent(),
+                Value<String> relationshipState = const Value.absent(),
+                Value<String?> requestId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> isSynced = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => FriendRelationshipsCompanion.insert(
+                userId: userId,
+                username: username,
+                avatarUrl: avatarUrl,
+                relationshipState: relationshipState,
+                requestId: requestId,
+                updatedAt: updatedAt,
+                isSynced: isSynced,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$FriendRelationshipsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $FriendRelationshipsTable,
+      FriendRelationship,
+      $$FriendRelationshipsTableFilterComposer,
+      $$FriendRelationshipsTableOrderingComposer,
+      $$FriendRelationshipsTableAnnotationComposer,
+      $$FriendRelationshipsTableCreateCompanionBuilder,
+      $$FriendRelationshipsTableUpdateCompanionBuilder,
+      (
+        FriendRelationship,
+        BaseReferences<
+          _$AppDatabase,
+          $FriendRelationshipsTable,
+          FriendRelationship
+        >,
+      ),
+      FriendRelationship,
+      PrefetchHooks Function()
+    >;
 typedef $$AchievementUnlocksTableCreateCompanionBuilder =
     AchievementUnlocksCompanion Function({
       required String achievementId,
@@ -12827,6 +13559,8 @@ class $AppDatabaseManager {
       $$MilestoneEventsTableTableManager(_db, _db.milestoneEvents);
   $$AcceptedFriendsTableTableManager get acceptedFriends =>
       $$AcceptedFriendsTableTableManager(_db, _db.acceptedFriends);
+  $$FriendRelationshipsTableTableManager get friendRelationships =>
+      $$FriendRelationshipsTableTableManager(_db, _db.friendRelationships);
   $$AchievementUnlocksTableTableManager get achievementUnlocks =>
       $$AchievementUnlocksTableTableManager(_db, _db.achievementUnlocks);
   $$NotificationEventsTableTableManager get notificationEvents =>

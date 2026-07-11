@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/calendar_provider.dart';
 import '../theme/app_theme.dart';
+import 'skeletons.dart';
 
 class CalendarSubscriptionCard extends ConsumerWidget {
   const CalendarSubscriptionCard({super.key});
@@ -96,7 +97,14 @@ class CalendarSubscriptionCard extends ConsumerWidget {
                 ],
               )
             else if (calendarState.isLoading)
-              const Center(child: CircularProgressIndicator())
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  HableSkeletonBlock(width: 220, height: 12),
+                  SizedBox(height: 8),
+                  HableSkeletonBlock(width: double.infinity, height: 12),
+                ],
+              )
             else
               Text(
                 calendarState.error ?? 'Failed to load calendar feed',

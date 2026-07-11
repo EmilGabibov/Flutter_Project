@@ -43,9 +43,18 @@ CREATE TABLE IF NOT EXISTS friend_requests (
     id TEXT PRIMARY KEY,
     requester_id TEXT NOT NULL,
     recipient_id TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'pending', -- 'pending', 'accepted', 'rejected'
+    status TEXT NOT NULL DEFAULT 'pending', -- 'pending', 'accepted', 'declined'
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX IF NOT EXISTS idx_friend_requests_recipient_status_created
+ON friend_requests(recipient_id, status, created_at);
+
+CREATE INDEX IF NOT EXISTS idx_friend_requests_requester_status_created
+ON friend_requests(requester_id, status, created_at);
+
+CREATE INDEX IF NOT EXISTS idx_friend_requests_pair_status
+ON friend_requests(requester_id, recipient_id, status);
 
 CREATE TABLE IF NOT EXISTS private_messages (
     id TEXT PRIMARY KEY,

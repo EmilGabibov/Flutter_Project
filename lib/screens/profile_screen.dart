@@ -13,6 +13,7 @@ import '../widgets/habit_form_sheet.dart';
 import '../widgets/habit_partner_row.dart';
 import '../widgets/user_avatar.dart';
 import '../widgets/avatar_picker_sheet.dart';
+import '../widgets/skeletons.dart';
 import '../providers/habit_actions_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/notification_providers.dart';
@@ -255,8 +256,8 @@ class ProfileScreen extends ConsumerWidget {
                                 ),
                               );
                             },
-                            loading: () => const SizedBox(height: 160),
-                            error: (_, _) => const SizedBox(height: 160),
+                            loading: () => const _ChartSkeleton(),
+                            error: (_, _) => const _ChartSkeleton(),
                           ),
                           const SizedBox(height: 12),
                           Row(
@@ -348,8 +349,8 @@ class ProfileScreen extends ConsumerWidget {
                                 ),
                               );
                             },
-                            loading: () => const SizedBox(height: 160),
-                            error: (_, _) => const SizedBox(height: 160),
+                            loading: () => const _ChartSkeleton(),
+                            error: (_, _) => const _ChartSkeleton(),
                           ),
                         ],
                       ),
@@ -625,8 +626,14 @@ class ProfileScreen extends ConsumerWidget {
               },
               loading: () => const SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.all(32),
-                  child: Center(child: CircularProgressIndicator()),
+                  padding: EdgeInsets.fromLTRB(20, 16, 20, 24),
+                  child: Column(
+                    children: [
+                      HableSkeletonCard(height: 86),
+                      HableSkeletonCard(height: 96),
+                      HableSkeletonCard(height: 96),
+                    ],
+                  ),
                 ),
               ),
               error: (err, _) => SliverToBoxAdapter(
@@ -726,6 +733,30 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ChartSkeleton extends StatelessWidget {
+  const _ChartSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox(
+      height: 160,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          HableSkeletonBlock(width: 180, height: 14),
+          SizedBox(height: 14),
+          HableSkeletonBlock(width: double.infinity, height: 18),
+          SizedBox(height: 10),
+          HableSkeletonBlock(width: 260, height: 18),
+          SizedBox(height: 10),
+          HableSkeletonBlock(width: 210, height: 18),
+        ],
       ),
     );
   }

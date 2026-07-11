@@ -25,10 +25,26 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   int _selectedIndex = 0;
   late final List<Widget?> _destinations = List<Widget?>.filled(3, null);
 
+  /// Key for the Social tab so the shell can request an internal tab switch.
+  final _socialKey = GlobalKey<SocialHubScreenState>();
+
+  void _switchToTab(int index, {int? socialSubTab}) {
+    setState(() => _selectedIndex = index);
+    if (index == 1 && socialSubTab != null) {
+      // Post-frame to ensure the Social tab is built before switching.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _socialKey.currentState?.switchToTab(socialSubTab);
+      });
+    }
+  }
+
   Widget _destinationFor(int index) {
     return _destinations[index] ??= switch (index) {
-      0 => HomeScreen(userId: widget.userId),
-      1 => const SocialHubScreen(),
+      0 => HomeScreen(
+          userId: widget.userId,
+          onOpenActivity: () => _switchToTab(1, socialSubTab: 1),
+        ),
+      1 => SocialHubScreen(key: _socialKey),
       2 => ProfileScreen(userId: widget.userId),
       _ => HomeScreen(userId: widget.userId),
     };

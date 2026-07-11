@@ -64,6 +64,13 @@ final acceptedFriendsProvider = StreamProvider<List<AcceptedFriend>>((ref) {
   return db.watchAcceptedFriends();
 });
 
+/// Watches pending incoming friend requests cached from sync or Social Hub refresh.
+final pendingIncomingFriendRelationshipsProvider =
+    StreamProvider<List<FriendRelationship>>((ref) {
+      final db = ref.watch(databaseProvider);
+      return db.watchPendingIncomingFriendRelationships();
+    });
+
 // ---------------------------------------------------------------------------
 // Nudge Action — enqueues NUDGE in SyncQueue (offline-safe)
 // ---------------------------------------------------------------------------

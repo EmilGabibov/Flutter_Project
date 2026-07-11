@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import '../theme/app_theme.dart';
+import 'skeletons.dart';
 
 class AvatarPickerSheet extends ConsumerStatefulWidget {
   const AvatarPickerSheet({super.key});
@@ -93,11 +94,7 @@ class _AvatarPickerSheetState extends ConsumerState<AvatarPickerSheet> {
             const SizedBox(height: 16),
             Expanded(
               child: _isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                        color: AppTheme.sageGreen,
-                      ),
-                    )
+                  ? _buildLoadingGrid()
                   : TabBarView(
                       children: [_buildGrid(characters), _buildGrid(emojis)],
                     ),
@@ -131,6 +128,20 @@ class _AvatarPickerSheetState extends ConsumerState<AvatarPickerSheet> {
             ),
           ),
         );
+      },
+    );
+  }
+
+  Widget _buildLoadingGrid() {
+    return GridView.builder(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 5,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+      ),
+      itemCount: 10,
+      itemBuilder: (context, index) {
+        return const HableSkeletonCircle(size: 48);
       },
     );
   }

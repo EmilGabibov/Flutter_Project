@@ -238,6 +238,12 @@ class SyncService {
               isSynced: const Value(true),
             ),
           );
+          await _db.cacheFriendRelationship(
+            userId: friendId,
+            username: friend['username']?.toString() ?? 'Friend',
+            avatarUrl: friend['avatar_url']?.toString(),
+            relationshipState: 'accepted',
+          );
 
           if (existingFriend == null) {
             await _upsertNotificationEvent(
@@ -433,6 +439,17 @@ class SyncService {
         // Persist friend requests as notification rows.
         final List<dynamic> friendRequests = data['friend_requests'] ?? [];
         for (final request in friendRequests) {
+          final requesterId = request['requester_id']?.toString() ?? '';
+          if (requesterId.isNotEmpty) {
+            await _db.cacheFriendRelationship(
+              userId: requesterId,
+              username: request['requester_username']?.toString() ?? 'Friend',
+              avatarUrl: request['requester_avatar']?.toString(),
+              relationshipState: 'pending_incoming',
+              requestId: request['id']?.toString(),
+            );
+          }
+
           await _upsertNotificationEvent(
             userId: userId,
             notificationId: 'friend_request:${request['id']}',

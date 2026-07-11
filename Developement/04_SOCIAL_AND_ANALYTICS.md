@@ -13,9 +13,10 @@ The backend must never expose a user's entire profile or habit list. Social data
 ### Friend Search & Habit Partner Invitations
 
 * **Navigation Ownership:** Social is a primary destination in the three-tab shell. Home should not own hidden Social navigation buttons; social obligations belong in Social and notification-center entry points.
-* **Friend Search:** Users can search by username or exact user code. Search results must expose only safe fields: `user_id`, `username`, `avatar_url`, and relationship state (`none`, `pending`, `accepted`).
+* **Friend Search:** Users can search by username prefix. Search results expose only safe fields: `user_id`, `username`, `avatar_url`, and relationship state (`none`, `pending_incoming`, `pending_outgoing`, `accepted`). Search must not expose score totals, habit metadata, logs, journal text, or private messages.
+* **Friend Request API:** `POST /api/social/friend-request` rejects self-requests and missing users, treats duplicate pending/accepted pairs idempotently, and returns the current relationship state. `POST /api/social/friend-request/accept` is recipient-scoped and idempotent for already accepted rows. `POST /api/social/friend-request/decline` is recipient-scoped and clears only pending requests.
 * **Friend Request Gate:** A user must be an accepted friend before receiving a habit-partner invite.
-* **Accepted Friend Cache:** `GET /api/sync/daily` returns accepted friends so Flutter can cache safe friend fields in Drift and render the habit creation partner picker offline.
+* **Accepted Friend Cache:** `GET /api/sync/daily` returns accepted friends and pending incoming requests so Flutter can cache safe friend fields in Drift (`accepted_friends` and `friend_relationships`) and render friend/request state without exposing habit data.
 * **Habit Invite Flow:** From habit creation surfaces, users can choose accepted friends from the local cache and enqueue a pending invite for one specific habit after the habit has been created locally.
 * **Invite Authorization:** `POST /api/social/habit-invitation` verifies requester ownership of the habit, rejects self-invites, requires an accepted friendship, and treats duplicate pending invites as idempotent.
 * **Acceptance Behavior:** Accepting a habit invite creates the recipient `partner` self-row plus directed rows to existing participants, while the creator remains `owner`. Declining leaves no partnership and exposes no habit progress.
@@ -45,7 +46,7 @@ All nudges are treated as ephemeral, transient data using Cloudflare KV.
 * **Nudge Visibility:** Received nudges should show on the relevant card for a bounded 24-hour window using local Drift state. Repeated nudges from the same sender/habit should coalesce rather than stack duplicate chips or notification rows.
 * **Friend Profile Privacy:** `GET /api/social/user/:id/profile` must stay authenticated and accepted-friend scoped. It may return only safe identity fields and allowed active shared-habit metadata; `Follow` in Flutter pre-fills local habit creation and does not create remote follow state.
 * **In-App Notification:** Sending a nudge should produce card-local queued feedback plus a lightweight snackbar, never an OS-level push notification in this MVP.
-* **Unified Social Notification Stream:** Friend requests, accepted-friend events, private messages, habit invitations, and nudges should all fan into the same Drift-backed notification center so Home and Social Hub share one unread model instead of bespoke badges.
+* **Unified Social Notification Stream:** Friend requests, accepted-friend events, private messages, habit invitations, and nudges all fan into the Drift-backed `NotificationEvents` table. The Social → Activity tab presents this as a unified chronological feed. Home's bell icon switches to this tab. The former standalone Notification Center and Inbox surfaces are retired as primary entry points.
 
 ## 4. The Daily Quote Engine
 
@@ -59,7 +60,7 @@ All nudges are treated as ephemeral, transient data using Cloudflare KV.
 * **Idempotency:** Score writes use `user_score_events(user_id, source_event_id)` so duplicate offline log replays do not double count.
 * **Achievements:** Backend events unlock `first_check_in`, `10_streak`, `100_streak`, `1000_streak`, `first_nudge`, and `first_supporter` in `user_achievements`.
 * **Daily Payload:** `/api/sync/daily` returns `gamification.total_points`, `level`, `level_id`, `badges`, and `newly_unlocked_badges`.
-* **Leaderboard:** Exists on the Social Hub screen. Users are ranked by backend-owned `total_score`. The global top 100 is fetched, and users can be searched.
+* **Leaderboard:** Exists on the Social → Leaderboard tab. Users are ranked by backend-owned `total_score`, scoped to the current user plus accepted friends, and fetched separately from friend search so search results stay privacy-limited.
 
 ## 6. Analytics Visualization (Profile View)
 

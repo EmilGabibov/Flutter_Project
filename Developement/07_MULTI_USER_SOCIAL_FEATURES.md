@@ -27,8 +27,9 @@ Hable is evolving beyond simple habit tracking into an inspiring, social experie
 - **Role Foundation:** Shared habits are now role-scoped at the backend. `Owner` controls habit metadata, `partner` can log progress, and future `supporter` views must stay read-only for progress while still allowing encouragement.
 
 ### 4. Friend Search & Partner Invite Flow
-- **Friends List:** Users can view a list of accepted friends directly in the "Friends" tab of the Social Hub, which updates instantly when a friend request is accepted locally.
-- **Friend Search:** Users can search for friends by username or exact user code. Results must be privacy-limited: username, avatar, and whether the user is already a friend or already invited.
+- **Friends List:** Users can view a list of accepted friends in the "Friends" tab (Social → Friends). Pending incoming friend requests appear inline at the top of this tab with Accept/Decline actions. The list updates instantly when a request is accepted.
+- **Friend Search:** Users search for friends by username prefix via a **bottom sheet** triggered by the search icon in the Social header. Results are privacy-limited to user id, username, avatar, and relationship state (`none`, `pending_incoming`, `pending_outgoing`, `accepted`).
+- **Activity Feed:** The "Activity" tab (Social → Activity) provides a unified chronological feed of all social events: nudges, friend requests, habit invites, private messages, and reminder settings. This merges the former standalone Notification Center and Inbox. The Home bell icon switches to this tab instead of pushing a separate screen.
 - **Friend Request Gate:** Habit partner invites can only be sent to accepted friends. If the searched user is not already a friend, the UI should offer "Send friend request" first.
 - **Invite From Habit Creation/Edit:** When creating or editing a habit, the user can search accepted friends and send a habit-partner invite for that specific habit.
 - **Current MVP:** Habit creation reuses the shared standard-habit presets and presents accepted friends from the local Drift cache as compact chips. Sending an invite is queued offline after the habit is created.
@@ -53,12 +54,12 @@ Hable is evolving beyond simple habit tracking into an inspiring, social experie
   - `private_messages`: Secure, private table for storing the wishes sent between users.
   - `habit_invitations`: Table to manage the state of partner invitations (pending, accepted, rejected).
   - `user_score_events` and `user_achievements`: Backend-owned progression tables for idempotent point awards and badge unlocks.
-- **Search API:** Add a minimal friend search endpoint returning only safe profile fields and relationship state. Do not expose habit data from search.
+- **Search API:** The minimal friend search endpoint returns only safe profile fields and relationship state. Do not expose habit data, score totals, logs, or private messages from search.
 - **Invitation API:** Habit invitation endpoints must verify accepted friendship before creating a pending habit invite, and after recipient acceptance must create role-aware directed `partnerships` rows so all participants see only authorized shared-habit data.
 - **Push Notifications:** WebSockets or push notifications to alert users when they receive a wish or a partnership invite.
 
 ## Next Steps
 1. Prototype a basic 3D abstract visual using Flutter shaders or a lightweight 3D engine.
 2. Design the database schema for private messages and milestone events.
-3. Build the UI for friend search, friend requests, and habit partnership invitations.
+3. Extend friend request UI only after the current search/request/accept/decline primitive needs pagination, blocking, QR codes, or contact import.
 4. Build the UI for sending contextual wishes.

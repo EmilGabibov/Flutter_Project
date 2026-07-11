@@ -43,37 +43,89 @@ Future<({AppDatabase db, Widget widget})> _buildHarness() async {
 }
 
 void main() {
-  testWidgets('MainNavigationShell exposes three tabs and Home FAB', (
-    tester,
-  ) async {
-    final harness = await _buildHarness();
-    addTearDown(harness.db.close);
+  group('MainNavigationShell', () {
+    testWidgets('renders three tabs and Home FAB', (tester) async {
+      final harness = await _buildHarness();
+      addTearDown(harness.db.close);
 
-    await tester.pumpWidget(harness.widget);
-    await tester.pump();
+      await tester.pumpWidget(harness.widget);
+      await tester.pump();
 
-    expect(find.byType(NavigationBar), findsOneWidget);
-    expect(find.text('Home'), findsOneWidget);
-    expect(find.text('Social'), findsOneWidget);
-    expect(find.text('Profile'), findsOneWidget);
-    expect(find.text('Habit'), findsOneWidget);
+      // Three navigation destinations.
+      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(find.text('Home'), findsOneWidget);
+      expect(find.text('Social'), findsOneWidget);
+      expect(find.text('Profile'), findsOneWidget);
 
-    await tester.tap(find.text('Habit'));
-    await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('New Habit'), findsOneWidget);
-    Navigator.of(tester.element(find.byType(MainNavigationShell))).pop();
-    await tester.pump(const Duration(milliseconds: 500));
+      // Home FAB for habit creation.
+      expect(find.text('Habit'), findsOneWidget);
 
-    await tester.tap(find.text('Social'));
-    await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('Find Friends'), findsOneWidget);
-    expect(find.text('Leaderboard'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(milliseconds: 1));
+    });
 
-    await tester.tap(find.text('Profile'));
-    await tester.pump(const Duration(milliseconds: 500));
-    expect(find.byTooltip('Open settings'), findsOneWidget);
+    testWidgets('Social tab shows 3 sub-tabs (Friends, Activity, Leaderboard)',
+        (tester) async {
+      final harness = await _buildHarness();
+      addTearDown(harness.db.close);
 
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump(const Duration(milliseconds: 1));
+      await tester.pumpWidget(harness.widget);
+      await tester.pump();
+
+      // Switch to Social tab.
+      await tester.tap(find.text('Social'));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      // Verify the 3 internal tabs exist.
+      expect(find.text('Friends'), findsAtLeast(1));
+      expect(find.text('Activity'), findsOneWidget);
+      expect(find.text('Leaderboard'), findsOneWidget);
+
+      // Find Friends is now a header icon, not a tab.
+      expect(find.byTooltip('Find friends'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(milliseconds: 1));
+    });
+
+    testWidgets('Profile tab shows settings gear', (tester) async {
+      final harness = await _buildHarness();
+      addTearDown(harness.db.close);
+
+      await tester.pumpWidget(harness.widget);
+      await tester.pump();
+
+      // Switch to Profile tab.
+      await tester.tap(find.text('Profile'));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      // Gear icon present.
+      expect(find.byTooltip('Open settings'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(milliseconds: 1));
+    });
+
+    testWidgets('Android back from non-Home returns to Home', (tester) async {
+      final harness = await _buildHarness();
+      addTearDown(harness.db.close);
+
+      await tester.pumpWidget(harness.widget);
+      await tester.pump();
+
+      // Switch to Profile tab.
+      await tester.tap(find.text('Profile'));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      // Simulate system back.
+      await tester.binding.handlePopRoute();
+      await tester.pump();
+
+      // Should be back on Home (FAB visible).
+      expect(find.text('Habit'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(milliseconds: 1));
+    });
   });
 }

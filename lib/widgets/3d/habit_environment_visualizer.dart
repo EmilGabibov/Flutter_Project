@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../database/database.dart';
 import '../../providers/habit_providers.dart';
 import '../../providers/social_providers.dart';
+import '../skeletons.dart';
 
 class HabitEnvironmentVisualizer extends ConsumerStatefulWidget {
   final double height;
@@ -43,7 +44,13 @@ class _HabitEnvironmentVisualizerState
     if (userId == null) {
       return SizedBox(
         height: widget.height,
-        child: const Center(child: CircularProgressIndicator()),
+        child: const Padding(
+          padding: EdgeInsets.all(16),
+          child: HableSkeletonBlock(
+            height: double.infinity,
+            borderRadius: BorderRadius.all(Radius.circular(28)),
+          ),
+        ),
       );
     }
 

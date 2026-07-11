@@ -15,3 +15,7 @@ binding = "DB"
 database_name = "hable_db"
 database_id = "63e137a2-f22f-4f28-98b9-5e52e90d1c03"
 preview_database_id = "local-db-id-preview"
+
+[[services]]
+binding = "EMAIL_WORKER"
+service = "campusweb-mailer"

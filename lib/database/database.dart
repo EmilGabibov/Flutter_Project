@@ -22,6 +22,7 @@ part 'database.g.dart';
     HabitInvitations,
     MilestoneEvents,
     AcceptedFriends,
+    FriendRelationships,
     AchievementUnlocks,
     NotificationEvents,
     ReminderSettings,
@@ -33,7 +34,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Bump this when the schema changes.
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -74,6 +75,9 @@ class AppDatabase extends _$AppDatabase {
       if (from < 10) {
         await m.createTable(notificationEvents);
         await m.createTable(reminderSettings);
+      }
+      if (from < 11) {
+        await m.createTable(friendRelationships);
       }
     },
   );
@@ -739,6 +743,65 @@ class AppDatabase extends _$AppDatabase {
 
   Stream<List<AcceptedFriend>> watchAcceptedFriends() =>
       select(acceptedFriends).watch();
+
+  Future<void> upsertFriendRelationship(
+    FriendRelationshipsCompanion relationship,
+  ) => into(friendRelationships).insertOnConflictUpdate(relationship);
+
+  Future<void> cacheFriendRelationship({
+    required String userId,
+    required String username,
+    required String relationshipState,
+    String? avatarUrl,
+    String? requestId,
+  }) {
+    return upsertFriendRelationship(
+      FriendRelationshipsCompanion(
+        userId: Value(userId),
+        username: Value(username),
+        avatarUrl: Value(avatarUrl),
+        relationshipState: Value(relationshipState),
+        requestId: Value(requestId),
+        updatedAt: Value(DateTime.now()),
+        isSynced: const Value(true),
+      ),
+    );
+  }
+
+  Future<void> updateFriendRelationshipState({
+    required String userId,
+    required String relationshipState,
+    String? requestId,
+  }) {
+    return (update(
+      friendRelationships,
+    )..where((relationship) => relationship.userId.equals(userId))).write(
+      FriendRelationshipsCompanion(
+        relationshipState: Value(relationshipState),
+        requestId: Value(requestId),
+        updatedAt: Value(DateTime.now()),
+        isSynced: const Value(true),
+      ),
+    );
+  }
+
+  Future<void> clearPendingIncomingFriendRelationships() =>
+      (delete(friendRelationships)..where(
+            (relationship) =>
+                relationship.relationshipState.equals('pending_incoming'),
+          ))
+          .go();
+
+  Stream<List<FriendRelationship>> watchPendingIncomingFriendRelationships() =>
+      (select(friendRelationships)
+            ..where(
+              (relationship) =>
+                  relationship.relationshipState.equals('pending_incoming'),
+            )
+            ..orderBy([
+              (relationship) => OrderingTerm.desc(relationship.updatedAt),
+            ]))
+          .watch();
 
   // ---------------------------------------------------------------------------
   // Achievement operations

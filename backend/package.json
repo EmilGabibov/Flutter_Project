@@ -8,7 +8,9 @@
     "web:build": "cd .. && flutter build web --release --base-href /",
     "web:deploy": "cd .. && flutter build web --release --base-href / && wrangler pages deploy ../build/web --project-name hable --branch main --commit-dirty=true --cwd backend",
     "db:setup": "wrangler d1 execute hable_db --local --file=./schema.sql",
-    "smoke:lifecycle": "node scripts/lifecycle-smoke.mjs"
+    "smoke:lifecycle": "node scripts/lifecycle-smoke.mjs",
+    "smoke:social": "node scripts/social-friend-smoke.mjs",
+    "smoke:regression": "node scripts/account-social-regression-smoke.mjs"
   },
   "dependencies": {
     "hono": "^4.2.1"

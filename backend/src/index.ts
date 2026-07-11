@@ -70,6 +70,18 @@ function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
+function normalizeAvatar(value: unknown): string {
+  return String(value ?? '').trim()
+}
+
+function isAllowedEmojiAvatar(value: string): boolean {
+  if (!value || value.length > 16) return false
+  if (/https?:|data:|\/|\\|<|>|\{|\}/i.test(value)) return false
+
+  const nonEmojiSyntax = value.replace(/[\p{Extended_Pictographic}\p{Emoji_Modifier}\uFE0F\u200D]/gu, '')
+  return nonEmojiSyntax.trim().length === 0
+}
+
 function isLocalRequest(url: string): boolean {
   const hostname = new URL(url).hostname
   return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0'
@@ -85,11 +97,6 @@ async function sendPinEmail(
   pin: string,
   purpose: 'password-reset' | 'profile-activation',
 ): Promise<void> {
-  const sender = env.PRIVATE_EMAIL_SENDER
-  if (!sender) {
-    throw new Error('Cloudflare email sender is not configured.')
-  }
-
   const purposeLabel = purpose === 'password-reset' ? 'password reset' : 'profile activation'
   const subject = purpose === 'password-reset'
     ? 'Your Hable password reset PIN'
@@ -119,6 +126,11 @@ async function sendPinEmail(
       throw new Error(`Email Worker failed with ${response.status}: ${details}`)
     }
     return
+  }
+
+  const sender = env.PRIVATE_EMAIL_SENDER
+  if (!sender) {
+    throw new Error('Cloudflare email sender is not configured.')
   }
 
   const accountId = env.CLOUDFLARE_ACCOUNT_ID
@@ -155,6 +167,7 @@ app.use('/api/*', cors({
       const url = new URL(origin)
       const normalizedOrigin = `${url.protocol}//${url.hostname}${url.port ? `:${url.port}` : ''}`
       if (allowedCorsOrigins.has(normalizedOrigin)) return origin
+      if (url.hostname.endsWith('.hable.pages.dev')) return origin
       if ((url.hostname === 'localhost' || url.hostname === '127.0.0.1') && url.protocol === 'http:') {
         return origin
       }
@@ -173,6 +186,7 @@ let ensureGamificationSchemaPromise: Promise<void> | null = null
 let ensureCalendarFeedSchemaPromise: Promise<void> | null = null
 let ensureAuthSchemaPromise: Promise<void> | null = null
 let ensureUsageDiagnosticsSchemaPromise: Promise<void> | null = null
+let ensureFriendRequestSchemaPromise: Promise<void> | null = null
 
 function normalizeRole(value: unknown): PartnershipRole {
   if (typeof value === 'string' && partnershipRoles.includes(value as PartnershipRole)) {
@@ -322,7 +336,32 @@ async function ensureUsageDiagnosticsSchema(env: Bindings): Promise<void> {
   await ensureUsageDiagnosticsSchemaPromise
 }
 
+async function ensureFriendRequestSchema(env: Bindings): Promise<void> {
+  if (!ensureFriendRequestSchemaPromise) {
+    ensureFriendRequestSchemaPromise = (async () => {
+      await env.DB.prepare(`
+        CREATE INDEX IF NOT EXISTS idx_friend_requests_recipient_status_created
+        ON friend_requests(recipient_id, status, created_at)
+      `).run()
+      await env.DB.prepare(`
+        CREATE INDEX IF NOT EXISTS idx_friend_requests_requester_status_created
+        ON friend_requests(requester_id, status, created_at)
+      `).run()
+      await env.DB.prepare(`
+        CREATE INDEX IF NOT EXISTS idx_friend_requests_pair_status
+        ON friend_requests(requester_id, recipient_id, status)
+      `).run()
+    })().catch((error) => {
+      ensureFriendRequestSchemaPromise = null
+      throw error
+    })
+  }
+
+  await ensureFriendRequestSchemaPromise
+}
+
 async function areAcceptedFriends(env: Bindings, leftUserId: string, rightUserId: string): Promise<boolean> {
+  await ensureFriendRequestSchema(env)
   const result = await env.DB.prepare(`
     SELECT id FROM friend_requests
     WHERE status = 'accepted'
@@ -1103,10 +1142,14 @@ app.post('/api/user/email/verify-pin', async (c) => {
 app.put('/api/user/avatar', async (c) => {
   const payload = c.get('jwtPayload')
   const { avatar_url } = await c.req.json()
-  if (!avatar_url) return c.json({ error: 'Missing avatar_url' }, 400)
+  const avatar = normalizeAvatar(avatar_url)
+  if (!avatar) return c.json({ error: 'Missing avatar_url' }, 400)
+  if (!isAllowedEmojiAvatar(avatar)) {
+    return c.json({ error: 'Avatar must be an emoji from the picker' }, 400)
+  }
   
-  await c.env.DB.prepare('UPDATE users SET avatar_url = ? WHERE id = ?').bind(avatar_url, payload.id).run()
-  return c.json({ success: true, avatar_url })
+  await c.env.DB.prepare('UPDATE users SET avatar_url = ? WHERE id = ?').bind(avatar, payload.id).run()
+  return c.json({ success: true, avatar_url: avatar })
 })
 
 app.get('/api/user/calendar-feed', async (c) => {
@@ -1223,6 +1266,7 @@ app.get('/api/social/user/:id/profile', async (c) => {
 
 // Friend Requests
 app.get('/api/social/friend-request', async (c) => {
+  await ensureFriendRequestSchema(c.env)
   const payload = c.get('jwtPayload')
   const userId = payload.id
 
@@ -1237,28 +1281,93 @@ app.get('/api/social/friend-request', async (c) => {
 })
 
 app.post('/api/social/friend-request', async (c) => {
+  await ensureFriendRequestSchema(c.env)
   const payload = c.get('jwtPayload')
-  const sender_id = payload.id
+  const senderId = payload.id
   const { target_user_id } = await c.req.json()
+  const targetUserId = String(target_user_id ?? '').trim()
 
-  if (!target_user_id) return c.json({ error: 'Missing target_user_id' }, 400)
+  if (!targetUserId) return c.json({ error: 'Missing target_user_id' }, 400)
+  if (targetUserId === senderId) {
+    return c.json({ error: 'Cannot send a friend request to yourself' }, 400)
+  }
+
+  const target = await c.env.DB.prepare(
+    'SELECT id FROM users WHERE id = ?'
+  ).bind(targetUserId).first<{ id: string }>()
+
+  if (!target?.id) {
+    return c.json({ error: 'Target user not found' }, 404)
+  }
+
+  const existing = await c.env.DB.prepare(`
+    SELECT id, requester_id, recipient_id, status
+    FROM friend_requests
+    WHERE status IN ('pending', 'accepted')
+      AND (
+        (requester_id = ? AND recipient_id = ?)
+        OR (requester_id = ? AND recipient_id = ?)
+      )
+    ORDER BY CASE status WHEN 'accepted' THEN 0 ELSE 1 END, created_at DESC
+    LIMIT 1
+  `).bind(senderId, targetUserId, targetUserId, senderId).first<{
+    id: string
+    requester_id: string
+    recipient_id: string
+    status: string
+  }>()
+
+  if (existing) {
+    const relationshipState = existing.status === 'accepted'
+      ? 'accepted'
+      : existing.requester_id === senderId
+        ? 'pending_outgoing'
+        : 'pending_incoming'
+
+    return c.json({
+      success: true,
+      request_id: existing.id,
+      relationship_state: relationshipState,
+    })
+  }
 
   const id = crypto.randomUUID()
   await c.env.DB.prepare(
     'INSERT INTO friend_requests (id, requester_id, recipient_id) VALUES (?, ?, ?)'
-  ).bind(id, sender_id, target_user_id).run()
+  ).bind(id, senderId, targetUserId).run()
 
-  return c.json({ success: true, request_id: id })
+  return c.json({ success: true, request_id: id, relationship_state: 'pending_outgoing' })
 })
 
 app.post('/api/social/friend-request/accept', async (c) => {
+  await ensureFriendRequestSchema(c.env)
   const payload = c.get('jwtPayload')
   const recipient_id = payload.id
   const { request_id } = await c.req.json()
 
   if (!request_id) return c.json({ error: 'Missing request_id' }, 400)
 
-  // Update status to accepted
+  const request = await c.env.DB.prepare(`
+    SELECT id, requester_id, recipient_id, status
+    FROM friend_requests
+    WHERE id = ? AND recipient_id = ?
+  `).bind(request_id, recipient_id).first<{
+    id: string
+    requester_id: string
+    recipient_id: string
+    status: string
+  }>()
+
+  if (!request) {
+    return c.json({ error: 'Request not found or unauthorized' }, 404)
+  }
+  if (request.status === 'accepted') {
+    return c.json({ success: true, relationship_state: 'accepted' })
+  }
+  if (request.status !== 'pending') {
+    return c.json({ error: 'Request is no longer pending' }, 409)
+  }
+
   const result = await c.env.DB.prepare(
     'UPDATE friend_requests SET status = "accepted" WHERE id = ? AND recipient_id = ?'
   ).bind(request_id, recipient_id).run()
@@ -1267,7 +1376,38 @@ app.post('/api/social/friend-request/accept', async (c) => {
     return c.json({ error: 'Request not found or unauthorized' }, 404)
   }
 
-  return c.json({ success: true })
+  return c.json({ success: true, relationship_state: 'accepted' })
+})
+
+app.post('/api/social/friend-request/decline', async (c) => {
+  await ensureFriendRequestSchema(c.env)
+  const payload = c.get('jwtPayload')
+  const recipient_id = payload.id
+  const { request_id } = await c.req.json()
+
+  if (!request_id) return c.json({ error: 'Missing request_id' }, 400)
+
+  const request = await c.env.DB.prepare(`
+    SELECT id, status
+    FROM friend_requests
+    WHERE id = ? AND recipient_id = ?
+  `).bind(request_id, recipient_id).first<{ id: string; status: string }>()
+
+  if (!request) {
+    return c.json({ error: 'Request not found or unauthorized' }, 404)
+  }
+  if (request.status === 'accepted') {
+    return c.json({ error: 'Accepted friendships cannot be declined' }, 409)
+  }
+  if (request.status === 'declined' || request.status === 'rejected') {
+    return c.json({ success: true, relationship_state: 'none' })
+  }
+
+  await c.env.DB.prepare(
+    'UPDATE friend_requests SET status = "declined" WHERE id = ? AND recipient_id = ?'
+  ).bind(request_id, recipient_id).run()
+
+  return c.json({ success: true, relationship_state: 'none' })
 })
 
 // Mutual Habit Tracking (Partnerships)
@@ -1533,6 +1673,7 @@ app.post('/api/sync/log', async (c) => {
 // Sync Daily
 app.get('/api/sync/daily', async (c) => {
   await ensurePartnershipRoleSchema(c.env)
+  await ensureFriendRequestSchema(c.env)
   await ensureGamificationSchema(c.env)
   const payload = c.get('jwtPayload')
   const userId = payload.id
@@ -1632,6 +1773,7 @@ app.get('/api/sync/daily', async (c) => {
 // --- New Leaderboard & Search Endpoints ---
 
 app.get('/api/social/leaderboard', async (c) => {
+  await ensureFriendRequestSchema(c.env)
   await ensureGamificationSchema(c.env)
   const payload = c.get('jwtPayload')
   const userId = payload.id
@@ -1658,18 +1800,49 @@ app.get('/api/social/leaderboard', async (c) => {
 })
 
 app.get('/api/social/search', async (c) => {
-  const query = c.req.query('q')
+  await ensureFriendRequestSchema(c.env)
+  const payload = c.get('jwtPayload')
+  const userId = payload.id
+  const query = c.req.query('q')?.trim().toLowerCase()
   if (!query || query.length < 2) {
     return c.json({ results: [] })
   }
 
-  await ensureGamificationSchema(c.env)
   const { results } = await c.env.DB.prepare(`
-    SELECT id, username, avatar_url, total_score
-    FROM users
-    WHERE username LIKE ?
+    SELECT
+      u.id AS id,
+      u.id AS user_id,
+      u.username,
+      u.avatar_url,
+      CASE
+        WHEN EXISTS (
+          SELECT 1 FROM friend_requests fr
+          WHERE fr.status = 'accepted'
+            AND (
+              (fr.requester_id = ? AND fr.recipient_id = u.id)
+              OR (fr.requester_id = u.id AND fr.recipient_id = ?)
+            )
+        ) THEN 'accepted'
+        WHEN EXISTS (
+          SELECT 1 FROM friend_requests fr
+          WHERE fr.status = 'pending'
+            AND fr.requester_id = ?
+            AND fr.recipient_id = u.id
+        ) THEN 'pending_outgoing'
+        WHEN EXISTS (
+          SELECT 1 FROM friend_requests fr
+          WHERE fr.status = 'pending'
+            AND fr.requester_id = u.id
+            AND fr.recipient_id = ?
+        ) THEN 'pending_incoming'
+        ELSE 'none'
+      END AS relationship_state
+    FROM users u
+    WHERE u.id != ?
+      AND lower(u.username) LIKE ?
+    ORDER BY lower(u.username) ASC
     LIMIT 20
-  `).bind(`${query}%`).all()
+  `).bind(userId, userId, userId, userId, userId, `${query}%`).all()
 
   return c.json({ results })
 })

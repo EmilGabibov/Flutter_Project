@@ -1499,3 +1499,233 @@ Enable users to manage their own habits.
 - Updated `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, and `08_Testing.md`.
 - Verified with `flutter analyze`, `flutter test test/main_navigation_shell_test.dart`, and full `flutter test`.
 - Completed At: 2026-07-11 16:06 CEST
+
+<a id="wire-friend-requests-through-social-hub-and-twin-harness-verification"></a>
+### [X] Wire Friend Requests Through Social Hub And Twin-Harness Verification
+
+**Raw source:** add a social feature, e.g., friend request. implement it via search and button (e.g., in settings or new people tab). after adding them in your app, add them in your friends app, see them in your app. test everything. Update docs.
+
+**Issue:** Backend friend-request endpoints exist, and `SocialHubScreen` already has a user search tab with a person-add button, but the button only shows "not yet implemented." Search results also do not expose relationship state, incoming requests are not surfaced in Flutter, and accepted friend state is not cached locally for downstream habit invites, nudges, leaderboards, or twin-app verification.
+
+**Ponytail triage:**
+- *Should exist:* Yes, accepted friendship is the gate for habit partnerships and later shared habit visibility.
+- *Smallest safe scope:* Reuse `SocialHubScreen` as the "Find Friends" surface, wire the existing add button to send friend requests, add a compact incoming request list with accept/decline, cache relationship state locally, and verify the flow between `primary` and `friend` app flavors.
+- *Skipped scope:* New settings tab, contact import, QR/user-code invites, push notifications, chat, blocking/reporting, public profiles, friend suggestions, and full 3D social browsing.
+- *Boundaries:* Friend search may be an explicit network action, but request status and accepted relationships should be cached into Drift for offline-first reads. Search must not expose habit metadata or private journal data.
+
+**Action:** Complete the friend-request flow end to end. Update the backend search/request APIs to be idempotent and privacy-safe, add request listing/accept/decline support, wire Flutter's Social Hub button and request list to those APIs through Riverpod/Drift state, and verify primary-to-friend plus friend-to-primary visibility in the twin harness.
+
+**Hable perspective:** Friendships are a social permission layer, not shared habit data by themselves. Accepted friends can later receive habit-partner invites, but simply becoming friends must not reveal habit lists, logs, skip journal text, partner snapshots, private messages, or milestone events.
+
+**Implementation scope:**
+- Backend routes in `backend/src/index.ts`: harden `POST /api/social/friend-request`, add/verify duplicate and self-request guards, add request list and decline endpoints if missing, and update `GET /api/social/search` to return `user_id`, `username`, `avatar_url`, and `relationship_state` only.
+- Backend schema/indexes in `backend/schema.sql`: add indexes for `(requester_id, recipient_id, status)` and enforce or simulate uniqueness for pending/accepted request pairs.
+- Drift schema in `lib/database/tables.dart`: add a minimal local friend/request cache table if no existing table can represent pending incoming, pending outgoing, accepted, declined, usernames, avatars, and timestamps.
+- Database methods in `lib/database/database.dart`: upsert friend request/search relationship state, watch pending incoming requests, watch accepted friends, and update status optimistically on accept/decline.
+- Riverpod/social state in `lib/providers/social_providers.dart` or a small companion provider: expose friend requests, accepted friends, send request, accept request, and decline request actions.
+- UI in `lib/screens/social/social_hub_screen.dart`: replace the placeholder add-button snackbar with real send behavior; show request state labels/buttons; add an incoming requests section/tab without creating a new broad social screen.
+- Sync layer in `lib/services/sync_service.dart`: pull request state through `/api/sync/daily` or a dedicated social request endpoint and persist it locally; keep UI non-blocking when offline.
+- Twin harness/testing: update `TWIN_TEST_HARNESS.md` and `08_Testing.md` with primary sends request to friend, friend accepts, primary sees accepted relationship, then reverse or re-run from friend side as needed.
+- Test surface: focused backend/API smoke checks for search state, duplicate requests, self-request rejection, accept/decline authorization, and one device/emulator twin-harness pass.
+
+**Scalability considerations:** Friend search should stay prefix/equality based with a small limit and indexed usernames. Friend request lookups need indexed requester/recipient/status pairs before the graph grows. A full friend graph service, pagination, and recommendation system are deferred.
+
+**Future split guidance:** Habit partner invitation from habit creation/edit, friend profile pages, friend blocking, push notifications, contact import, and 3D friend exploration should remain separate tasks. Implement them only after this accepted-friend primitive works.
+
+**Edge cases:** Searching yourself, duplicate request taps, reciprocal pending requests, accepting a missing/rejected request, stale token, user deleted after request, offline during send/accept, declined requests re-sent later, relationship state not refreshing in the sender app, seeded twin users already connected in D1, search leaking `total_score` or habit data, and accepted friendship without any shared habits.
+
+**Acceptance criteria:**
+- Social Hub search results show safe fields plus relationship state (`none`, `pending_incoming`, `pending_outgoing`, `accepted`, or equivalent).
+- Tapping the existing add/friend button sends a real friend request and updates local/request UI state without blocking unrelated app use.
+- Incoming friend requests are visible in the receiving app with accept and decline actions.
+- Accepting a request updates backend state and both installs eventually show the relationship as accepted.
+- Duplicate friend requests and self-requests are rejected or treated idempotently.
+- Accepted friends still do not expose habit metadata until a separate habit partnership/invite exists.
+- The primary app can send a request to the friend app, the friend app can accept it, and the primary app can see accepted state after refresh/sync.
+- The same flow is verified from the friend app side or documented as already covered by the symmetric backend path.
+- `04_Social_and_Analytics.md`, `07_Multi_User_Social_Features.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `TWIN_TEST_HARNESS.md`, and `08_Testing.md` are verified and updated to match the implemented flow.
+
+**Dependencies:** `04_Social_and_Analytics.md`, `07_Multi_User_Social_Features.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `TWIN_TEST_HARNESS.md`, `08_Testing.md`
+
+**Completion notes:**
+- Implemented idempotent, privacy-safe friend request handling in `backend/src/index.ts`: self/missing-target guards, duplicate pending/accepted handling, recipient-scoped accept, recipient-scoped decline, relationship-state search, and friend-request indexes in `backend/schema.sql`.
+- Added local Drift `friend_relationships` cache plus DAO/Riverpod support so Social Hub can render pending incoming request rows and search relationship labels without storing habit metadata.
+- Updated `SocialHubScreen` search rows to show `Add`, `Requested`, `Respond`, or `Friends` based on backend relationship state; Requests now exposes Accept and Decline actions backed by cached pending incoming rows.
+- Updated `SyncService.pullDailySync` to cache accepted friends and incoming friend requests into local relationship state while preserving notification-center rows.
+- Added focused regression coverage in `test/friend_relationship_cache_test.dart` and repeatable backend API coverage in `backend/scripts/social-friend-smoke.mjs` exposed as `npm run smoke:social`.
+- Updated `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `07_Multi_User_Social_Features.md`, `TWIN_TEST_HARNESS.md`, and `08_Testing.md`.
+- Verified: `flutter analyze`, `flutter test test/friend_relationship_cache_test.dart test/main_navigation_shell_test.dart`, full `flutter test`, `npx tsc --noEmit`, `node --check scripts/social-friend-smoke.mjs`, `node --check scripts/lifecycle-smoke.mjs`, `npm run db:setup`, `npm run smoke:social`, and `npm run smoke:lifecycle`.
+- Device validation note: `adb` and MobAI device-control tools were not exposed in this session, so the tap-by-tap twin-app UI pass remains a manual/device follow-up even though the Worker API and Flutter test surfaces passed.
+- Completed At: 2026-07-11 20:19 CEST
+
+<a id="repair-account-and-social-api-regression-across-auth-avatar-nudge-leaderboard-and-search"></a>
+### [X] Repair Account And Social API Regression Across Auth Avatar Nudge Leaderboard And Search
+
+**Issue:** Core account and social surfaces are showing a cluster of regressions that point to route, method, or response-shape mismatches between the Flutter app and the Worker. The result is broken login/registration, unclear activation PIN behavior, avatar update failures, friend search uncertainty, nudge failures, and a leaderboard UI that appears to hang.
+
+**Ponytail triage:**
+- *Should exist:* Yes. This is a regression repair on existing Hable flows, not a new feature request.
+- *Smallest safe scope:* Restore the current auth, avatar, search, nudge, and leaderboard contract end to end, keeping the existing emoji-only avatar picker and the current Social/Profile surfaces.
+- *Skipped scope:* New auth model, profile photo uploads, avatar editor redesign, new people tabs, search ranking, friend recommendations, push notifications, and leaderboard redesign.
+- *Boundaries:* Preserve offline-first local caching and optimistic UI updates. Do not expose private habit data through search or leaderboard. Treat 405s, stale loading states, and route mismatches as defects to fix, not acceptable fallbacks.
+
+**Action:** Trace the failing surfaces from Flutter call site to backend route, fix the method/response mismatches that produce 405s or indefinite loading, make error states resolve deterministically, and verify the current app can log in, register, request and verify activation PINs, update an emoji avatar, search friends, send nudges, and load the leaderboard without hanging.
+
+**Hable perspective:** Account records should continue to seed Drift so the app can recover offline. Avatar customization stays emoji-first unless a later task introduces media uploads. Friend search must remain privacy-limited, nudges must remain habit-scoped, and leaderboard data must remain server-owned and non-blocking in the UI.
+
+**Implementation scope:**
+- Backend route audit in `backend/src/index.ts` and `backend/schema.sql`: verify supported methods, response codes, auth guards, and delivery paths for `/api/auth/login`, `/api/auth/register`, `/api/auth/request-pin`, `/api/auth/reset-password`, `/api/user/avatar`, `/api/social/search`, `/api/social/leaderboard`, and `/api/social/nudge`.
+- Flutter auth wiring in `lib/providers/auth_provider.dart` and `lib/screens/auth_screen.dart`: ensure login/register/PIN/activation failures surface clearly, 405s are handled as actionable errors, and local Drift stays in sync after successful auth changes.
+- Avatar UI in `lib/widgets/avatar_picker_sheet.dart` and `lib/providers/auth_provider.dart`: keep the picker emoji-only, persist the selected avatar locally and remotely, and show a deterministic failure state if the server rejects the update.
+- Social UI/providers in `lib/screens/social/social_hub_screen.dart`, `lib/providers/social_providers.dart`, and related notification providers: ensure friend search requests complete, nudge actions use the existing queued path, and leaderboard/search loading states exit on success or error instead of spinning forever.
+- Local persistence in `lib/database/database.dart` and `lib/database/tables.dart`: confirm account and profile fields needed by the UI are cached correctly and refreshed on successful network writes.
+- Test surface in `08_Testing.md` and any focused smoke tests: add a regression checklist for login, registration, PIN request, avatar update, friend search, nudge send, and leaderboard load.
+
+**Scalability considerations:** Search and leaderboard should stay bounded and indexed; no new unbounded feeds or polling loops are needed. The emoji-only avatar path avoids media-upload backpressure. Scalability impact: none expected beyond the existing limited search and top-100 leaderboard patterns.
+
+**Future split guidance:** Split profile photo uploads, richer avatar management, search ranking, friend recommendations, and push-based nudge delivery into separate follow-up tasks if they become requirements.
+
+**Edge cases:** Stale cached tokens, missing email during PIN flows, unsupported avatar values, empty search terms, non-JSON leaderboard responses, backend 405/401/500 responses, offline mode during send/update, duplicate nudge taps, and users reopening the app while a previous request is still in flight.
+
+**Acceptance criteria:**
+- Login and registration from the app no longer fail with 405 against the current backend origin.
+- PIN request and reset/activation flows either complete successfully or surface a clear, non-hanging error.
+- Avatar changes remain emoji-only and successfully persist across app restart when the backend accepts them.
+- Friend search returns usable results and the UI no longer reports an ambiguous route/API failure.
+- Nudge actions are usable from the current social surface and complete without leaving the UI stuck.
+- Leaderboard loads to either data or a clear empty/error state instead of indefinite loading.
+- Verified docs are updated where the implementation changes auth, offline, social, or testing behavior.
+
+**Dependencies:** `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `07_Multi_User_Social_Features.md`, `08_Testing.md`
+
+**Completion notes:**
+- Enforced emoji-only avatar updates in `backend/src/index.ts` for `PUT /api/user/avatar`; URL/data-upload avatar values now return a clear `400`.
+- Updated `AuthNotifier.updateAvatar` so avatar failures set deterministic auth error text and local Drift updates use an update path before falling back to user upsert.
+- Added 10-second bounds to Social Hub leaderboard, search, pending request, send, accept, and decline HTTP calls so route/backend failures resolve into existing data/error UI instead of indefinite loading.
+- Added `backend/scripts/account-social-regression-smoke.mjs` and `npm run smoke:regression` covering username/password registration, case-insensitive login, activation PIN request, emoji avatar update/rejection, friend search/request/accept, leaderboard load, shared-habit creation/invite, habit-scoped nudge send, and nudge receipt through daily sync.
+- Updated `01_Schema_and_Core_Logic.md`, `03_UI_UX_and_Animations.md`, and `08_Testing.md` to document emoji-only avatar behavior, relationship cache/API endpoints, social loading bounds, and the regression smoke procedure.
+- Verified: `flutter analyze`, full `flutter test`, `npx tsc --noEmit`, `node --check scripts/account-social-regression-smoke.mjs`, `node --check scripts/social-friend-smoke.mjs`, `node --check scripts/lifecycle-smoke.mjs`, `npm run db:setup`, and `npm run smoke:regression`.
+- Device validation note: `adb` and MobAI device-control tools were not exposed in this session, so device tap-through remains manual follow-up; backend API and Flutter test surfaces passed.
+- Completed At: 2026-07-11 20:24 CEST
+- Reopened production follow-up at 2026-07-11 21:23 CEST: reproduced `405` on `https://hable.pages.dev/api/auth/register`, `/api/auth/login`, and CORS preflight, applied `backend/schema.sql` to remote D1, redeployed Pages Functions from `backend/`, and verified production register/login now return `200` while preflight returns `204`.
+- Fixed production PIN delivery by adding the `EMAIL_WORKER` service binding to `backend/wrangler.toml` and allowing `sendPinEmail` in `backend/src/index.ts` to use that binding without requiring duplicate Hable email-sender secrets. Verified production profile activation PIN and password reset PIN endpoints return `200` with `{"success":true,"message":"Verification PIN sent"}`.
+
+<a id="replace-core-loading-spinners-with-consistent-skeleton-empty-states"></a>
+### [X] Replace Core Loading Spinners With Consistent Skeleton Empty States
+
+**Raw source:** implement better skeleton empty states.
+
+**Issue:** Several Hable screens still fall back to centered `CircularProgressIndicator` widgets or shrink to blank space while data loads. That makes the app feel abrupt and unstable, especially on first open, and it weakens the calm visual language the rest of the UI is already using.
+
+**Ponytail triage:**
+- *Should exist:* Yes. This is a real UX polish pass on existing loading and empty states.
+- *Smallest safe scope:* Replace the most visible full-screen spinners and blank gaps with lightweight skeleton placeholders that preserve layout shape on Home, Social Hub, Profile, Auth, Notification Center, and Habit Form.
+- *Skipped scope:* New animation library, shimmer dependency, global design-system rewrite, custom asset pack, and any backend/data-model changes.
+- *Boundaries:* Keep the implementation simple and local. Reuse Material widgets and existing theme tokens before adding anything new. Do not disturb data flow or offline behavior.
+
+**Action:** Add a minimal reusable skeleton/placeholder component and use it to swap the current loading states in the main app surfaces for structured placeholder content instead of abrupt spinners or empty boxes.
+
+**Hable perspective:** Hable should feel calm, immediate, and predictable. Skeletons should hold the screen shape while local Drift or async providers resolve, so the app feels ready instead of stalled.
+
+**Implementation scope:**
+- UI surfaces in `lib/screens/home_screen.dart`, `lib/screens/profile_screen.dart`, `lib/screens/social/social_hub_screen.dart`, `lib/screens/auth_screen.dart`, `lib/screens/notification_center_screen.dart`, and `lib/widgets/habit_form_sheet.dart`: replace the most visible spinner-only and blank loading branches with skeleton placeholders that resemble the final card/list layout.
+- Shared widget in `lib/widgets/`: add a tiny reusable skeleton block/row/card helper if multiple screens need the same placeholder shape.
+- Accessibility: preserve labels/semantics for loading content where needed so assistive tech does not lose context.
+- Test surface: add or update widget tests for the key empty/loading states so the app does not regress back to blank screens or spinner-only shells.
+
+**Scalability considerations:** This is purely presentational. It should not add any network calls, rebuild pressure, or dependency weight. Scalability impact: none expected.
+
+**Future split guidance:** If the placeholder treatment later needs richer motion, a dedicated skeleton system, or cross-screen animation choreography, split that into a separate visual-polish task.
+
+**Edge cases:** Slow auth init, empty friend lists, no active habits, empty profile data, empty notifications, no accepted friends in the habit form, and intermittent provider refreshes that briefly re-enter loading state.
+
+**Acceptance criteria:**
+- Main app screens no longer flash between blank space and content while loading.
+- The most visible loading states use stable skeleton placeholders instead of only centered spinners.
+- Empty states still show clear copy, but with better structure and visual weight.
+- No backend or database behavior changes are required to complete the polish.
+- Widget coverage exists for the updated loading/empty states.
+
+**Dependencies:** `03_UI_UX_and_Animations.md`, `08_Testing.md`
+
+**Completion notes:**
+- Added reusable skeleton and structured empty-state widgets in `lib/widgets/skeletons.dart`.
+- Replaced prominent spinner-only or blank loading branches across Home, Social Hub, Notification Center, Auth auto-login, Habit Form partner chips, Profile chart/friend loads, avatar picker update state, calendar feed loading, and the habit environment visualizer.
+- Improved empty states for notifications, friends, requests, and inbox with icon/title/description cards while preserving existing data providers and offline-first reads.
+- Fixed a short-viewport overflow in the reusable empty-state card by making it scrollable; covered this with `test/skeletons_test.dart`.
+- Updated `03_UI_UX_and_Animations.md` and `08_Testing.md` with skeleton/empty-state expectations and verification notes.
+- Verified: `flutter analyze`, `flutter test test/skeletons_test.dart`, `flutter test test/main_navigation_shell_test.dart`, and full `flutter test`.
+- Completed At: 2026-07-11 20:31 CEST
+
+<a id="complete-cross-app-habit-lifecycle-sync-and-twin-harness-verification"></a>
+### [X] Complete Cross-App Habit Lifecycle Sync And Twin-Harness Verification
+
+**Raw source:** Add a habit, set a time, sync it, update it, delete it. see it in your friends app (if you added them as friend), update it in your friends app, see it in your app. do the same for multi-day habits. after adding them in your app, add them in your friends app, see them in your app. test everything. Update docs.
+
+**Issue:** Profile habit CRUD exists locally, but cross-app habit lifecycle sync is not real yet. `createHabitWithSync`, `updateHabitDetails`, `archiveHabit`, completion, and skip actions enqueue `SyncAction.createHabit`, `updateHabit`, and `logHabit`; `SyncService` currently mocks those actions instead of sending habit/log records to Cloudflare. The backend has social partnerships and `habit_progress`, but no complete authorized habit metadata lifecycle that lets the primary/friend installs see shared habit create/update/archive/log changes from each other.
+
+**Ponytail triage:**
+- *Should exist:* Yes, this is the smallest root-cause fix needed before twin-app habit testing can mean anything.
+- *Smallest safe scope:* Implement real sync for create, update, archive, and log actions; pull shared habit metadata/progress through daily sync; verify one shared normal habit and one multi-day habit across `primary` and `friend` flavors.
+- *Skipped scope:* Hard delete, reminders, recurring schedules, calendar integration, realtime sockets, conflict-resolution UI, bulk editing, public friend habit feeds, and full automation frameworks.
+- *Boundaries:* Keep Hable privacy rules. Friends must not see every habit automatically; cross-app visibility requires an accepted friendship plus explicit partnership/habit invite. Treat "delete" as archive/abandon unless a future task explicitly requires destructive deletion.
+
+**Action:** Replace the mocked habit/log sync path with a real offline-first lifecycle. Local Drift remains the optimistic source for UI. Background sync sends queued habit/log mutations to authenticated backend endpoints, the backend persists and authorizes shared habit state, and daily sync pulls only allowed shared habit metadata/progress into the other app. Then run the twin harness to prove add/time/update/archive/log behavior works in both directions for a normal habit and a multi-day habit.
+
+**Hable perspective:** The Home and Profile screens should continue to read only Drift/Riverpod streams. The backend is only the reconciliation layer. Partner visibility belongs to accepted relationships and per-habit partnerships, not general friendship. Shared updates must not expose private skip journal text or unrelated habit lists.
+
+**Implementation scope:**
+- Drift schema/DAO: audit `Habits`, `Logs`, `Partnerships`, `SyncQueue`, and `PartnerSnapshots`; add only the minimum field needed to represent "set a time" without corrupting multi-day duration semantics if the current `targetDuration/currentDuration` fields are insufficient.
+- Database methods in `lib/database/database.dart`: enqueue full payloads for create/update/archive/log instead of only `habitId`; mark local rows synced only after backend success.
+- Sync layer in `lib/services/sync_service.dart`: replace the mocked `SyncAction.createHabit`, `SyncAction.updateHabit`, and `SyncAction.logHabit` branch with real authenticated HTTP calls and retry-safe error handling.
+- Backend D1/schema: add or align full habit metadata storage, progress/log upserts, shared-habit authorization, status/archive handling, updated timestamps, and needed indexes for `user_id`, `habit_id`, partnership lookups, and updated sync ordering.
+- Backend routes in `backend/src/index.ts`: implement authenticated habit create/update/archive/log endpoints and extend `/api/sync/daily` to return only authorized shared habit metadata and partner progress.
+- Riverpod/UI: keep `ProfileScreen`, `HabitFormSheet`, `HomeScreen`, and `PartnerTicker` wired to local Drift; add only minimal UI/state hooks needed to show shared synced habits after daily sync.
+- Twin harness/testing: update `TWIN_TEST_HARNESS.md` and/or `08_Testing.md` with exact steps for primary-to-friend and friend-to-primary habit lifecycle testing; run the path on a device/emulator.
+- Test surface: focused backend/API smoke checks for habit create/update/archive/log authorization plus one device smoke pass through the twin harness.
+
+**Scalability considerations:** Habit and log sync can be one queued mutation per request for now. Add D1 indexes before shared habits grow, and keep daily sync scoped to accepted/partnered habits. If offline queues grow after long offline use, batch habit/log mutations in a separate task.
+
+**Future split guidance:** Batch sync, hard deletion, conflict-resolution UI, realtime shared updates, reminders, and CI-grade device automation are deferred. Append separate raw tasks only after this bidirectional lifecycle works manually.
+
+**Edge cases:** User is offline during create/update/archive/log, missing or expired JWT, friend request accepted but no habit partnership, invite pending/declined, user tries to see non-partner habits, duplicate queued updates, update/archive conflict from both apps, archive after completion, restore after archive, local row marked synced after failed backend call, stale daily sync payload, private skip journal leaking to partner payloads, duration unit mismatch between daily time and multi-day journey, and seeded harness data diverging from D1.
+
+**Acceptance criteria:**
+- Creating a habit from Profile writes Drift immediately and syncs the full habit metadata to the backend instead of being mocked.
+- Setting/updating the habit time/duration preserves correct multi-day habit semantics and does not inflate day counts through unit mismatch.
+- Updating title, duration/time, and color in one install syncs and appears in the partnered install after daily sync.
+- Archiving a habit in one install removes it from active lists in both partnered installs after sync while preserving history locally.
+- Completing and skipping a habit enqueue real `logHabit` payloads; skip journal text stays private and is not exposed to partners.
+- A normal shared habit and a multi-day shared habit can be created from `primary`, seen/updated from `friend`, then seen back in `primary`.
+- A shared habit created from `friend` can be seen in `primary` after sync.
+- Non-partner friends cannot see private habit metadata.
+- `SyncService` no longer mocks `createHabit`, `updateHabit`, or `logHabit`.
+- `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `07_Multi_User_Social_Features.md`, `TWIN_TEST_HARNESS.md`, and `08_Testing.md` are verified and updated to match the implemented lifecycle.
+
+**Dependencies:** `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `07_Multi_User_Social_Features.md`, `TWIN_TEST_HARNESS.md`, `08_Testing.md`
+
+**Implementation progress notes:**
+- Implemented shared standard habit presets in `lib/data/standard_habits.dart` and reused them from onboarding plus `HabitFormSheet`.
+- Updated `HabitFormSheet` to create/edit habits in days, prefill preset title/duration/color, and offer accepted-friend partner chips from Drift/Riverpod.
+- Updated `AppDatabase.createHabitWithSync` and `HabitActionsController.createHabit` to return the created habit id, enqueue full habit metadata, and enqueue `sendHabitInvitation` items after the local habit exists.
+- Hardened `POST /api/social/habit-invitation` to require requester habit ownership, accepted friendship, non-self target, and idempotent duplicate pending invites.
+- Updated docs in `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `07_Multi_User_Social_Features.md`, `TWIN_TEST_HARNESS.md`, and `08_Testing.md`.
+- Verified: `flutter analyze`, `npx tsc --noEmit`, `flutter test`, and `flutter build apk --debug`.
+- Added optimistic completion-state repair in `lib/database/database.dart` so local remaining days decrement and habits move to `completed` only when they actually hit zero.
+- Updated `lib/screens/home_screen.dart` so completion/skip logs flush the sync queue immediately and skip payloads no longer send private journal text to the backend.
+- Updated `lib/services/sync_service.dart` to mark pushed habits/logs as synced after backend success and to reconcile inbound shared habits using backend status plus viewer remaining days instead of forcing `active` + zero progress.
+- Extended `GET /api/sync/daily` in `backend/src/index.ts` to return shared-habit `status` and `viewer_remaining_days` for local reconciliation.
+- Verified the lifecycle fixes with `flutter analyze`, `flutter test test/profile_habit_crud_test.dart test/habit_completion_progress_test.dart`, and `npx tsc --noEmit`.
+- Added repeatable backend lifecycle smoke script at `backend/scripts/lifecycle-smoke.mjs` and exposed it as `npm run smoke:lifecycle`.
+- Verified local backend with `npm run db:setup` and a direct API lifecycle smoke covering seeded auth, case-insensitive friend search, friend acceptance, normal shared habit sync, multi-day shared habit sync, Bob-owned habit visibility in Alice, completion progress, owner-only metadata update enforcement, archive propagation, and private habit exclusion.
+- Verified emulator harness setup on `emulator-5554`: `adb reverse tcp:8787 tcp:8787`, built `app-primary-debug.apk` and `app-friend-debug.apk` with seeded identities, installed both packages, launched both flavors, and dumped UI hierarchies showing Alice/Bob each reach Home with the reciprocal shared Hydration card.
+- Verified Android twin harness on `emulator-5554` with local Wrangler on `http://127.0.0.1:8787`, `adb reverse tcp:8787 tcp:8787`, rebuilt seeded primary/friend debug APKs, installed both packages, and launched both flavors.
+- Verified primary flavor launches as Alice and renders the Home shell with `Hydration`, Bob partner state, nudge state, FAB, and Home/Social/Profile tabs.
+- Verified friend flavor launches as Bob and renders the reciprocal Home shell with `Hydration`, Alice partner state, FAB, and Home/Social/Profile tabs.
+- Fixed Android debug flavor build regression by enabling core library desugaring for `flutter_local_notifications`.
+- Verified backend bidirectional habit lifecycle again with `npm run smoke:lifecycle`, including normal shared habit sync, multi-day shared habit sync, Bob-owned habit visibility, owner-only update enforcement, archive propagation, completion progress, and private habit exclusion.
+- Device automation note: MobAI MCP tools were not exposed, so validation used SDK-local `adb`, APK install/launch, and Android UI hierarchy dumps instead.
+- Progress completed at 2026-07-11 21:05 CEST.
+
+**Completion notes:** Completed at 2026-07-11 21:05 CEST. Touched `android/app/build.gradle.kts` for required core-library desugaring and verified the already implemented lifecycle path through local Worker smoke plus Android primary/friend flavor launch checks on `emulator-5554`.
+- Completed At: 2026-07-11 21:05 CEST

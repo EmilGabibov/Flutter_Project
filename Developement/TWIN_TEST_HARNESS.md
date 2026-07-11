@@ -60,29 +60,31 @@ flutter run --flavor friend \
 With both apps installed, test the current social path in this order:
 
 1. **Friend Request**: In Alice's app, open Social Hub -> Find Friends, search for Bob, and send a friend request.
-2. **Acceptance**: In Bob's app, open Social Hub -> Requests and accept Alice's request.
-3. **Accepted Friend Cache**: Reopen or sync Alice's app and verify Bob now appears as an accepted friend for local invite surfaces.
-4. **Habit Invite**: In Alice's app, create a habit from Home or Profile and select Bob from the accepted-friend partner chips.
-5. **Invite Acceptance**: In Bob's app, run/open daily sync, verify the invitation banner appears, and accept it.
-6. **Shared Habit Visibility**: After acceptance and sync, verify the shared habit appears on both apps.
-7. **Progress Sync**: Complete the shared habit on Alice, flush/open Bob, and verify Bob sees Alice's updated per-card partner state. Then complete the same shared habit on Bob and verify Bob's own challenge day advances locally and Alice sees Bob's updated partner state after sync.
-8. **Archive Sync**: Archive the shared habit on Alice and verify it disappears from both active Home lists after daily sync while still remaining in archived/history surfaces locally.
-9. **Skip Privacy**: Trigger a skip with journal text on one side and verify the shared partner state updates without exposing that free-form journal text in the other install.
-10. **Per-Card Social Status**: On the shared habit card, verify partner/supporter avatars render inside the card with role-aware state.
-11. **Send a Nudge**: Trigger a nudge from the shared-habit context and wait for the sync queue to flush.
-12. **Receive Nudge**: Open or sync the receiving app and verify the nudge is visible through the current in-app social state.
-13. **Role Checks**: Verify Alice can still edit/archive the shared habit, Bob can complete/skip it but cannot edit/archive it, and only shared-habit participants can send nudges.
+2. **Request State**: Verify Alice's search row changes to `Requested`, and Bob's search row for Alice shows a pending incoming/respond state.
+3. **Acceptance/Decline**: In Bob's app, open Social Hub -> Requests and verify the pending row exposes both Accept and Decline. For the main shared-habit pass, accept Alice's request.
+4. **Accepted Friend Cache**: Reopen or sync Alice's app and verify Bob now appears as an accepted friend for local invite surfaces.
+5. **Habit Invite**: In Alice's app, create a habit from Home or Profile and select Bob from the accepted-friend partner chips.
+6. **Invite Acceptance**: In Bob's app, run/open daily sync, verify the invitation banner appears, and accept it.
+7. **Shared Habit Visibility**: After acceptance and sync, verify the shared habit appears on both apps.
+8. **Progress Sync**: Complete the shared habit on Alice, flush/open Bob, and verify Bob sees Alice's updated per-card partner state. Then complete the same shared habit on Bob and verify Bob's own challenge day advances locally and Alice sees Bob's updated partner state after sync.
+9. **Archive Sync**: Archive the shared habit on Alice and verify it disappears from both active Home lists after daily sync while still remaining in archived/history surfaces locally.
+10. **Skip Privacy**: Trigger a skip with journal text on one side and verify the shared partner state updates without exposing that free-form journal text in the other install.
+11. **Per-Card Social Status**: On the shared habit card, verify partner/supporter avatars render inside the card with role-aware state.
+12. **Send a Nudge**: Trigger a nudge from the shared-habit context and wait for the sync queue to flush.
+13. **Receive Nudge**: Open or sync the receiving app and verify the nudge is visible through the current in-app social state.
+14. **Role Checks**: Verify Alice can still edit/archive the shared habit, Bob can complete/skip it but cannot edit/archive it, and only shared-habit participants can send nudges.
 
-## 5. Backend Lifecycle Smoke
+## 5. Backend Social And Lifecycle Smokes
 
-Before or after the device pass, run the repeatable backend lifecycle smoke against the local Worker:
+Before or after the device pass, run the repeatable backend social and lifecycle smokes against the local Worker:
 
 ```bash
 cd backend
+npm run smoke:social
 npm run smoke:lifecycle
 ```
 
-The smoke uses the seeded Alice/Bob users and verifies case-insensitive search, friend request acceptance, shared normal habit sync, shared multi-day habit sync, Bob-owned habit visibility in Alice, completion progress, owner-only metadata updates, archive propagation, and private habit exclusion.
+`smoke:social` registers fresh users and verifies privacy-safe search, self-request rejection, duplicate request idempotency, incoming request listing, decline, resend, accept, and accepted-state search. `smoke:lifecycle` uses the seeded Alice/Bob users and verifies case-insensitive search, friend request acceptance or pre-existing accepted state, shared normal habit sync, shared multi-day habit sync, Bob-owned habit visibility in Alice, completion progress, owner-only metadata updates, archive propagation, and private habit exclusion.
 
 ## Troubleshooting
 
