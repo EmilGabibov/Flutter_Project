@@ -68,3 +68,42 @@
 - 2026-07-12 10:37 UTC+2: [Document Scoring Leaderboard Quotes Rewards And Habit State Moments](Task2_Archived.md#document-scoring-leaderboard-quotes-rewards-and-habit-state-moments)
 
 ## Remaining Tasks
+
+<a id="add-playwright-multi-user-regression-harness-for-shared-habits-and-social-interactions"></a>
+### [ ] Add Playwright Multi-User Regression Harness For Shared Habits And Social Interactions
+
+**Raw source:** Add an end-to-end regression harness for partner shared habits that covers invite acceptance, mirrored completion state on both cards, nudge delivery in Social Activity, and score/flame award only after all participants complete.
+
+**Issue:** Testing the core multi-user loop (Alice and Bob) currently requires a manual, time-consuming ADB twin-app pass or manual browser juggling. Regressions in shared habit states, nudges, or scoring can easily slip through because single-user unit/widget tests cannot validate the asynchronous sync and state mirrored across two isolated clients.
+
+**Ponytail triage:**
+- *Should exist:* Yes. The social check-in and scoring loop is the app's primary interaction. Automated verification is essential.
+- *Smallest safe scope:* Create a Playwright (or similar multi-context) test script targeting the Web build. It should spawn two isolated browser contexts (Alice and Bob), register/login, and walk through the exact steps defined in `qa_web_multi_user_plan.md` up to mutual check-in and scoring.
+- *Skipped scope:* Do not attempt dual-device Appium/Flutter Driver tests on Android. Limit to Web for the multi-user E2E regression. No new UI features.
+- *Boundaries:* The harness must respect the offline-first sync (waiting for sync flushes) and not manipulate the database directly—only through the UI as a real user would.
+
+**Action:** Set up a Node/Playwright test project (e.g., in a new `e2e/` directory). Write a script that orchestrates two browser contexts. Implement the flow: Alice creates a habit and invites Bob -> Bob accepts -> Alice completes -> Bob completes -> Verify both cards update and leaderboard scores increment only after mutual completion.
+
+**Hable perspective:** Hable's offline-first architecture means UI state often relies on background sync. The test harness will need to handle async waits (e.g., waiting for the sync indicator to finish or UI to update) rather than expecting synchronous API responses.
+
+**Implementation scope:**
+- `e2e/package.json` & Playwright config: Setup for multi-context web testing.
+- `e2e/tests/shared_habit.spec.ts`: The main test script handling Alice and Bob's interactions.
+- `Developement/qa_testing.md`: Document the new automated web harness and how to run it.
+
+**Scalability considerations:** Scalability impact: Playwright tests can be flaky if they rely on hardcoded timeouts. The harness must scale by using smart locator waits (e.g., waiting for a specific DOM element or semantics label to update after sync) rather than arbitrary delays.
+
+**Future split guidance:** If the test suite grows to cover push notifications or offline scenarios (toggling network offline in Playwright), those should be split into separate tasks. This task is only for the happy path mutual completion and scoring loop.
+
+**Edge cases:** Network sync delays causing timeouts, animations (like the mud button) delaying state checks, seeded user cleanup to prevent test data pollution.
+
+**Acceptance criteria:**
+- A single command (e.g., `npm run test:e2e`) runs the dual-browser test.
+- The test verifies friend request, habit invite, invite acceptance, nudge delivery, and mutual completion.
+- The test verifies that points/flames are only awarded after *both* participants complete the habit.
+- The test runs reliably without arbitrary `sleep` commands, relying on UI/DOM state.
+- Documentation is updated.
+
+**Dependencies:** `Developement/qa_web_multi_user_plan.md`, `Developement/qa_testing.md`
+
+**Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]

@@ -36,4 +36,7 @@
 - [x] Transferred to [Design Web Multi-User Browser Test Plan For Core Social Habit And Leaderboard Flows](Task1_Engineered.md#design-web-multi-user-browser-test-plan-for-core-social-habit-and-leaderboard-flows) — 2026-07-12 11:31 CEST
 
 - [x] Transferred to [Document Scoring Leaderboard Quotes Rewards And Habit State Moments](Task1_Engineered.md#document-scoring-leaderboard-quotes-rewards-and-habit-state-moments) — 2026-07-12 11:56 CEST
-    
+
+- [x] Transferred to [Fix Shared-Habit Hold-To-Complete Cancellation Before Threshold](Task2_Archived.md#fix-shared-habit-hold-to-complete-cancellation-before-threshold) — 2026-07-12 14:07 CEST
+
+- [x] Transferred to [Add Playwright Multi-User Regression Harness For Shared Habits And Social Interactions](Task1_Engineered.md#add-playwright-multi-user-regression-harness-for-shared-habits-and-social-interactions) — 2026-07-12 14:33 CEST
