@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import 'package:drift/drift.dart' hide Column;
@@ -431,10 +432,13 @@ class _HabitCard extends ConsumerStatefulWidget {
 class _HabitCardState extends ConsumerState<_HabitCard> {
   _QueuedNudgeFeedback? _sentNudgeFeedback;
   Timer? _clearSentNudgeTimer;
+  bool _isShowingCompletionFeedback = false;
+  Timer? _completionFeedbackTimer;
 
   @override
   void dispose() {
     _clearSentNudgeTimer?.cancel();
+    _completionFeedbackTimer?.cancel();
     super.dispose();
   }
 
@@ -531,7 +535,8 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
                                 resistance.resistanceCoefficient,
                             calculatedDurationMs:
                                 resistance.calculatedDurationMs,
-                            isCompleted: isCompletedToday,
+                            isCompleted: _isShowingCompletionFeedback,
+                            isDisabled: isCompletedToday,
                             habitColor: habitColor,
                             habitIcon: habitMeta?.emoji,
                             visualParameters: HabitVisualParameters.standard,
@@ -777,6 +782,29 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
     int currentDay,
     PartnershipRole viewerRole,
   ) async {
+    // Show transient completion feedback
+    if (mounted) {
+      HapticFeedback.heavyImpact();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Great job completing ${habit.title}!'),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      setState(() {
+        _isShowingCompletionFeedback = true;
+      });
+      _completionFeedbackTimer?.cancel();
+      _completionFeedbackTimer = Timer(const Duration(milliseconds: 1200), () {
+        if (mounted) {
+          setState(() {
+            _isShowingCompletionFeedback = false;
+          });
+        }
+      });
+    }
+
     final db = ref.read(databaseProvider);
     final logId = const Uuid().v4();
     final now = DateTime.now();

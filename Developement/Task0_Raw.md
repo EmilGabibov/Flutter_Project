@@ -26,3 +26,9 @@
     - [x] Transferred to [Restore Inline Habit Card State After Completion Feedback](Task1_Engineered.md#restore-inline-habit-card-state-after-completion-feedback) — 2026-07-12 10:35 CEST
     - [x] Transferred to [Make Avatar Updates Optimistic And Failure-Safe](Task1_Engineered.md#make-avatar-updates-optimistic-and-failure-safe) — 2026-07-12 10:40 CEST
     - [x] Transferred to [Gate Authenticated Shell On Startup Sync Readiness](Task1_Engineered.md#gate-authenticated-shell-on-startup-sync-readiness) — 2026-07-12 10:45 CEST
+
+- [x] Transferred into platform build tasks — [Verify Web Build Integrity](Task1_Engineered.md#verify-web-build-integrity), [Verify iOS Build Integrity](Task1_Engineered.md#verify-ios-build-integrity), [Verify Android Build Integrity](Task1_Engineered.md#verify-android-build-integrity), [Verify MacOS Build Integrity](Task1_Engineered.md#verify-macos-build-integrity), [Verify Windows Build Integrity](Task1_Engineered.md#verify-windows-build-integrity) — 2026-07-12 10:45 CEST
+
+- [x] Transferred to [Document AI Agent Guideline For Cross-Platform Build Fix Workflow](Task1_Engineered.md#document-ai-agent-guideline-for-cross-platform-build-fix-workflow) — 2026-07-12 11:05 CEST
+
+- [x] Transferred to [Refine And Organize Development Documentation](Task1_Engineered.md#refine-and-organize-development-documentation) — 2026-07-12 11:00 CEST

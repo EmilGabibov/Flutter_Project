@@ -413,6 +413,24 @@ class AuthNotifier extends Notifier<AuthState> {
     }
 
     state = state.copyWith(clearError: true);
+
+    // 1. Fetch current avatar and make optimistic write
+    final currentUserRow = await (_db.select(_db.users)..where((u) => u.userId.equals(userId))).getSingleOrNull();
+    final oldAvatarUrl = currentUserRow?.avatarUrl;
+
+    if (currentUserRow != null) {
+      await (_db.update(_db.users)..where((u) => u.userId.equals(userId))).write(
+        UsersCompanion(
+          avatarUrl: Value(avatarUrl),
+          updatedAt: Value(DateTime.now()),
+          isSynced: const Value(false),
+        ),
+      );
+    } else {
+      await _ensureUserInDb(userId, state.username ?? 'User', avatarUrl);
+    }
+
+    // 2. Perform network request
     try {
       final response = await http
           .put(
@@ -426,33 +444,40 @@ class AuthNotifier extends Notifier<AuthState> {
           .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
-        final updated = await (_db.update(
-          _db.users,
-        )..where((user) => user.userId.equals(userId))).write(
+        // Confirm sync status
+        await (_db.update(_db.users)..where((u) => u.userId.equals(userId))).write(
+          const UsersCompanion(isSynced: Value(true)),
+        );
+        return true;
+      }
+
+      // Rollback on HTTP error
+      if (currentUserRow != null) {
+        await (_db.update(_db.users)..where((u) => u.userId.equals(userId))).write(
           UsersCompanion(
-            avatarUrl: Value(avatarUrl),
-            updatedAt: Value(DateTime.now()),
+            avatarUrl: Value(oldAvatarUrl),
             isSynced: const Value(true),
           ),
         );
-
-        if (updated == 0) {
-          await _ensureUserInDb(
-            userId,
-            state.username ?? 'User',
-            avatarUrl,
-          );
-        }
-        return true;
       }
       state = state.copyWith(
         error: _errorFromResponse(response, 'Failed to update avatar'),
       );
       return false;
     } on TimeoutException {
+      if (currentUserRow != null) {
+        await (_db.update(_db.users)..where((u) => u.userId.equals(userId))).write(
+          UsersCompanion(avatarUrl: Value(oldAvatarUrl), isSynced: const Value(true)),
+        );
+      }
       state = state.copyWith(error: 'Request timed out');
       return false;
     } catch (e) {
+      if (currentUserRow != null) {
+        await (_db.update(_db.users)..where((u) => u.userId.equals(userId))).write(
+          UsersCompanion(avatarUrl: Value(oldAvatarUrl), isSynced: const Value(true)),
+        );
+      }
       state = state.copyWith(error: _networkErrorMessage(e));
       return false;
     }

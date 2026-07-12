@@ -56,11 +56,15 @@ class _AvatarPickerSheetState extends ConsumerState<AvatarPickerSheet> {
     setState(() => _isLoading = false);
 
     if (success) {
-      Navigator.of(context).pop();
-    } else {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Failed to update avatar')));
+      ).showSnackBar(const SnackBar(content: Text('Avatar updated successfully')));
+      Navigator.of(context).pop();
+    } else {
+      final error = ref.read(authProvider).error ?? 'Failed to update avatar';
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error)));
     }
   }
 

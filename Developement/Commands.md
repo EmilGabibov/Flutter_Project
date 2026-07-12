@@ -42,6 +42,14 @@ To build and install the **primary** flavor directly to a connected iOS device:
 ```bash
 flutter run --release --flavor primary -t lib/main.dart
 ```
+```bash
+flutter build ios --no-codesign --flavor primary -t lib/main.dart
+```
+To build for iOS simulator:
+```bash
+flutter build ios --simulator --flavor primary -t lib/main.dart
+```
+
 
 To build and install the **partner/friend** flavor to a connected iOS device:
 ```bash

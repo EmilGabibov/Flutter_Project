@@ -15,6 +15,7 @@ class MudLongPressButton extends StatefulWidget {
   final int calculatedDurationMs;
   final VoidCallback onCompletion;
   final bool isCompleted;
+  final bool isDisabled;
 
   /// Per-habit accent color for the ring arc. Defaults to sage green.
   final Color habitColor;
@@ -31,6 +32,7 @@ class MudLongPressButton extends StatefulWidget {
     required this.calculatedDurationMs,
     required this.onCompletion,
     this.isCompleted = false,
+    this.isDisabled = false,
     this.habitColor = AppTheme.sageGreen,
     this.habitIcon,
     this.visualParameters = HabitVisualParameters.standard,
@@ -129,8 +131,8 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
     }
 
     return GestureDetector(
-      onLongPressStart: (_) => _controller.forward(),
-      onLongPressEnd: (_) {
+      onLongPressStart: widget.isDisabled ? null : (_) => _controller.forward(),
+      onLongPressEnd: widget.isDisabled ? null : (_) {
         if (!_controller.isCompleted) {
           _controller.animateTo(
             0.0,

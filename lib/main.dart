@@ -41,6 +41,9 @@ class _AppGate extends ConsumerStatefulWidget {
 }
 
 class _AppGateState extends ConsumerState<_AppGate> with WidgetsBindingObserver {
+  bool _initialSyncCompleted = false;
+  String? _lastSyncedUserId;
+
   @override
   void initState() {
     super.initState();
@@ -57,12 +60,26 @@ class _AppGateState extends ConsumerState<_AppGate> with WidgetsBindingObserver 
     super.dispose();
   }
 
-  void _checkAndStartSync() {
+  Future<void> _checkAndStartSync() async {
     final authState = ref.read(authProvider);
     if (authState.isAuthenticated && authState.userId != null) {
+      if (_lastSyncedUserId != authState.userId) {
+        if (mounted) {
+          setState(() {
+            _initialSyncCompleted = false;
+          });
+        }
+      }
       ref.read(databaseProvider).removeSelfFromSocialCaches(authState.userId!);
       ref.read(foregroundSyncControllerProvider.notifier).startPolling(authState.userId!);
-      ref.read(foregroundSyncControllerProvider.notifier).syncNow(authState.userId!);
+      await ref.read(foregroundSyncControllerProvider.notifier).syncNow(authState.userId!);
+      
+      if (mounted) {
+        setState(() {
+          _initialSyncCompleted = true;
+          _lastSyncedUserId = authState.userId;
+        });
+      }
     }
   }
 
@@ -90,12 +107,21 @@ class _AppGateState extends ConsumerState<_AppGate> with WidgetsBindingObserver 
     // Ensure polling is active when authState updates from unauthenticated to authenticated
     ref.listen(authProvider, (previous, next) {
       if ((previous == null || !previous.isAuthenticated) && next.isAuthenticated && next.userId != null) {
-         ref.read(foregroundSyncControllerProvider.notifier).startPolling(next.userId!);
-         ref.read(foregroundSyncControllerProvider.notifier).syncNow(next.userId!);
+         _checkAndStartSync();
       } else if ((previous != null && previous.isAuthenticated) && !next.isAuthenticated) {
          ref.read(foregroundSyncControllerProvider.notifier).stopPolling();
+         if (mounted) {
+           setState(() {
+             _initialSyncCompleted = false;
+             _lastSyncedUserId = null;
+           });
+         }
       }
     });
+
+    if (!_initialSyncCompleted) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     final userAsync = ref.watch(currentUserProvider);
     return userAsync.when(
