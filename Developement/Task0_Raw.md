@@ -40,3 +40,10 @@
 - [x] Transferred to [Fix Shared-Habit Hold-To-Complete Cancellation Before Threshold](Task2_Archived.md#fix-shared-habit-hold-to-complete-cancellation-before-threshold) — 2026-07-12 14:07 CEST
 
 - [x] Transferred to [Add Playwright Multi-User Regression Harness For Shared Habits And Social Interactions](Task1_Engineered.md#add-playwright-multi-user-regression-harness-for-shared-habits-and-social-interactions) — 2026-07-12 14:33 CEST
+
+- [ ] Task 1: Resolve Habit Completion Sync Loop - Modify SyncService.pullDailySync and the local habit watcher to distinguish between "Daily Check-In" and "Challenge Lifecycle Completion". Ensure partner-side check-ins do not trigger the archive or completed status for the shared metadata row.
+- [ ] Task 2: Implement "Mud" Resistance State Notifier - Extract the physics-driven resistance math into a dedicated Riverpod StateNotifier to isolate physics calculations from the UI thread.
+- [ ] Task 3: Engineering the Five Ring States - Implement the visual cycle for the habit ring (Empty, Completing, Completion, Complete, Missed) and move percentage labels to ARIA Semantics.
+- [ ] Task 4: Consolidated Card Information Architecture - Redesign the habit card to be narrower, adjust streak icon placement based on habit type, and replace Solo Today with Partners Remains.
+- [ ] Task 5: The "Completion Moment" Splash Screen - Create a dynamic typographic splash screen triggered upon final habit completion.
+- [ ] Task 6: Shareable Achievement Cards (MVP) - Implement a background service to render a shareable PNG card containing the habit name, duration, participant emojis, and the Hable logo.
