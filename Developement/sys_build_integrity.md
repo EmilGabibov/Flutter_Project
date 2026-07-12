@@ -23,7 +23,7 @@ When a cross-platform or general dependency update causes build failures, always
 ## 2. Web Build Investigation Workflow
 
 **Constraint:** The web build is tightly coupled to Cloudflare Pages.
-- **Command:** `flutter build web --release --base-href /` (or `flutter build web` as seen in `Commands.md`).
+- **Command:** `flutter build web --release --base-href /` (or `flutter build web` as seen in `commands.md`).
 - **Workflow:** 
   1. Run the build command.
   2. If it fails, capture the exact error output in the current task's completion notes or walkthrough.

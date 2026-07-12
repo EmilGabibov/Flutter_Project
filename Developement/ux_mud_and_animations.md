@@ -28,7 +28,10 @@ This document provides the complete technical specification and native Flutter c
 ### 2. Mandatory Friction (Skipping)
 If a user skips a habit, open a glassmorphic bottom sheet requiring a text input (Journal Entry). The UI must visually reflect the penalty (extending the journey map).
 
-### 3. Mathematical Model for Physical Resistance
+### 3. Mud Check-In: Mathematical Resistance Model (Specialized — Do Not Simplify)
+
+> [!IMPORTANT]
+> **The Mud mathematical check-in is a specialized, physics-driven interaction unique to Hable.** Its algorithm is NOT subject to normal UI refactoring rules. Do not simplify, extract, or inline the resistance math into the widget `build()` method. The `StateNotifier` isolation boundary is mandatory (see `sys_offline_architecture.md §3 — The Resistance State Isolation`). Haptic intervals and curve control points are intentionally calibrated — do not remove or approximate them.
 
 The gesture's behavioral characteristics depend entirely on the habit timeline progression. The physical resistance behaves according to two variables: total duration ($D$) and current day index ($d$).
 
@@ -41,7 +44,13 @@ This coefficient linearly maps to the animation controller configuration:
 
 **Important:** This math must be executed within a Riverpod `StateNotifier`, NOT within the UI widget's `build` method. The widget only receives the final `resistanceCoefficient` and `calculatedDurationMs`.
 
-### 4. Flutter Implementation Blueprint
+> [!NOTE]
+> This section is the canonical mathematical specification for the Mud check-in. Any divergence in the Flutter implementation must be documented and justified here before the implementation is merged.
+
+### 4. Mud Check-In: Flutter Implementation Blueprint (Canonical Reference)
+
+> [!IMPORTANT]
+> The code below is the **canonical reference implementation** for the Mud long-press completion widget. Do not refactor the `CatmullRomCurve` control points, haptic feedback intervals, or `AnimationController` disposal pattern without updating this spec first. These values are physics-calibrated against the 0.0–1.0 resistance range.
 
 ```dart
 import 'package:flutter/material.dart';
@@ -95,9 +104,12 @@ class _MudLongPressButtonState extends State<MudLongPressButton> with SingleTick
         0.0, 1.0,
         curve: CatmullRomCurve([
           const Offset(0.0, 0.0),
+          // Control point 1: very slow start when resistance is high (early days).
+          // As resistance drops (later days), the curve starts rising sooner.
           Offset(0.3, 0.05 * (1.0 - widget.resistanceCoefficient)),
+          // Control point 2: mid-curve acceleration shaped by resistance.
           Offset(0.6, 0.2 * (1.0 - widget.resistanceCoefficient)),
-          const Offset(1.0, 1.0),
+          const Offset(1.0, 1.0), // Always completes fully at gesture end.
         ]),
       ),
     ).curve;

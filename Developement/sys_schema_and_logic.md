@@ -13,6 +13,9 @@ The core logic governs how habits are calculated and penalized.
   * Custom habits must accept an integer day duration.
 * **The "Mud" Coefficient:** The backend does not calculate resistance; it only tracks the current day. The Flutter client will compute the `resistance_coefficient` locally.
 
+> [!IMPORTANT]
+> The Mud resistance math is a **specialized, physics-driven interaction unique to Hable**. The coefficient computation is intentionally client-side and must remain isolated in a Riverpod `StateNotifier`. See [`ux_mud_and_animations.md §3`](ux_mud_and_animations.md) for the canonical mathematical model and Flutter implementation blueprint. Do NOT simplify or inline this logic.
+
 * **The Penalty Engine:**
   * If a day (00:00 to 23:59 local time) passes without a `COMPLETED` or `SKIPPED` log, the habit enters an `OVERDUE` state.
   * When the user executes a `SKIP` action, the `total_duration` integer increments by `+2`.
@@ -39,8 +42,8 @@ Both the local Drift (SQLite) database and the remote Cloudflare D1 (SQL) databa
 * **`notification_events` table:** Drift-only unified in-app notification read model keyed by a stable `notification_id`, with `user_id`, `type`, `source_type`, `source_id`, `title`, `body`, optional route/payload metadata, `created_at`, optional `expires_at`, optional `read_at`, and `updated_at`. Sync normalization must upsert this table idempotently instead of letting each feature surface parse raw event payloads on its own.
 * **`reminder_settings` table:** Drift-only per-user local reminder preference (`user_id`, `is_enabled`, `hour`, `minute`, `updated_at`) used to restore device-local reminders after relaunch/login without turning reminder preferences into a server push-subscription feature.
 * **`SearchDocuments` table:** Local Drift-only metadata for offline search (id, title, author, source, etc).
-* **`UsageAggregateBuckets` table:** Drift-only coarse diagnostics buckets keyed by `bucket_date`, `platform`, `build_channel`, `screen_name`, and `metric_name`, with aggregate `count`, aggregate `total_duration_ms`, and local upload-watermark columns. This table must never include user IDs, emails, usernames, auth tokens, device/session/install IDs, IPs, user agents, habit titles, or route parameters.
-* **`usage_aggregate_buckets` table:** D1-only development aggregate sink keyed by the same coarse dimensions. It stores only rolled-up counts and rounded duration totals for `app_open`, `screen_visit`, and `screen_visible_ms`.
+* **`UsageAggregateBuckets` table (Drift-only):** Coarse development diagnostics buckets keyed by `bucket_date`, `platform`, `build_channel`, `screen_name`, and `metric_name`, with aggregate `count`, aggregate `total_duration_ms`, and local upload-watermark columns. This table must never include user IDs, emails, usernames, auth tokens, device/session/install IDs, IPs, user agents, habit titles, or route parameters.
+* **`usage_aggregate_buckets` table (D1-only):** Remote development aggregate sink keyed by the same coarse dimensions. Stores only rolled-up counts and rounded duration totals for `app_open`, `screen_visit`, and `screen_visible_ms`. Upload is disabled by default and requires an explicit compile-time flag.
 
 ### B. Cloudflare KV (Key-Value) - High-Speed Transient Data
 

@@ -2,6 +2,9 @@
 
 **Target Stack:** Flutter / Cloudflare Workers (API) / Cloudflare KV (Ephemeral Storage) / `fl_chart` / Drift / Riverpod
 
+> [!NOTE]
+> This document covers the **current production social and analytics contracts**. For the long-term social vision (3D habit environments, private messaging, milestone wishes), see [`ux_social_vision.md`](ux_social_vision.md) — vision sections are marked `[VISION]` there.
+
 ## 1. Privacy-First Data Scoping (API Logic)
 
 The backend must never expose a user's entire profile or habit list. Social data is strictly compartmentalized on a per-habit basis.
@@ -74,7 +77,7 @@ All nudges are treated as ephemeral, transient data using Cloudflare KV.
 * **Storage Rules:** Flutter stores aggregate buckets in Drift. Optional remote upload writes only to `usage_aggregate_buckets` in D1. No user ID, email, username, auth token, device/install/session ID, IP address, user agent, cookie, localStorage identifier, fingerprinting probe, or raw event timeline belongs in diagnostics data.
 * **Remote Upload Gate:** Remote diagnostics are disabled by default and require an explicit compile-time flag. The client should upload without auth headers so aggregate data cannot be linked back to accounts.
 * **Report Surface:** The Worker may expose a development-only aggregate report (`/api/dev/usage-report`) that shows coarse totals only and hides low-volume buckets. This is not a product analytics dashboard and must not become a per-user drilldown tool.
-* **Tooling Boundary:** The requested `21st-dev` React/shadcn dashboard component is out of scope for the Flutter app because there is no compatible admin shell in this repo. A future dedicated admin-web task can revisit that stack if needed.
+* **Tooling Boundary:** The `21st-dev` React/shadcn dashboard component is explicitly out of scope for the Flutter app because there is no compatible admin shell in this repo. A future dedicated admin-web task can revisit that stack if needed.
 
 ## 8. Waterfall Onboarding Sequence
 

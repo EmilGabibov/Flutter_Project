@@ -1,5 +1,8 @@
 # Twin-App Friend Flow Test Harness
 
+> [!NOTE]
+> This guide is the standalone operational ADB twin-app harness. For the full testing spec, smoke checklist, and historical execution logs, see [`qa_testing.md`](qa_testing.md).
+
 This guide provides instructions for testing the end-to-end friendship, habit invitation, shared-habit tracking, and nudging flow on a single Android device or emulator using two isolated instances of the Hable app.
 
 ## Prerequisites

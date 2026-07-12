@@ -1,12 +1,14 @@
-## Hable Project Commands
+# Hable Project Commands
 
-### Web Deployment
+Quick reference for all build, install, and deploy shell commands across platforms.
+
+## Web Deployment
 Deploy the web version of the Flutter app to Cloudflare Pages:
 ```bash
-flutter build web && npx wrangler pages deploy build/web --project-name=hable
+flutter build web && cd backend && npx wrangler pages deploy ../build/web --project-name=hable
 ```
 
-### Build Android APKs
+## Build Android APKs
 Build the **primary** Android APK:
 ```bash
 flutter build apk --flavor primary -t lib/main.dart
@@ -26,7 +28,7 @@ flutter build apk --debug --flavor primary -t lib/main.dart \
 ```
 The override above is the usual emulator case; replace the URL as needed.
 
-### Install APKs via ADB
+## Install APKs via ADB
 Install the **primary** APK on a connected USB device:
 ```bash
 ~/Library/Android/sdk/platform-tools/adb install build/app/outputs/flutter-apk/app-primary-release.apk
@@ -37,7 +39,7 @@ Install the **partner/friend** APK on a connected USB device:
 ~/Library/Android/sdk/platform-tools/adb install build/app/outputs/flutter-apk/app-friend-release.apk
 ```
 
-### Build & Install on iOS via USB
+## Build & Install on iOS via USB
 To build and install the **primary** flavor directly to a connected iOS device:
 ```bash
 flutter run --release --flavor primary -t lib/main.dart

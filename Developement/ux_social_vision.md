@@ -1,17 +1,23 @@
-# 07: Multi-User Social & 3D Environment Ideation
+# 07: Multi-User Social Features — Vision & MVP Contracts
+
+> [!IMPORTANT]
+> **This document contains two distinct registers of content:**
+> - Sections marked **`[CURRENT MVP]`** describe production contracts that are already implemented or actively being implemented in code. Treat these as authoritative behavioral specs.
+> - Sections marked **`[VISION]`** are exploratory long-term ideation. They are **NOT implemented** and must NOT be acted on without a dedicated engineered task in `Task1_Engineered.md`.
 
 ## Concept Overview
+
 Hable is evolving beyond simple habit tracking into an inspiring, social experience. The vision is to visualize both your own and your friends' habits in a **3D abstract environment**. By seeing how friends spend their time, users can draw inspiration and plan their own schedules accordingly.
 
 ## Core Features
 
-### 1. 3D Abstract Habit Environment
+### 1. [VISION] 3D Abstract Habit Environment
 - **Visualization:** Instead of standard lists, habits are represented as elements in a 3D abstract space (e.g., floating orbs, growing trees, or building blocks in a personal galaxy).
 - **Social Exploration:** Users can visit a friend's 3D environment to see their habit landscape.
 - **Inspiration & Planning:** Viewing a friend's impressive habit structure (e.g., a massive, glowing orb for a 100-day reading streak) inspires the user to adopt similar habits. Users can "clone" or plan their own habits based on what they see.
 - **Cool & Engaging:** The UI must feel premium, fluid, and gamified. Interactions should include smooth camera pans, particle effects on habit completion, and satisfying micro-animations.
 
-### 2. Contextual & Milestone-based Wishes (Private Messaging)
+### 2. [VISION] Contextual & Milestone-based Wishes (Private Messaging)
 - **Private Celebrations:** Users can send private, one-to-one messages or "best wishes" to friends based on their habit milestones.
 - **Server-Owned Progression:** Completion points, shared-habit bonuses, levels, and achievement badges are calculated in the Worker and returned through daily sync. Social UI should consume that payload instead of recomputing achievements locally.
 - **Smart Suggestions:** 
@@ -20,13 +26,13 @@ Hable is evolving beyond simple habit tracking into an inspiring, social experie
   - *Special Days:* Similar to LinkedIn's birthday reminders, the system detects special occasions (e.g., 365-day streak, new year, birthday) and provides a carousel of pre-written, context-aware wishes with emojis.
 - **Customization:** Users can choose from the smart suggestions or write their own custom message.
 
-### 3. Habit Partnerships & Invitations
+### 3. [CURRENT MVP] Habit Partnerships & Invitations
 - **Adding New Habits:** Streamlined flow for adding new habits inspired by friends.
 - **Partnering Up:** When creating a habit, a user can invite a friend to become a "Habit Partner".
 - **Mutual Tracking:** If the friend accepts, the habit becomes a shared entity. Both users' progress is visually linked in the 3D environment (e.g., a dual-colored orb or a bridge connecting their spaces).
 - **Role Foundation:** Shared habits are now role-scoped at the backend. `Owner` controls habit metadata, `partner` can log progress, and future `supporter` views must stay read-only for progress while still allowing encouragement.
 
-### 4. Friend Search & Partner Invite Flow
+### 4. [CURRENT MVP] Friend Search & Partner Invite Flow
 - **Friends List:** Users can view a list of accepted friends in the "Friends" tab (Social → Friends). Pending incoming friend requests appear inline at the top of this tab with Accept/Decline actions. The list updates instantly when a request is accepted.
 - **Friend Search:** Users search for friends by username prefix via a **bottom sheet** triggered by the search icon in the Social header. Results are privacy-limited to user id, username, avatar, and relationship state (`none`, `pending_incoming`, `pending_outgoing`, `accepted`).
 - **Activity Feed:** The "Activity" tab (Social → Activity) provides a unified chronological feed of all social events: nudges, friend requests, habit invites, private messages, and reminder settings. This merges the former standalone Notification Center and Inbox. The Home bell icon switches to this tab instead of pushing a separate screen.
@@ -44,6 +50,9 @@ Hable is evolving beyond simple habit tracking into an inspiring, social experie
 
 ## Technical Implementation Considerations
 
+> [!NOTE]
+> The 3D rendering investigation below (`flutter_3d_controller`, `ditto`, WebGL/CanvasKit shaders) is **future/vision scope**. Current implementation uses standard Flutter widgets, `CustomPainter`, and `fl_chart`. Do not add 3D rendering dependencies without a dedicated engineered task.
+
 ### Frontend (Flutter)
 - **3D Rendering:** Investigate Flutter 3D rendering options. Options include `flutter_3d_controller` (wrapping Filament/glTF), `ditto` or custom WebGL/CanvasKit shaders for abstract shapes and particle effects.
 - **State Management:** Riverpod streams listening to Drift for real-time updates of the 3D scene state.
@@ -59,6 +68,10 @@ Hable is evolving beyond simple habit tracking into an inspiring, social experie
 - **Push Notifications:** WebSockets or push notifications to alert users when they receive a wish or a partnership invite.
 
 ## Next Steps
+
+> [!NOTE]
+> These "Next Steps" are **aspirational roadmap items**, not an active implementation queue. Track these against `Task0_Raw.md` only when the project is ready to prioritize them.
+
 1. Prototype a basic 3D abstract visual using Flutter shaders or a lightweight 3D engine.
 2. Design the database schema for private messages and milestone events.
 3. Extend friend request UI only after the current search/request/accept/decline primitive needs pagination, blocking, QR codes, or contact import.

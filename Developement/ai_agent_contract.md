@@ -2,6 +2,8 @@
 
 > Canonical source of truth for all AI agent behavioral rules governing the Project Hable task pipeline.  
 > Referenced by: [`Task0_Raw.md`](Task0_Raw.md), [`Task1_Engineered.md`](Task1_Engineered.md), [`Task2_Archived.md`](Task2_Archived.md).
+>
+> For the tech-stack identity, immutable architectural rules, and documentation map, see [`agent_directives.md`](agent_directives.md).
 
 ---
 
@@ -21,7 +23,7 @@
 
 1. **Select exactly one** pending raw item from `Task0_Raw.md`.
 2. **Query the knowledge graph** using `/graphify query "your question"` (or `mcp_graphify_query_graph`) to gather context on existing files, Flutter widgets, Riverpod providers, and Drift tables.
-3. **Read related domain documentation** in the `Developement/` folder depending on the prompt's subject (e.g., `03_UI_UX_and_Animations.md` for widgets, `02_Offline_Architecture.md` for background sync) to maintain architectural standards.
+3. **Read related domain documentation** in the `Developement/` folder depending on the prompt's subject (e.g., `ux_mud_and_animations.md` for widgets, `sys_offline_architecture.md` for background sync) to maintain architectural standards.
 4. Run a **Ponytail triage** before expanding the raw item.
    - Use the active Ponytail binding for the host: `@ponytail` / `/ponytail` when exposed, or the installed Ponytail skill/instructions/hooks.
    - Treat Ponytail as an instruction bond, not an MCP/tool dependency. Let it evaluate scope safety, non-negotiable architectural boundaries (e.g., Offline-First), and what to skip.

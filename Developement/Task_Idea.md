@@ -799,5 +799,7 @@ Future tasks after refining the CORE finctionality:
 - home screen widgets: it will be a great feature, something like duolingo's widget that shows your streak and progress, your current habits which needs to check-in and ones you have already check-in or skipped.
 
 
+____________________________
+now: as of acknowledging of a habit tracker having a skip button isn't a good idea, the skipping of a check-in should be automatically and considered as a missed checking in. So that escape the button should be removed.
 
-
+For habit cards, it's better to integrate the 🔥 and strikes with the progress bar; I'm thinking about should strike number the same as the day number it could be too much numbers to read as strike and the day of the challenge day, which one should we keep? What is your opinion on this? 

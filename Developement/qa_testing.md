@@ -4,6 +4,9 @@
 
 ## 1. ADB Twin-App Smoke Test
 
+> [!NOTE]
+> For the standalone step-by-step operational guide (preferred for manual passes), see [`qa_twin_test_harness.md`](qa_twin_test_harness.md). This section documents the full checklist and execution history.
+
 Because Hable involves mutual habit tracking and a offline-first sync engine, it is necessary to test interactions between two distinct users on physical hardware.
 
 ### Pre-requisites
