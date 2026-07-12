@@ -1,7 +1,9 @@
 # Web Multi-User Browser Test Plan: Social & Leaderboard Flows
 
 > [!NOTE]
-> This QA plan is dedicated to the **deployed web build** (Cloudflare Pages) connecting to the production `/api/*` contract. It provides a step-by-step reproducible guide for validating the end-to-end multi-user loop using two isolated browser environments.
+> This QA plan outlines the expected behavior for the **deployed web build** (Cloudflare Pages) connecting to the production `/api/*` contract.
+> 
+> **Automated Execution:** The steps in this plan are fully automated in the `e2e/tests/shared_habit.spec.ts` Playwright test suite, which can be run locally using `npm run test` in the `e2e` directory. The manual guide below remains for ad-hoc debugging or production verification.
 
 ## 1. Environment & Prerequisites
 - **Target:** Deployed web build (e.g., `https://hable.app` or specific preview URL).
@@ -63,7 +65,8 @@
 ### Step 7: Dual Check-Ins & Point Scoring
 1. **User A:** Complete (check-in) the shared habit from the Home dashboard.
 2. **User B:** Complete (check-in) the shared habit from their Home dashboard.
-3. **Validation:** Both users should see the habit marked as completed for the day. Shared habit cards should remain visible on Home after check-in. Both users should see their personal point scores increment based on the completion.
+3. **Validation:** A short press/release on the mud completion control must **not** complete the habit or advance shared progress. Only a full sustained hold through the required duration should complete.
+4. **Validation:** Both users should see the habit marked as completed for the day only after a valid hold. Shared habit cards should remain visible on Home after check-in. Both users should see their personal point scores increment based on the completion, with the shared bonus/state update appearing only after all participants complete.
 
 ### Step 8: Leaderboard Verification
 1. **User A:** Navigate to the Social Hub → Leaderboard.

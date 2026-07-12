@@ -70,7 +70,7 @@
 ## Remaining Tasks
 
 <a id="add-playwright-multi-user-regression-harness-for-shared-habits-and-social-interactions"></a>
-### [ ] Add Playwright Multi-User Regression Harness For Shared Habits And Social Interactions
+### [x] Add Playwright Multi-User Regression Harness For Shared Habits And Social Interactions
 
 **Raw source:** Add an end-to-end regression harness for partner shared habits that covers invite acceptance, mirrored completion state on both cards, nudge delivery in Social Activity, and score/flame award only after all participants complete.
 
@@ -106,4 +106,10 @@
 
 **Dependencies:** `Developement/qa_web_multi_user_plan.md`, `Developement/qa_testing.md`
 
-**Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+**Completion notes:** 
+- Initialized new Playwright project in `e2e/`.
+- Configured `e2e/playwright.config.ts` to support dual-browser-context tests targeting the web build via `BASE_URL`.
+- Implemented `e2e/tests/shared_habit.spec.ts` testing the complete mutual shared habit, nudge, and leaderboard score progression.
+- Updated `Developement/qa_testing.md` to document the new `npm run test` harness.
+- Updated `Developement/qa_web_multi_user_plan.md` explicitly referencing the new Playwright scripts.
+- Completed At: 2026-07-12 14:35 Z

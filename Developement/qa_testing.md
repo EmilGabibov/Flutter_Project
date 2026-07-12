@@ -40,7 +40,19 @@ Because Hable involves mutual habit tracking and a offline-first sync engine, it
 - **Daily Reminder:** From Profile, enable the daily reminder, grant OS permission, choose a time, restart the app, and verify the setting persists locally and restores scheduling without another prompt. Then disable it and verify the scheduled reminder is canceled.
 - **Friend Profile Drilldown:** From a habit card, tap a partner identity and verify it opens the friend's profile. Tap the separate hand/nudge action and verify a `sendNudge` queue item is created for that partner without navigating away. From the friend profile, tap `Follow` on an active habit and verify `HabitFormSheet` opens with the title prefilled; tap encourage and verify it uses the same queued nudge path.
 
-*(Note: Automated Flutter `integration_test` scripts are currently known to time out during the ADB install phase on physical devices, so this manual twin-harness remains the primary smoke procedure.)*
+*(Note: Automated Flutter `integration_test` scripts are currently known to time out during the ADB install phase on physical devices, so this manual twin-harness remains the primary smoke procedure for Android hardware.)*
+
+### Automated Web E2E Alternative (Playwright)
+To combat regressions without manual Android ADB passes, there is an automated Playwright suite located in the `e2e/` directory. It uses isolated browser contexts to simulate Alice and Bob interacting concurrently.
+1. Ensure the Flutter web build is running locally (e.g. `flutter run -d web-server --web-port 8080`).
+2. Ensure the Cloudflare backend is running (`cd backend && npm run dev`).
+3. Run the E2E suite:
+   ```bash
+   cd e2e
+   npm run test
+   ```
+This test covers friend requests, shared habit invites, mutual completion holds, nudges, and score validation.
+
 
 ## 2. ADB Smoke Test Execution Log
 
