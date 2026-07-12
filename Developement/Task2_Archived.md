@@ -1,4 +1,4 @@
-<!-- AI AGENT OPERATING CONTRACT — See Task_ai_agent_contract.md for full rules. This file is the full-body archive for completed tasks. -->
+<!-- AI AGENT OPERATING CONTRACT — See ai_agent_contract.md for full rules. This file is the full-body archive for completed tasks (§5 / §2). -->
 
 ## Archived Tasks
 
@@ -113,12 +113,12 @@
 - Any discovered implementation gaps are added to `Task0_Raw.md` as separate raw items instead of being hidden inside docs.
 - Completion notes state which dependencies were verified and updated.
 
-**Dependencies:** `00_Agent_Directives.md`, `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `05_Search_Engine_Architecture.md`, `07_Multi_User_Social_Features.md`, `TWIN_TEST_HARNESS.md`, `08_Testing.md`, `Task_ai_agent_contract.md`
+**Dependencies:** `00_Agent_Directives.md`, `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `05_Search_Engine_Architecture.md`, `07_Multi_User_Social_Features.md`, `TWIN_TEST_HARNESS.md`, `08_Testing.md`, `ai_agent_contract.md`
 
 **Completion notes:**
 - Touched files: `Developement/00_Agent_Directives.md`, `Developement/05_Search_Engine_Architecture.md`, `Developement/TWIN_TEST_HARNESS.md`, `Developement/Task1_Engineered.md`, `Developement/Task2_Archived.md`, and `Developement/Task0_Raw.md`.
 - Behavior verified: the directives doc now matches the current Flutter web plus Android target, mixed Riverpod usage, secure token persistence, and privacy-scoped sync model; the search doc now matches the implemented local in-memory index, `SearchDocuments` metadata, `compute`-backed tokenization, and deferred persistence path; the twin harness doc now matches the invite-driven shared-habit flow, accepted-friend cache expectations, and current backend seed/setup commands.
-- Docs verified/updated: `00_Agent_Directives.md`, `05_Search_Engine_Architecture.md`, and `TWIN_TEST_HARNESS.md` were updated. `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `07_Multi_User_Social_Features.md`, `08_Testing.md`, and `Task_ai_agent_contract.md` were reviewed and already aligned with current code/tasks.
+- Docs verified/updated: `00_Agent_Directives.md`, `05_Search_Engine_Architecture.md`, and `TWIN_TEST_HARNESS.md` were updated. `01_Schema_and_Core_Logic.md`, `02_Offline_Architecture.md`, `03_UI_UX_and_Animations.md`, `04_Social_and_Analytics.md`, `07_Multi_User_Social_Features.md`, `08_Testing.md`, and `ai_agent_contract.md` were reviewed and already aligned with current code/tasks.
 - Verification run: repo-wide doc/code sanity checks with `rg` plus direct source review across Flutter, backend, schema, and test-runbook files. No Flutter/backend tests were run because this task only changed documentation.
 - Completed At: 2026-07-11 13:50 CEST
 

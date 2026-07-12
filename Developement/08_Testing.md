@@ -307,8 +307,8 @@ Then rerun `npm run db:setup`.
 **Setup:**
 1. Started backend: `cd backend && npm run dev` on port 8787.
 2. Configured ADB port forward: `adb reverse tcp:8787 tcp:8787`.
-3. Cleared primary app data: `adb shell pm clear com.example.flutter_project.primary`.
-4. Verified both APK flavors installed: `com.example.flutter_project.primary` and `com.example.flutter_project.friend`.
+3. Cleared primary app data: `adb shell pm clear com.hable.app.primary`.
+4. Verified both APK flavors installed: `com.hable.app.primary` and `com.hable.app.friend`.
 
 **Execution & Observations:**
 
@@ -358,8 +358,8 @@ Then rerun `npm run db:setup`.
 
 **Phase 5: APK Flavor Isolation**
 - Both flavors remain installed and isolated:
-  - `com.example.flutter_project.primary` (package: `...primary`) ✅
-  - `com.example.flutter_project.friend` (package: `...friend`) ✅
+  - `com.hable.app.primary` (package: `...primary`) ✅
+  - `com.hable.app.friend` (package: `...friend`) ✅
 - Each maintains separate local Drift database (verified via app data paths).
 
 **Failures Encountered:** None. All core flows passed without errors.

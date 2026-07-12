@@ -1,0 +1,30 @@
+- generic [active] [ref=e5] [cursor=pointer]:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - group:
+                - generic [ref=e17]: Good evening
+                - generic [ref=e18]: webtest_711
+                - button "Open notifications" [ref=e19]
+                - generic [ref=e20]: 💬
+                - generic [ref=e21]: Small daily improvements over time lead to stunning results.
+                - generic [ref=e22]: Suggested Habits
+                - generic:
+                  - group:
+                    - button "💧 Hydration Drink 8 glasses of water daily" [ref=e23]
+                    - button "📖 Reading Read for 20 minutes every day" [ref=e24]
+                    - button "🧘 Meditation 10 minutes of mindfulness" [ref=e25]
+                    - button "🏃 Exercise 30 minutes of movement" [ref=e26]
+                    - button "😴 Sleep Routine In bed by 10:30 PM" [ref=e27]
+                    - button "📝 Journaling Write 3 things you're grateful for" [ref=e28]
+                - generic [ref=e29]: No active habits yet. Start one from Home.
+                - button "Add habit" [ref=e30]
+            - button "Create a new habit":
+              - button "Habit" [ref=e31]
+            - tablist:
+              - tab "Home" [selected] [ref=e32]
+              - tab "Social" [ref=e33]
+              - tab "Profile" [ref=e34]

@@ -1,0 +1,13 @@
+- generic [ref=e5]:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - group:
+              - generic [ref=e6]: Join Hable.
+              - generic [ref=e7]: Choose a username and password. You can activate cloud recovery from Profile later.
+              - textbox "Username" [ref=e9]
+              - textbox "Password" [ref=e11]
+              - button "Sign Up" [ref=e15]
+              - button "Already have an account? Log in" [active] [ref=e16]
