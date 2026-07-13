@@ -29,6 +29,7 @@ import '../widgets/badge_reveal_dialog.dart';
 import '../widgets/milestone_wish_carousel.dart';
 import '../widgets/skeletons.dart';
 import '../widgets/usage_tracked_screen.dart';
+import 'habit_dashboard_screen.dart';
 import 'profile_screen.dart';
 
 const _nudgeVisibilityTtl = Duration(hours: 24);
@@ -87,16 +88,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       if (next.isNotEmpty) {
         final badge = next.first;
         final parts = badge.achievementId.replaceAll('_', ' ').split(' ');
-        final title = parts.map((e) => e.isNotEmpty ? '${e[0].toUpperCase()}${e.substring(1)}' : '').join(' ');
-        
-        BadgeRevealDialog.show(
-          context,
-          title,
-          'You unlocked a new badge!',
-          () {
-            ref.read(celebrationProvider.notifier).markRevealed(badge.achievementId);
-          },
-        );
+        final title = parts
+            .map(
+              (e) =>
+                  e.isNotEmpty ? '${e[0].toUpperCase()}${e.substring(1)}' : '',
+            )
+            .join(' ');
+
+        BadgeRevealDialog.show(context, title, 'You unlocked a new badge!', () {
+          ref
+              .read(celebrationProvider.notifier)
+              .markRevealed(badge.achievementId);
+        });
       }
     });
 
@@ -190,6 +193,38 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         );
                         final unreadCount = unreadAsync.value ?? 0;
                         return IconButton(
+                          tooltip: 'Open dashboard',
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    HabitDashboardScreen(userId: widget.userId),
+                              ),
+                            );
+                          },
+                          icon: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: AppTheme.surfaceVariant,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.grid_view_rounded,
+                              color: AppTheme.deepCharcoal,
+                              size: 20,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final unreadAsync = ref.watch(
+                          unreadNotificationCountProvider,
+                        );
+                        final unreadCount = unreadAsync.value ?? 0;
+                        return IconButton(
                           tooltip: 'Open notifications',
                           onPressed: widget.onOpenActivity,
                           icon: Stack(
@@ -259,36 +294,45 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: allEmpty ? AppTheme.mutedLavender.withValues(alpha: 0.1) : AppTheme.sageGreen.withValues(alpha: 0.08),
+                color: allEmpty
+                    ? AppTheme.mutedLavender.withValues(alpha: 0.1)
+                    : AppTheme.sageGreen.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
                 children: [
-                  Text(allEmpty ? '🚀' : '💬', style: const TextStyle(fontSize: 24)),
+                  Text(
+                    allEmpty ? '🚀' : '💬',
+                    style: const TextStyle(fontSize: 24),
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: allEmpty 
-                      ? Text(
-                          "A new day, a fresh start! Ready to build your streak today?",
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.mutedLavender,
-                          ),
-                        )
-                      : quoteAsync.when(
-                          data: (quote) => Text(
-                            quote,
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontStyle: FontStyle.italic,
-                              color: AppTheme.deepCharcoal.withValues(alpha: 0.7),
+                    child: allEmpty
+                        ? Text(
+                            "A new day, a fresh start! Ready to build your streak today?",
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.mutedLavender,
+                                ),
+                          )
+                        : quoteAsync.when(
+                            data: (quote) => Text(
+                              quote,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    fontStyle: FontStyle.italic,
+                                    color: AppTheme.deepCharcoal.withValues(
+                                      alpha: 0.7,
+                                    ),
+                                  ),
                             ),
+                            loading: () => const HableSkeletonBlock(
+                              width: double.infinity,
+                              height: 14,
+                            ),
+                            error: (_, _) => const SizedBox.shrink(),
                           ),
-                          loading: () => const HableSkeletonBlock(
-                            width: double.infinity,
-                            height: 14,
-                          ),
-                          error: (_, _) => const SizedBox.shrink(),
-                        ),
                   ),
                 ],
               ),
@@ -572,7 +616,8 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
               ? "Skipped today."
               : "Not completed today."}${recentNudge == null ? "" : " ${recentNudge.username} nudged this habit."}',
       child: Card(
-        margin: EdgeInsets.zero, // Padding handled by SliverPadding/Grid spacing
+        margin:
+            EdgeInsets.zero, // Padding handled by SliverPadding/Grid spacing
         clipBehavior: Clip.antiAlias,
         child: Stack(
           children: [
@@ -585,9 +630,9 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
                 habit.title,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
               ),
             ),
 
@@ -655,7 +700,10 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
             Align(
               alignment: Alignment.center,
               child: Padding(
-                padding: const EdgeInsets.only(top: 24, bottom: 48), // offset for bottom bar
+                padding: const EdgeInsets.only(
+                  top: 24,
+                  bottom: 48,
+                ), // offset for bottom bar
                 child: Opacity(
                   opacity: canLogProgress ? 1 : 0.45,
                   child: IgnorePointer(
@@ -663,7 +711,8 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
                     child: _NudgedRingPulse(
                       isActive: recentNudge != null && !isCompletedToday,
                       color: habitColor,
-                      pulseKey: recentNudge?.lastNudgeAt?.millisecondsSinceEpoch,
+                      pulseKey:
+                          recentNudge?.lastNudgeAt?.millisecondsSinceEpoch,
                       child: MudLongPressButton(
                         resistanceCoefficient: resistance.resistanceCoefficient,
                         calculatedDurationMs: resistance.calculatedDurationMs,
@@ -704,7 +753,8 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
                   ],
                   if (visibleSentNudgeFeedback != null) ...[
                     _HabitNudgeChip(
-                      label: 'Nudge queued for ${visibleSentNudgeFeedback.partnerName}',
+                      label:
+                          'Nudge queued for ${visibleSentNudgeFeedback.partnerName}',
                       color: habitColor,
                       icon: Icons.back_hand_rounded,
                     ),
@@ -749,7 +799,10 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
                 children: [
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: habitColor.withValues(alpha: 0.08),
                     ),
@@ -757,23 +810,27 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          isContinuous 
-                              ? 'Continuous' 
+                          isContinuous
+                              ? 'Continuous'
                               : 'Day $challengeDay of $targetDays',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppTheme.deepCharcoal.withValues(alpha: 0.7),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: AppTheme.deepCharcoal.withValues(
+                                  alpha: 0.7,
+                                ),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
                         ),
                         streakAsync.when(
                           data: (streak) => Text(
                             '🔥 $streak',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: habitColor,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 11,
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: habitColor,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 11,
+                                ),
                           ),
                           loading: () => const SizedBox.shrink(),
                           error: (_, _) => const SizedBox.shrink(),
@@ -782,7 +839,8 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
                     ),
                   ),
                   Semantics(
-                    label: 'Progress ${((progressFraction * 100).round())} percent.',
+                    label:
+                        'Progress ${((progressFraction * 100).round())} percent.',
                     child: Container(
                       height: 4,
                       decoration: BoxDecoration(
@@ -873,7 +931,7 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
           });
         }
       });
-      
+
       // Push the completion splash screen overlay
       Navigator.of(context).push(
         PageRouteBuilder(
@@ -890,14 +948,16 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
       if (!context.mounted) return;
       // Check for joint completion
       if (partners.any((p) => p.hasCompletedToday)) {
-         ScaffoldMessenger.of(context).showSnackBar(
-           SnackBar(
-             content: const Text('🎉 Joint Completion! You and your partner matched today!'),
-             backgroundColor: AppTheme.mutedLavender,
-             duration: const Duration(seconds: 3),
-             behavior: SnackBarBehavior.floating,
-           ),
-         );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              '🎉 Joint Completion! You and your partner matched today!',
+            ),
+            backgroundColor: AppTheme.mutedLavender,
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     }
 

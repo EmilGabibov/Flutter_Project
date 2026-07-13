@@ -1671,7 +1671,7 @@
 **Completion notes:** Completed on 2026-07-13. Added a reusable `SocialRecapPlan` path in `lib/services/sync_service.dart` so coalesced recaps can include recent partner check-ins from `partner_snapshots` in addition to unread nudges, invites, friend requests, and friend-accepted events while preserving prior single-event and grouped-nudge behavior. The background prefetch worker now records bounded anonymous freshness outcomes (`prefetch_recap_ready`, `prefetch_recap_stale`, `prefetch_recap_empty`) after `pullDailySync`, and `UsageDiagnosticsService` now explicitly allowlists those metrics. Expanded regression coverage in `test/notification_recap_test.dart` and `test/usage_diagnostics_service_test.dart`; targeted tests pass.
 
 <a id="build-dedicated-tablet-and-grid-habit-dashboards-with-reusable-habit-tile-foundation"></a>
-### [ ] Build Dedicated Tablet And Grid Habit Dashboards With Reusable Habit Tile Foundation
+### [x] Build Dedicated Tablet And Grid Habit Dashboards With Reusable Habit Tile Foundation
 
 **Raw source:** Tablet & Grid Dashboards. Create a dedicated all-habits page, separate Home and grid experiences, advanced tablet dashboard composition, or a reusable design-system `HabitTile` package.
 
@@ -1709,7 +1709,7 @@
 
 **Dependencies:** `Developement/ux_habit_states_and_scoring.md`, `Developement/ux_mud_and_animations.md`, `Developement/qa_testing.md`
 
-**Completion notes:** Pending implementation.
+**Completion notes:** Completed on 2026-07-13. Added a dedicated `HabitDashboardScreen` reachable from Home via a new grid-view entry point, keeping Home as the focused daily check-in surface while giving larger screens a separate dashboard experience. The new screen reuses the shared `lib/widgets/habit_card.dart` foundation for interactive tiles, adds an adaptive summary card/rail, and defines explicit responsive breakpoints through `HabitDashboardScreen.columnsForWidth()` for 1/2/3/4-column layouts. Added focused layout-contract coverage in `test/habit_dashboard_screen_test.dart`; targeted tests pass.
 
 <a id="upgrade-notification-inbox-ux-with-focus-grouping-and-platform-specific-actions"></a>
 ### [ ] Upgrade Notification Inbox UX With Focus Grouping And Platform-Specific Actions
