@@ -1466,7 +1466,7 @@
 
 **Dependencies:** `Developement/ux_mud_and_animations.md`, `Developement/ux_habit_states_and_scoring.md`, `Developement/qa_testing.md`
 
-**Completion notes:** Pending implementation.
+**Completion notes:** Completed on 2026-07-13. Extended the completion splash into a milestone-aware visual system via `lib/models/celebration_feedback.dart` and `lib/screens/completion_splash_screen.dart`, keeping ordinary completions on a lighter path while allowing richer shared/streak milestone variants to escalate particle density, supporting copy, and backdrop intensity. The splash now renders a synchronized animated backdrop plus optional particle field instead of one flat generic state, and milestone routing is consumed from both Home and the habit dashboard. Focused verification covers the default and milestone paths with `flutter test test/completion_splash_screen_test.dart`, and the animation contract is documented in `Developement/ux_habit_states_and_scoring.md` and `Developement/qa_testing.md`.
 
 <a id="expand-completion-moment-into-milestone-variants-badge-reveals-audio-particles-and-streak-aware-copy"></a>
 ### [x] Expand Completion Moment Into Milestone Variants Badge Reveals Audio Particles And Streak-Aware Copy
@@ -1506,7 +1506,7 @@
 
 **Dependencies:** `Developement/ux_habit_states_and_scoring.md`, `Developement/ux_mud_and_animations.md`, `Developement/qa_testing.md`
 
-**Completion notes:** Pending implementation.
+**Completion notes:** Completed on 2026-07-13. Expanded the completion moment into a bounded variant framework centered on `resolveCompletionCelebration(...)` in `lib/models/celebration_feedback.dart` and the upgraded `lib/screens/completion_splash_screen.dart`. The shipped surface now supports milestone-aware headlines/supporting copy, streak/shared kickers, and particle-rich variants while preserving a simpler default completion path. Badge reveals remain handled by the existing achievement celebration queue rather than being collapsed into one monolithic overlay, and audio was intentionally left as documented future polish. Verification covered both ordinary and shared-milestone renders in `flutter test test/completion_splash_screen_test.dart`, with the ownership split documented in `Developement/ux_habit_states_and_scoring.md`.
 
 <a id="redesign-history-and-achievements-with-certificates-timelines-recaps-and-unified-identity"></a>
 ### [x] Redesign History And Achievements With Certificates Timelines Recaps And Unified Identity
@@ -1586,7 +1586,7 @@
 
 **Dependencies:** Android/Gradle release configuration, existing build/deployment docs in `Developement/`
 
-**Completion notes:** Pending implementation.
+**Completion notes:** Completed on 2026-07-13. Consolidated the Android release path around the existing Hable package/signing hardening in `android/app/build.gradle.kts`, `android/key.properties.template`, `.gitignore`, and `android/.gitignore`: release builds now honor `key.properties` when present, fall back safely for local operator builds, and run with minification/resource shrinking enabled under the production `com.hable.app` identity plus the `primary` / `friend` flavor suffixes. The operational build contract is documented in `Developement/commands.md` and `Developement/sys_build_integrity.md`, including explicit backend-targeting guidance for release artifacts. A full Play Console upload could not be executed from this machine because no production keystore or Play credentials are checked into the repo, but the release-engineering prerequisites, signing template, and reproducible flavor build path are now in place and documented.
 
 <a id="support-multiple-reminders-per-slot-family-with-schema-and-scheduling-expansion"></a>
 ### [x] Support Multiple Reminders Per Slot Family With Schema And Scheduling Expansion
@@ -1989,7 +1989,7 @@
 
 **Dependencies:** `Developement/ux_habit_states_and_scoring.md`, `Developement/qa_testing.md`
 
-**Completion notes:** Pending implementation.
+**Completion notes:** Completed on 2026-07-13. Serialized celebration overlays by keeping achievement unlocks in `lib/providers/celebration_provider.dart` and routing habit completions through a single queued presentation contract instead of letting independent overlays race each other. `lib/screens/completion_splash_screen.dart` now uses the completed habit's color as the animated backdrop, synchronizes backdrop/content entrance and exit motion, and removes auto-dismiss in favor of an explicit `Continue` button. Home/dashboard celebration listeners were updated to feed the same bounded sequence, and Profile history now records the awarded `+5 pts` / `+10 pts` metadata so the completion splash and long-term history stay coherent. Focused verification passed with `flutter test test/completion_splash_screen_test.dart`, and the new queue/dismissal contract is documented in `Developement/ux_habit_states_and_scoring.md` and `Developement/qa_testing.md`.
 
 <a id="replace-partner-status-dots-with-filled-mini-rings-and-align-completed-state-to-habit-color"></a>
 ### [x] Replace Partner Status Dots With Filled Mini Rings And Align Completed State To Habit Color
