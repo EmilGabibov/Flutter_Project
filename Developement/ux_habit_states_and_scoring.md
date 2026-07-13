@@ -44,6 +44,7 @@ Currently, rewards are structured around Levels and Streak Badges derived from p
 
 Quotes are fetched and cached via `QuoteProvider` and displayed prominently on the Home dashboard.
 - **Behavior:** Quotes serve as the emotional anchor for the day. They refresh daily or on empty states. If the synced quote is absent, the app falls back to deterministic local copy.
+- **Onboarding quote beat:** The new-user slide sequence opens with the existing quote provider so first-run education starts with the same cached/fallback quote contract as Home and celebration surfaces.
 - **First-run opening:** The first authenticated entry for a user can now pause on a dedicated quote splash before the main shell appears. This splash is storage-gated per user so it acts as a one-time emotional opening rather than a recurring blocker.
 - **Implemented Personalization:** The local fallback path now reacts to coarse state buckets only: recent skips, social momentum (recent nudge / partner completion activity), active streak strength, and no-active-habit fresh-start states. Daily reminder copy uses the same coarse context buckets plus early/late timing buckets.
 - **Remaining Gap:** This is still a lightweight local resolver, not a full experimentation or deeply adaptive copy system. Future work can expand locale, quiet-hours policy, or remote experiments without changing the offline-safe fallback contract.

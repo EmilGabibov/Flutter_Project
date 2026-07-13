@@ -2202,3 +2202,94 @@ reorder correctly, the emoji at left (emoji picker appears by click), and at the
 **Dependencies:** `Developement/qa_testing.md`
 
 **Completion notes:** Completed on 2026-07-13. Updated `pubspec.yaml` so `flutter_launcher_icons` now uses `Developement/Resources/AppIcon - Hable.png` as the canonical source and also generates web, Windows, and macOS derivatives in addition to Android and iOS. Regenerated the shipped platform assets across `android/app/src/main/res/mipmap-*`, `ios/Runner/Assets.xcassets/AppIcon.appiconset`, `macos/Runner/Assets.xcassets/AppIcon.appiconset`, `windows/runner/resources/app_icon.ico`, `web/favicon.png`, and `web/icons/*`, with `web/manifest.json` refreshed to the new icon set and colors. The obsolete `Developement/Resources/app_icon.jpeg` source was removed from the effective pipeline, and QA notes in `Developement/qa_testing.md` now call out launcher-icon and favicon verification explicitly. Focused verification confirmed the new asset contract via `flutter pub run flutter_launcher_icons`, `rg -n "app_icon\\.jpeg|AppIcon - Hable\\.png|flutter_launcher_icons" pubspec.yaml web/manifest.json Developement/Task1_Engineered.md Developement/qa_testing.md`, `sips -g pixelWidth -g pixelHeight web/favicon.png web/icons/Icon-192.png web/icons/Icon-512.png ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_1024.png`, `file windows/runner/resources/app_icon.ico`, and density checks across the Android `mipmap-*` launcher assets.
+
+<a id="add-research-backed-new-user-onboarding-slides-before-the-existing-setup-flow"></a>
+### [x] Add Research-Backed New-User Onboarding Slides Before The Existing Setup Flow
+
+**Raw source:** work on onboarding slides for new users based on this research Flutter/hable/Developement/Resources/Researches/Onboarding Slides. Follow-up scope note: could be fun implementing the day quote inside the onboarding.
+
+**Issue:** Hable’s current onboarding is a functional setup sequence (`OnboardingUsernameScreen` → `OnboardingHabitScreen` → `OnboardingDurationScreen` → `OnboardingCompleteScreen`), but it does not yet deliver the research-backed educational slide experience. The research file calls for a chill, minimal, pastel/sage sequence that explains Hable’s emotional and behavioral model before or around setup: welcome, Mud resistance, first commit, habit partners, gentle reminders, deferred verification, no skip button, and private journal boundaries. Hable also already has a daily quote pipeline through `quoteProvider`, cached quotes, and fallback copy, but that emotional first-read moment is currently separate from the onboarding slide sequence. The current screens create a local user and first habit, but they do not introduce the Mud long-press model, social partner rings, reminder soft-ask behavior, privacy expectations, or quote-of-the-day framing in a guided slide format.
+
+**Triage:**
+- *Should exist:* Yes. This is a clear product onboarding task backed by a local research artifact and aligned with the existing onboarding screen label in usage diagnostics.
+- *Smallest safe scope:* Add a focused slide/walkthrough layer for first-time users, include the current daily quote as an emotional anchor in that slide sequence, and route it into the existing setup sequence without replacing the current username, habit, duration, commit, or test-seed flows.
+- *Skipped scope:* Do not redesign authentication, require email/PIN verification, add a full social invite flow inside onboarding, or rework the Mud physics provider itself.
+- *Boundaries:* Keep signup low-friction. Preserve username/password-only activation expectations from the docs, keep email/PIN recovery in nested Settings, reuse the existing quote provider/fallback pipeline instead of creating a new quote source, and ensure any Mud education uses static/derived presentation rather than recalculating Mud math in widget builds.
+
+**Action:** Build a research-backed onboarding slide surface that introduces Hable to new users before the existing setup flow. The slides should use the research sequence as the content contract: "Every day is day one," the quote of the day as a calm opening or closing beat, Mud resistance and the 1500ms new-habit press, first commit with standard presets and custom duration support, social habit partners with habit-colored progress rings, and gentle reminder nudges that ask only when reminders are enabled. The final slide should hand off cleanly into the existing username/habit/duration/commit flow or Home empty-state transition as appropriate for the current startup contract.
+
+**Hable perspective:** Onboarding should teach the user how Hable feels before it asks them to manage a dashboard. The right first impression is calm, direct, and specific to Hable’s mechanics: a quote-led day-one tone, habit resistance, commitment, partner support, reminders, and private reflection. It should make the first setup feel intentional while preserving the app’s local-first, low-friction start.
+
+**Implementation scope:**
+- Add or refactor a slide-based onboarding entry surface under `lib/screens/onboarding/`, likely using a `PageView` plus clear progress affordance, research-backed slide copy, and the existing `UsageTrackedScreen(screenName: 'onboarding')`.
+- Integrate the existing quote-of-the-day pipeline via `lib/providers/quote_provider.dart`, including cached quote and fallback behavior, into one onboarding slide or a dedicated quote-led opening/closing moment.
+- Wire the slide completion into the existing `OnboardingUsernameScreen` / setup flow without breaking the `SEED_USER_ID` and `SEED_USERNAME` test harness bypass.
+- Reuse existing theme primitives from `AppTheme`, standard habit preset data from `lib/data/standard_habits.dart`, and existing skeleton/empty-state patterns where asynchronous content is involved.
+- Keep Mud education presentational and reference the provider-owned 1500ms/physics contract without moving resistance math into slide widgets.
+- Add focused widget tests for slide order, quote rendering/fallback, navigation controls, final handoff, and seeded onboarding bypass.
+- Update onboarding/UX/QA docs to reflect the new slide contract and manual verification path.
+
+**Scalability considerations:** The slide content should be data-driven enough that adding or reordering a small number of slides does not require new screen classes. Keep provider watching minimal so onboarding does not rebuild from broad app state. Quote rendering should use the existing cached/fallback provider path and must not introduce a blocking remote fetch dependency into first-run onboarding.
+
+**Future split guidance:** If later work needs animated illustrations, personalized onboarding variants, reminder permission priming, social invite capture during onboarding, or A/B experimentation, split those into separate tasks. This task is only for the research-backed slide sequence and safe handoff into the existing onboarding setup.
+
+**Edge cases:** Returning users who have already completed onboarding, seeded test users, small screens and large text, back navigation across slides and setup screens, offline first launch, no cached daily quote, no available habit presets, reduced-motion preferences, and ensuring privacy/verification copy does not imply unsupported account-recovery behavior.
+
+**Acceptance criteria:**
+- New users see a research-backed onboarding slide sequence before entering the existing setup flow.
+- The slide content covers welcome/day-one framing, quote of the day, Mud resistance with the 1500ms press concept, first commit/presets, social partners/rings, gentle reminders/soft ask, deferred verification, no skip-button framing, and private journal boundaries.
+- The quote slide uses the existing `quoteProvider` behavior, including offline fallback copy when no cached daily quote exists.
+- The final slide routes into the existing setup path without breaking local user creation, first habit creation, or Home entry.
+- The seeded test harness still bypasses normal onboarding and reaches Home as before.
+- The design follows Hable’s muted pastel/sage, generous negative-space, chill/minimal visual philosophy.
+- Focused tests or verification cover slide navigation, quote rendering/fallback, final handoff, and seed bypass.
+- Relevant docs are updated to reflect the onboarding slide contract and QA checks.
+
+**Dependencies:** `Developement/Resources/Researches/Onboarding Slides`, `Developement/sys_social_and_analytics.md`, `Developement/ux_mud_and_animations.md`, `Developement/ux_habit_states_and_scoring.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Completed on 2026-07-13. Added `lib/screens/onboarding/onboarding_slides_screen.dart`, a data-driven `PageView` onboarding surface using `UsageTrackedScreen(screenName: 'onboarding')`, muted Hable theme primitives, the existing `quoteProvider`, progress dots, and explicit Log in / Start setup handoff actions. The slide sequence covers the research-backed day-one quote, Mud 1500ms press concept, first commit and science-backed durations, partner rings, gentle reminders, deferred verification, private journals, and no-skip main-ring framing. Wired `lib/screens/auth_screen.dart` so logged-out non-seeded users see the slides before auth, the final slide opens sign-up, returning users can go straight to login, and the existing `SEED_USER_ID` auto-login skeleton still bypasses the slide layer. Added focused coverage in `test/onboarding_slides_screen_test.dart` for quote rendering/fallback copy, slide order, final handoff, and auth-form routing. Documentation was updated in `Developement/ux_mud_and_animations.md`, `Developement/ux_habit_states_and_scoring.md`, and `Developement/qa_testing.md`. Verification passed with `dart analyze lib/screens/auth_screen.dart lib/screens/onboarding/onboarding_slides_screen.dart test/onboarding_slides_screen_test.dart` and `flutter test test/onboarding_slides_screen_test.dart test/auth_session_test.dart`; full `flutter analyze` was attempted but blocked before analysis by the local generated Windows symlink cleanup error at `windows/flutter/ephemeral/.plugin_symlinks`.
+
+<a id="connect-the-quotable-daily-quote-api-to-worker-daily-sync-and-local-drift-cache"></a>
+### [ ] Connect The Quotable Daily Quote API To Worker Daily Sync And Local Drift Cache
+
+**Raw source:** integrate and combine this api with database for quotes https://api.quotable.io/quotes/random?tags=inspirational
+
+**Issue:** Hable’s quote system is only partially wired. The product docs say the Worker should fetch one external quote per day and serve it through `/api/sync/daily`, while Flutter should cache that quote in Drift and fall back to local copy when offline. The app already has the local `cached_quotes` table, `cacheQuote()`/`getTodaysQuote()`, and `quoteProvider`, but the real data path is broken: `backend/src/index.ts` does not currently fetch or return any quote payload in `/api/sync/daily`, and `lib/services/sync_service.dart` never persists quote data from sync into Drift. As a result, the quote surfaces mostly depend on stale rows or local fallback strings instead of a real daily external quote source.
+
+**Triage:**
+- *Should exist:* Yes. This is a concrete integration gap between an existing API contract, backend sync route, local database cache, and user-facing quote surfaces.
+- *Smallest safe scope:* Fetch one inspirational quote from the external API on the server, expose it through the existing daily sync payload, and persist it into the existing local Drift cache so the current `quoteProvider` starts working as documented.
+- *Skipped scope:* Do not redesign quote personalization, add user-authored quote collections, build a separate quote-refresh endpoint, or move quote fetching directly into Flutter.
+- *Boundaries:* Keep quote ownership in the Worker and quote consumption in the existing `/api/sync/daily` + Drift + `quoteProvider` pipeline. Preserve the offline fallback behavior when the external API is unavailable or rate-limited.
+
+**Action:** Extend the backend daily sync flow so it fetches a bounded inspirational quote from `https://api.quotable.io/quotes/random?tags=inspirational`, normalizes the returned shape, caches or coalesces it per day, and includes the resulting quote text in the `/api/sync/daily` response. Then update Flutter’s `SyncService` to persist that synced quote into the existing `cached_quotes` Drift table, so `quoteProvider` can continue reading local data first and fall back only when no synced quote exists. The result should be one coherent quote pipeline rather than parallel documented and undocumented behaviors.
+
+**Hable perspective:** Quotes are meant to be the emotional anchor of the day across Home, onboarding, and celebration surfaces. That only works if the quote source is consistent, offline-safe, and owned by the same sync path that already feeds the rest of Hable’s daily state. Pulling quotes directly in UI widgets would fragment the experience and weaken the offline-first contract.
+
+**Implementation scope:**
+- `backend/src/index.ts`: add the external quote fetch, normalization, failure handling, and inclusion in the `/api/sync/daily` payload.
+- Worker cache/persistence layer: use the smallest existing durable mechanism that prevents unnecessary repeated upstream quote fetches within the same day.
+- `lib/services/sync_service.dart`: read the quote field from `/api/sync/daily` and persist it through the existing `cacheQuote()` path.
+- `lib/database/database.dart` and related Drift helpers only as needed to keep quote inserts deterministic and avoid unbounded duplicate rows for the same day.
+- `lib/providers/quote_provider.dart` only if a small adjustment is needed to align with the finalized synced-quote contract.
+- Focused tests or smoke verification for backend payload shape, local quote persistence, and fallback behavior when the external API is unavailable.
+- Documentation updates for the actual backend/client quote contract.
+
+**Scalability considerations:** Quote fetching should stay cheap and bounded. Do not let every authenticated `/api/sync/daily` request hit the external API; coalesce by day and rely on cached server results plus local Drift caching so the upstream dependency does not become a latency or reliability bottleneck.
+
+**Future split guidance:** If later work needs locale-aware quotes, moderation/copy review, multiple tags/categories, A/B selection logic, or analytics around quote engagement, split those into follow-up tasks. This task is only for connecting the daily external quote source to the existing Worker-sync and Drift-cache pipeline.
+
+**Edge cases:** External API timeout or non-200 response, unexpected JSON shape from Quotable, empty quote text, repeated syncs in one day, timezone boundaries around “today,” stale local quotes surviving offline sessions, and ensuring fallback quotes still render when the upstream API fails.
+
+**Acceptance criteria:**
+- `/api/sync/daily` includes a normalized daily quote payload sourced from the external inspirational quote API or a bounded server-side cached equivalent.
+- Flutter persists the synced quote into the existing local Drift quote cache during daily sync.
+- `quoteProvider` can resolve the current day’s synced quote from Drift without requiring UI-level network fetches.
+- Existing fallback quote behavior still works when the Worker cannot fetch a quote or no synced quote is cached locally.
+- The integration avoids hitting the upstream quote API on every client sync request.
+- Focused verification covers at least one successful synced quote path and one upstream-failure fallback path.
+- Relevant docs are updated to match the real Worker/Flutter quote contract.
+
+**Dependencies:** `Developement/sys_social_and_analytics.md`, `Developement/sys_offline_architecture.md`, `Developement/ux_habit_states_and_scoring.md`, `Developement/qa_testing.md`
+
+**Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]

@@ -4,6 +4,7 @@ import '../providers/auth_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/skeletons.dart';
 import '../widgets/usage_tracked_screen.dart';
+import 'onboarding/onboarding_slides_screen.dart';
 
 enum AuthView { login, register, forgotPasswordRequest, forgotPasswordVerify }
 
@@ -22,6 +23,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   AuthView _currentView = AuthView.login;
   bool _isAutoLoggingIn = false;
+  bool _showIntroSlides = true;
 
   @override
   void initState() {
@@ -103,12 +105,27 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     });
   }
 
+  void _finishIntro(AuthView view) {
+    setState(() {
+      _showIntroSlides = false;
+      _currentView = view;
+      ref.read(authProvider.notifier).clearError();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
 
     if (_isAutoLoggingIn) {
       return const Scaffold(body: SafeArea(child: _AuthLoadingSkeleton()));
+    }
+
+    if (_showIntroSlides) {
+      return OnboardingSlidesScreen(
+        onGetStarted: () => _finishIntro(AuthView.register),
+        onLogIn: () => _finishIntro(AuthView.login),
+      );
     }
 
     String title;
