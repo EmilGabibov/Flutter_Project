@@ -36,6 +36,9 @@ const completedCheckInPoints = 5
 const sharedHabitBonusPoints = 5
 const nudgeAssistPoints = 2
 const streakBadgeThresholds = [10, 100, 1000] as const
+const forcedClientResetToken = '2026-07-13-shared-habit-cache-reset-1'
+const forcedClientResetReason =
+  'We temporarily cleared local Hable data to recover from a shared-habit cache issue. Please sign in again.'
 const levelTiers = [
   { id: 'newbie', name: 'Newbie', minPoints: 0 },
   { id: 'builder', name: 'Builder', minPoints: 50 },
@@ -261,6 +264,8 @@ app.get('/api/app/version-status', async (c) => {
     min_supported_service_worker_version: normalizeOptionalString(
       c.env.MIN_SUPPORTED_SERVICE_WORKER_VERSION,
     ),
+    force_client_reset_token: forcedClientResetToken,
+    force_client_reset_reason: forcedClientResetReason,
     force_refresh_on_mismatch: true,
   })
 })

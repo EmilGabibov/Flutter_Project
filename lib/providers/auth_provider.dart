@@ -415,11 +415,15 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(clearError: true);
 
     // 1. Fetch current avatar and make optimistic write
-    final currentUserRow = await (_db.select(_db.users)..where((u) => u.userId.equals(userId))).getSingleOrNull();
+    final currentUserRow = await (_db.select(
+      _db.users,
+    )..where((u) => u.userId.equals(userId))).getSingleOrNull();
     final oldAvatarUrl = currentUserRow?.avatarUrl;
 
     if (currentUserRow != null) {
-      await (_db.update(_db.users)..where((u) => u.userId.equals(userId))).write(
+      await (_db.update(
+        _db.users,
+      )..where((u) => u.userId.equals(userId))).write(
         UsersCompanion(
           avatarUrl: Value(avatarUrl),
           updatedAt: Value(DateTime.now()),
@@ -445,15 +449,16 @@ class AuthNotifier extends Notifier<AuthState> {
 
       if (response.statusCode == 200) {
         // Confirm sync status
-        await (_db.update(_db.users)..where((u) => u.userId.equals(userId))).write(
-          const UsersCompanion(isSynced: Value(true)),
-        );
+        await (_db.update(_db.users)..where((u) => u.userId.equals(userId)))
+            .write(const UsersCompanion(isSynced: Value(true)));
         return true;
       }
 
       // Rollback on HTTP error
       if (currentUserRow != null) {
-        await (_db.update(_db.users)..where((u) => u.userId.equals(userId))).write(
+        await (_db.update(
+          _db.users,
+        )..where((u) => u.userId.equals(userId))).write(
           UsersCompanion(
             avatarUrl: Value(oldAvatarUrl),
             isSynced: const Value(true),
@@ -466,16 +471,26 @@ class AuthNotifier extends Notifier<AuthState> {
       return false;
     } on TimeoutException {
       if (currentUserRow != null) {
-        await (_db.update(_db.users)..where((u) => u.userId.equals(userId))).write(
-          UsersCompanion(avatarUrl: Value(oldAvatarUrl), isSynced: const Value(true)),
+        await (_db.update(
+          _db.users,
+        )..where((u) => u.userId.equals(userId))).write(
+          UsersCompanion(
+            avatarUrl: Value(oldAvatarUrl),
+            isSynced: const Value(true),
+          ),
         );
       }
       state = state.copyWith(error: 'Request timed out');
       return false;
     } catch (e) {
       if (currentUserRow != null) {
-        await (_db.update(_db.users)..where((u) => u.userId.equals(userId))).write(
-          UsersCompanion(avatarUrl: Value(oldAvatarUrl), isSynced: const Value(true)),
+        await (_db.update(
+          _db.users,
+        )..where((u) => u.userId.equals(userId))).write(
+          UsersCompanion(
+            avatarUrl: Value(oldAvatarUrl),
+            isSynced: const Value(true),
+          ),
         );
       }
       state = state.copyWith(error: _networkErrorMessage(e));
@@ -485,6 +500,21 @@ class AuthNotifier extends Notifier<AuthState> {
 
   void clearError() {
     state = state.copyWith(clearError: true);
+  }
+
+  Future<void> forceLogoutWithMessage(String message) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    final userId = state.userId;
+    if (userId != null) {
+      await _cancelReminderForUser(userId);
+    }
+    await _storage.deleteAll();
+    state = state.copyWith(
+      isLoading: false,
+      isInitialized: true,
+      error: message,
+      clearCredentials: true,
+    );
   }
 
   Future<void> logout() async {
@@ -539,7 +569,9 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<void> _restoreReminderForUser(String userId) async {
     try {
-      await ref.read(notificationActionsProvider).restoreRemindersForUser(userId);
+      await ref
+          .read(notificationActionsProvider)
+          .restoreRemindersForUser(userId);
     } catch (error) {
       debugPrint('Failed to restore reminder schedule: $error');
     }
@@ -547,7 +579,9 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<void> _cancelReminderForUser(String userId) async {
     try {
-      await ref.read(notificationActionsProvider).cancelRemindersForUser(userId);
+      await ref
+          .read(notificationActionsProvider)
+          .cancelRemindersForUser(userId);
     } catch (error) {
       debugPrint('Failed to cancel reminder schedule: $error');
     }

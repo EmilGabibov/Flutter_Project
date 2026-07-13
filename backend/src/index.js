@@ -1,6 +1,8 @@
 import { Hono } from 'hono';
 import { jwt, sign } from 'hono/jwt';
 const app = new Hono();
+const forcedClientResetToken = '2026-07-13-shared-habit-cache-reset-1';
+const forcedClientResetReason = 'We temporarily cleared local Hable data to recover from a shared-habit cache issue. Please sign in again.';
 // --- Helpers ---
 async function hashPassword(password) {
     const encoder = new TextEncoder();
@@ -75,6 +77,8 @@ app.get('/api/app/version-status', async (c) => {
         current_service_worker_version: deployed.currentServiceWorkerVersion,
         min_supported_version: normalizeOptionalString(c.env.MIN_SUPPORTED_APP_VERSION),
         min_supported_service_worker_version: normalizeOptionalString(c.env.MIN_SUPPORTED_SERVICE_WORKER_VERSION),
+        force_client_reset_token: forcedClientResetToken,
+        force_client_reset_reason: forcedClientResetReason,
         force_refresh_on_mismatch: true,
     });
 });

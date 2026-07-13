@@ -146,6 +146,28 @@ class AppDatabase extends _$AppDatabase {
     ),
   );
 
+  Future<void> clearAllLocalData() async {
+    await transaction(() async {
+      await delete(logs).go();
+      await delete(partnerships).go();
+      await delete(syncQueue).go();
+      await delete(cachedQuotes).go();
+      await delete(searchDocuments).go();
+      await delete(partnerSnapshots).go();
+      await delete(privateMessages).go();
+      await delete(habitInvitations).go();
+      await delete(milestoneEvents).go();
+      await delete(acceptedFriends).go();
+      await delete(friendRelationships).go();
+      await delete(achievementUnlocks).go();
+      await delete(notificationEvents).go();
+      await delete(reminderSettings).go();
+      await delete(usageAggregateBuckets).go();
+      await delete(habits).go();
+      await delete(users).go();
+    });
+  }
+
   // ---------------------------------------------------------------------------
   // Habit operations
   // ---------------------------------------------------------------------------
