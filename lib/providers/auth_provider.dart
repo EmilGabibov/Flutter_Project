@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:drift/drift.dart' hide Column;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import '../database/database.dart';
 import 'notification_providers.dart';
@@ -24,6 +25,7 @@ class AuthState {
   final String? token;
   final String? userId;
   final String? username;
+  final bool restoredFromLocalSnapshot;
 
   AuthState({
     this.isLoading = false,
@@ -32,6 +34,7 @@ class AuthState {
     this.token,
     this.userId,
     this.username,
+    this.restoredFromLocalSnapshot = false,
   });
 
   bool get isAuthenticated => token != null && userId != null;
@@ -43,6 +46,7 @@ class AuthState {
     String? token,
     String? userId,
     String? username,
+    bool? restoredFromLocalSnapshot,
     bool clearError = false,
     bool clearCredentials = false,
   }) {
@@ -53,6 +57,9 @@ class AuthState {
       token: clearCredentials ? null : (token ?? this.token),
       userId: clearCredentials ? null : (userId ?? this.userId),
       username: clearCredentials ? null : (username ?? this.username),
+      restoredFromLocalSnapshot: clearCredentials
+          ? false
+          : (restoredFromLocalSnapshot ?? this.restoredFromLocalSnapshot),
     );
   }
 }
@@ -63,6 +70,9 @@ class AuthNotifier extends Notifier<AuthState> {
   static const String _tokenKey = 'jwt_token';
   static const String _userIdKey = 'user_id';
   static const String _usernameKey = 'username';
+  static const String _sessionTokenKey = 'session_token_snapshot';
+  static const String _sessionUserIdKey = 'session_user_id_snapshot';
+  static const String _sessionUsernameKey = 'session_username_snapshot';
 
   String _networkErrorMessage(
     Object error, {
@@ -102,18 +112,39 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<void> _loadStoredAuth() async {
-    final token = await _storage.read(key: _tokenKey);
-    final userId = await _storage.read(key: _userIdKey);
-    final username = await _storage.read(key: _usernameKey);
+    String? token;
+    String? userId;
+    String? username;
+    try {
+      token = await _storage.read(key: _tokenKey);
+      userId = await _storage.read(key: _userIdKey);
+      username = await _storage.read(key: _usernameKey);
+    } catch (error) {
+      debugPrint('Failed to read auth from secure storage: $error');
+    }
+    final snapshot = defaultTargetPlatform == TargetPlatform.macOS
+        ? await _readSessionSnapshot()
+        : const <String, String?>{};
 
-    if (token != null && userId != null) {
+    final restoredToken = token ?? snapshot['token'];
+    final restoredUserId = userId ?? snapshot['userId'];
+    final restoredUsername = username ?? snapshot['username'];
+
+    if (restoredToken != null && restoredUserId != null) {
+      unawaited(_persistAuthToSecureStorage(
+        restoredToken,
+        restoredUserId,
+        restoredUsername ?? '',
+      ));
       state = state.copyWith(
-        token: token,
-        userId: userId,
-        username: username,
+        token: restoredToken,
+        userId: restoredUserId,
+        username: restoredUsername,
+        restoredFromLocalSnapshot: defaultTargetPlatform == TargetPlatform.macOS &&
+            (token == null || userId == null || username == null),
         isInitialized: true,
       );
-      unawaited(_restoreReminderForUser(userId));
+      unawaited(_restoreReminderForUser(restoredUserId));
       return;
     }
 
@@ -626,7 +657,14 @@ class AuthNotifier extends Notifier<AuthState> {
     if (userId != null) {
       await _cancelReminderForUser(userId);
     }
-    await _storage.deleteAll();
+    try {
+      await _storage.deleteAll();
+    } catch (error) {
+      debugPrint('Failed to clear secure storage on logout: $error');
+    }
+    if (defaultTargetPlatform == TargetPlatform.macOS) {
+      await _clearSessionSnapshot();
+    }
     state = state.copyWith(
       isLoading: false,
       isInitialized: true,
@@ -641,7 +679,14 @@ class AuthNotifier extends Notifier<AuthState> {
     if (userId != null) {
       await _cancelReminderForUser(userId);
     }
-    await _storage.deleteAll();
+    try {
+      await _storage.deleteAll();
+    } catch (error) {
+      debugPrint('Failed to clear secure storage on logout: $error');
+    }
+    if (defaultTargetPlatform == TargetPlatform.macOS) {
+      await _clearSessionSnapshot();
+    }
     state = state.copyWith(
       isLoading: false,
       isInitialized: true,
@@ -650,13 +695,15 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<void> _saveAuth(String token, String userId, String username) async {
-    await _storage.write(key: _tokenKey, value: token);
-    await _storage.write(key: _userIdKey, value: userId);
-    await _storage.write(key: _usernameKey, value: username);
+    if (defaultTargetPlatform == TargetPlatform.macOS) {
+      await _persistSessionSnapshot(token, userId, username);
+    }
+    await _persistAuthToSecureStorage(token, userId, username);
     state = state.copyWith(
       token: token,
       userId: userId,
       username: username,
+      restoredFromLocalSnapshot: false,
       isInitialized: true,
     );
   }
@@ -703,6 +750,47 @@ class AuthNotifier extends Notifier<AuthState> {
     } catch (error) {
       debugPrint('Failed to cancel reminder schedule: $error');
     }
+  }
+
+  Future<void> _persistAuthToSecureStorage(
+    String token,
+    String userId,
+    String username,
+  ) async {
+    try {
+      await _storage.write(key: _tokenKey, value: token);
+      await _storage.write(key: _userIdKey, value: userId);
+      await _storage.write(key: _usernameKey, value: username);
+    } catch (error) {
+      debugPrint('Failed to persist auth in secure storage: $error');
+    }
+  }
+
+  Future<void> _persistSessionSnapshot(
+    String token,
+    String userId,
+    String username,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_sessionTokenKey, token);
+    await prefs.setString(_sessionUserIdKey, userId);
+    await prefs.setString(_sessionUsernameKey, username);
+  }
+
+  Future<Map<String, String?>> _readSessionSnapshot() async {
+    final prefs = await SharedPreferences.getInstance();
+    return {
+      'token': prefs.getString(_sessionTokenKey),
+      'userId': prefs.getString(_sessionUserIdKey),
+      'username': prefs.getString(_sessionUsernameKey),
+    };
+  }
+
+  Future<void> _clearSessionSnapshot() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_sessionTokenKey);
+    await prefs.remove(_sessionUserIdKey);
+    await prefs.remove(_sessionUsernameKey);
   }
 }
 

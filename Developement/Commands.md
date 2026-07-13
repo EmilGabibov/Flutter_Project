@@ -2,12 +2,20 @@
 
 Quick reference for all build, install, and deploy shell commands across platforms.
 
+## Doppler Setup
+Initialize the local Doppler project for backend secrets:
+```bash
+cd /Flutter/hable/backend && npm run setup:doppler
+```
+
 ## Web Deployment
 Deploy the web version of the Flutter app to Cloudflare Pages:
 ```bash
-flutter build web --release --base-href / \
-  --dart-define=HABLE_APP_ENV=production && \
-cd backend && npx wrangler pages deploy ../build/web --project-name=hable
+cd /Flutter/hable && \
+flutter build web --release --base-href / --dart-define=HABLE_APP_ENV=production && \
+cd backend && \
+npx wrangler pages deploy ../build/web --project-name=hable
+
 ```
 
 ## Build Android APKs

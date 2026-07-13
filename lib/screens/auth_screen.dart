@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
@@ -30,7 +31,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   void initState() {
     super.initState();
     const seedUserId = String.fromEnvironment('SEED_USER_ID');
-    if (seedUserId.isNotEmpty) {
+    final allowSeedLogin = defaultTargetPlatform != TargetPlatform.macOS;
+    if (seedUserId.isNotEmpty && allowSeedLogin) {
       _isAutoLoggingIn = true;
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         final success = await ref

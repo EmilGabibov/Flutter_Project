@@ -73,6 +73,7 @@ class _AppGate extends ConsumerStatefulWidget {
 class _AppGateState extends ConsumerState<_AppGate>
     with WidgetsBindingObserver {
   String? _lastSyncedUserId;
+  String? _restoreNoticeShownForUserId;
   final GlobalKey<MainNavigationShellState> _shellKey =
       GlobalKey<MainNavigationShellState>();
   StreamSubscription<String?>? _payloadSub;
@@ -133,6 +134,21 @@ class _AppGateState extends ConsumerState<_AppGate>
 
   void _handlePayload(String payloadStr) {
     _shellKey.currentState?.handleNotificationPayload(payloadStr);
+  }
+
+  void _showLocalRestoreNotice(String userId) {
+    if (_restoreNoticeShownForUserId == userId) return;
+    _restoreNoticeShownForUserId = userId;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Restored local session on macOS.'),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    });
   }
 
   @override
@@ -250,6 +266,7 @@ class _AppGateState extends ConsumerState<_AppGate>
     }
 
     if (!authState.isAuthenticated || authState.userId == null) {
+      _restoreNoticeShownForUserId = null;
       return const AuthScreen();
     }
 
@@ -276,6 +293,12 @@ class _AppGateState extends ConsumerState<_AppGate>
     final userId = authState.userId;
     if (userId == null) {
       return const AuthScreen();
+    }
+
+    if (authState.restoredFromLocalSnapshot) {
+      _showLocalRestoreNotice(userId);
+    } else if (_restoreNoticeShownForUserId == userId) {
+      _restoreNoticeShownForUserId = null;
     }
 
     return userAsync.when(

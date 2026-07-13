@@ -48,6 +48,10 @@ To participate in social/cloud sync features, users must verify their email. Thi
 - **`POST /api/user/email/request-pin`**: Sends an OTP to the user's email. (Requires `Bearer` token).
 - **`POST /api/user/email/verify-pin`**: Validates the OTP. On success, it updates the local Drift `emailVerifiedAt` timestamp to unlock sync features.
 
+### Email Delivery Configuration
+- `PRIVATE_EMAIL_SENDER_HABLE`: Verified sender address used by Hable's email flow.
+- `EMAIL_WORKER`: Optional Cloudflare service binding for PIN delivery without duplicating sender/API-token secrets.
+
 ## 5. Error Handling and Normalization
 
 The `AuthNotifier` intercepts exceptions and normalizes them into user-friendly UI strings in `state.error`:

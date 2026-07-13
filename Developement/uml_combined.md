@@ -42,12 +42,14 @@ Flowchart for the local-first data path using Riverpod, Drift, sync services, an
 
 ```mermaid
 flowchart TD
-    UI[Flutter UI] --> Riverpod[Riverpod Providers]
+    AppGate[AppGate / Startup Shell] -->|Diagnostics & Recovery| UI[Flutter UI]
+    UI --> Riverpod[Riverpod Providers]
     Riverpod --> LocalDB[(Drift SQLite)]
     LocalDB --> SyncQueue[Sync Queue]
     SyncService[Sync Service] --> SyncQueue
     SyncService <--> Internet((Cloudflare Backend))
     UI -.->|Invalidates & Calls| SyncService
+    Push[Push/Realtime Transport] -->|Invalidates| SyncService
 ```
 
 ## 3. Schema & Core Logic
@@ -155,6 +157,78 @@ erDiagram
         boolean is_synced
     }
 
+    PUSH_SUBSCRIPTIONS {
+        uuid id PK
+        uuid user_id FK
+        string device_token UK
+        string platform
+        string endpoint_url
+        string auth_keys
+        boolean quiet_hours_enabled
+        datetime created_at
+        datetime updated_at
+    }
+
+    NOTIFICATION_EVENTS {
+        string notification_id PK
+        uuid user_id FK
+        string type
+        string source_type
+        string source_id
+        string title
+        string body
+        string route_payload
+        datetime created_at
+        datetime expires_at
+        datetime read_at
+        datetime updated_at
+        boolean is_synced
+    }
+
+    REMINDER_SETTINGS {
+        uuid id PK
+        uuid user_id FK
+        string type
+        boolean is_enabled
+        int hour
+        int minute
+        datetime updated_at
+        boolean is_synced
+    }
+
+    SEARCH_DOCUMENTS {
+        string id PK
+        string title
+        string author
+        string source
+    }
+
+    USAGE_AGGREGATE_BUCKETS {
+        string bucket_date PK
+        string platform PK
+        string build_channel PK
+        string screen_name PK
+        string metric_name PK
+        int count
+        int total_duration_ms
+        datetime updated_at
+        boolean is_synced
+    }
+
+    ACCEPTED_FRIENDS {
+        uuid friend_user_id PK
+        string username
+        string avatar_url
+    }
+
+    FRIEND_RELATIONSHIPS {
+        uuid user_id PK
+        string username
+        string avatar_url
+        string relationship_state
+        uuid request_id
+    }
+
     USERS ||--o{ HABITS : owns
     USERS ||--o{ LOGS : writes
     HABITS ||--o{ LOGS : records
@@ -170,6 +244,11 @@ erDiagram
     USERS ||--o{ HABIT_INVITATIONS : requests
     USERS ||--o{ HABIT_INVITATIONS : receives
     HABITS ||--o{ HABIT_INVITATIONS : targets
+    USERS ||--o{ PUSH_SUBSCRIPTIONS : registers
+    USERS ||--o{ NOTIFICATION_EVENTS : receives
+    USERS ||--o{ REMINDER_SETTINGS : configures
+    USERS ||--o{ ACCEPTED_FRIENDS : knows
+    USERS ||--o{ FRIEND_RELATIONSHIPS : interacts
 ```
 
 ## 4. Social & Analytics
@@ -204,9 +283,11 @@ stateDiagram-v2
     [*] --> Active
     Active --> Completed : Check In
     Active --> Skipped : Skip Day
+    Active --> Overdue : Day Expires
     Completed --> Active : Next Day
     Skipped --> Active : Next Day
-    Active --> Abandoned : Too many misses
+    Overdue --> Active : Next Day
+    Overdue --> Abandoned : Too many misses
 ```
 
 ## 6. Mud Button & Animations

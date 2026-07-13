@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -29,7 +30,10 @@ class _OnboardingUsernameScreenState
     // ── Twin-App Test Harness Auto-Seeding ──
     const seedUserId = String.fromEnvironment('SEED_USER_ID');
     const seedUsername = String.fromEnvironment('SEED_USERNAME');
-    if (seedUserId.isNotEmpty && seedUsername.isNotEmpty) {
+    final allowSeedHarness = defaultTargetPlatform != TargetPlatform.macOS;
+    if (seedUserId.isNotEmpty &&
+        seedUsername.isNotEmpty &&
+        allowSeedHarness) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _proceedWithSeed(seedUserId, seedUsername);
       });

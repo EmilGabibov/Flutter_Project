@@ -96,32 +96,31 @@ class LocalReminderService {
     await initialize();
     if (!_pluginAvailable) return false;
 
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      return await _plugin
+    final status = await Permission.notification.request();
+    if (status.isGranted) {
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        await _plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >()
+            ?.requestNotificationsPermission();
+      } else if (defaultTargetPlatform == TargetPlatform.iOS ||
+          defaultTargetPlatform == TargetPlatform.macOS) {
+        if (defaultTargetPlatform == TargetPlatform.iOS) {
+          await _plugin
               .resolvePlatformSpecificImplementation<
-                AndroidFlutterLocalNotificationsPlugin
+                IOSFlutterLocalNotificationsPlugin
               >()
-              ?.requestNotificationsPermission() ??
-          false;
-    }
-
-    if (defaultTargetPlatform == TargetPlatform.iOS ||
-        defaultTargetPlatform == TargetPlatform.macOS) {
-      if (defaultTargetPlatform == TargetPlatform.iOS) {
-        return await _plugin
-                .resolvePlatformSpecificImplementation<
-                  IOSFlutterLocalNotificationsPlugin
-                >()
-                ?.requestPermissions(alert: true, badge: true, sound: true) ??
-            false;
-      }
-
-      return await _plugin
+              ?.requestPermissions(alert: true, badge: true, sound: true);
+        } else {
+          await _plugin
               .resolvePlatformSpecificImplementation<
                 MacOSFlutterLocalNotificationsPlugin
               >()
-              ?.requestPermissions(alert: true, badge: true, sound: true) ??
-          false;
+              ?.requestPermissions(alert: true, badge: true, sound: true);
+        }
+      }
+      return true;
     }
 
     return false;
