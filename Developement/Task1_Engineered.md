@@ -1264,7 +1264,7 @@
 
 **Dependencies:** `Developement/agent_directives.md`, all relevant `Developement/sys_*.md` and `Developement/ux_*.md` files
 
-**Completion notes:** Pending implementation.
+**Completion notes:** Completed on 2026-07-13. Verified the Mermaid pack already exists adjacent to the relevant development docs: `sys_authentication.mmd`, `sys_offline_architecture.mmd`, `sys_schema_and_logic.mmd`, `sys_social_and_analytics.mmd`, `ux_habit_states_and_scoring.mmd`, and `ux_mud_and_animations.mmd`, with `Developement/uml_index.md` collecting and describing the set. The artifacts cover the expected contract-level scope (authentication, offline architecture, schema/ER, social flow, habit-state scoring, and mud interaction UX) and satisfy the “saved nearby plus central index” acceptance criteria without introducing implementation-noise diagrams.
 
 <a id="add-distinct-finished-lifecycle-state-and-hall-of-fame-history-lane"></a>
 ### [x] Add Distinct Finished Lifecycle State And Hall Of Fame History Lane
