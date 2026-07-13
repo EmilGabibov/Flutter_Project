@@ -192,51 +192,91 @@ class _PartnerAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final wasNudgedRecently = _wasNudgedRecently(partner.lastNudgeAt);
-    final borderColor = partner.hasCompletedToday
-        ? habitColor
-        : wasNudgedRecently
-        ? habitColor.withValues(alpha: 0.85)
-        : partner.role == PartnershipRole.supporter
-        ? AppTheme.mutedLavender
-        : AppTheme.warmGray.withValues(alpha: 0.5);
+    final ringStyle = _PartnerRingStyle.resolve(
+      partner: partner,
+      habitColor: habitColor,
+      wasNudgedRecently: wasNudgedRecently,
+    );
 
     return Semantics(
       label: '${partner.username} status $_stateLabel',
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: borderColor, width: 2.5),
-            ),
-            child: UserAvatar(
-              avatarUrl: partner.avatarUrl,
-              username: partner.username,
-              radius: 16,
-              backgroundColor: Colors.white,
-            ),
-          ),
-          Positioned(
-            right: -2,
-            bottom: -2,
-            child: Container(
-              key: Key('partner-status-ring-${partner.partnerUserId}'),
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: partner.hasCompletedToday
-                    ? AppTheme.completionGreen
-                    : partner.role == PartnershipRole.supporter
-                    ? AppTheme.mutedLavender
-                    : AppTheme.warmGray,
-                border: Border.all(color: Colors.white, width: 1.5),
-              ),
+      child: Container(
+        key: Key('partner-status-ring-${partner.partnerUserId}'),
+        width: 36,
+        height: 36,
+        padding: const EdgeInsets.all(2.5),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: ringStyle.fillColor,
+          border: Border.all(color: ringStyle.ringColor, width: 2.5),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: ringStyle.innerBorderColor,
+              width: ringStyle.innerBorderWidth,
             ),
           ),
-        ],
+          child: UserAvatar(
+            avatarUrl: partner.avatarUrl,
+            username: partner.username,
+            radius: 14,
+            backgroundColor: Colors.white,
+          ),
+        ),
       ),
+    );
+  }
+}
+
+class _PartnerRingStyle {
+  final Color ringColor;
+  final Color fillColor;
+  final Color innerBorderColor;
+  final double innerBorderWidth;
+
+  const _PartnerRingStyle({
+    required this.ringColor,
+    required this.fillColor,
+    required this.innerBorderColor,
+    required this.innerBorderWidth,
+  });
+
+  factory _PartnerRingStyle.resolve({
+    required PartnerSnapshot partner,
+    required Color habitColor,
+    required bool wasNudgedRecently,
+  }) {
+    if (partner.hasCompletedToday) {
+      return _PartnerRingStyle(
+        ringColor: habitColor,
+        fillColor: habitColor.withValues(alpha: 0.18),
+        innerBorderColor: habitColor.withValues(alpha: 0.34),
+        innerBorderWidth: 1.2,
+      );
+    }
+    if (wasNudgedRecently) {
+      return _PartnerRingStyle(
+        ringColor: habitColor.withValues(alpha: 0.8),
+        fillColor: habitColor.withValues(alpha: 0.1),
+        innerBorderColor: habitColor.withValues(alpha: 0.18),
+        innerBorderWidth: 1.1,
+      );
+    }
+    if (partner.role == PartnershipRole.supporter) {
+      return _PartnerRingStyle(
+        ringColor: AppTheme.mutedLavender,
+        fillColor: AppTheme.mutedLavender.withValues(alpha: 0.14),
+        innerBorderColor: AppTheme.mutedLavender.withValues(alpha: 0.2),
+        innerBorderWidth: 1.1,
+      );
+    }
+    return _PartnerRingStyle(
+      ringColor: AppTheme.warmGray.withValues(alpha: 0.5),
+      fillColor: AppTheme.surface,
+      innerBorderColor: AppTheme.warmGray.withValues(alpha: 0.12),
+      innerBorderWidth: 1.0,
     );
   }
 }
@@ -269,13 +309,11 @@ class _PartnerChip extends StatelessWidget {
         : partner.role == PartnershipRole.supporter
         ? 'supporting'
         : 'pending';
-    final borderColor = partner.hasCompletedToday
-        ? habitColor
-        : wasNudgedRecently
-        ? habitColor.withValues(alpha: 0.85)
-        : partner.role == PartnershipRole.supporter
-        ? AppTheme.mutedLavender
-        : AppTheme.warmGray.withValues(alpha: 0.5);
+    final ringStyle = _PartnerRingStyle.resolve(
+      partner: partner,
+      habitColor: habitColor,
+      wasNudgedRecently: wasNudgedRecently,
+    );
     final fillColor = partner.hasCompletedToday
         ? habitColor.withValues(alpha: 0.12)
         : wasNudgedRecently
@@ -287,7 +325,7 @@ class _PartnerChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: fillColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: borderColor, width: 1.5),
+        border: Border.all(color: ringStyle.ringColor, width: 1.5),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -340,7 +378,7 @@ class _PartnerChip extends StatelessWidget {
                                         : partner.role ==
                                               PartnershipRole.supporter
                                         ? AppTheme.mutedLavender
-                                        : borderColor,
+                                        : ringStyle.ringColor,
                                     fontWeight: FontWeight.w600,
                                   ),
                             ),

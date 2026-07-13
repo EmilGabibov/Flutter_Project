@@ -1951,7 +1951,7 @@
 **Completion notes:** Completed on 2026-07-13. Replaced the default Windows desktop metadata with Hable-specific values in `windows/CMakeLists.txt`, `windows/runner/main.cpp`, and `windows/runner/Runner.rc` so release artifacts resolve to `Hable.exe` with matching product/version strings. Added `windows/installer/Hable.iss` as the installer template and documented the supported installer + portable bundle workflows in `Developement/windows_distribution.md`. A native Windows smoke build was not possible from the current macOS host, so the documented release path explicitly requires a Windows build/signing machine for `flutter build windows --release`, installer compilation, and final code-signing validation.
 
 <a id="serialize-achievement-and-habit-completion-splashes-with-user-driven-dismiss-and-habit-colored-background-animation"></a>
-### [ ] Serialize Achievement And Habit Completion Splashes With User-Driven Dismiss And Habit-Colored Background Animation
+### [x] Serialize Achievement And Habit Completion Splashes With User-Driven Dismiss And Habit-Colored Background Animation
 
 **Raw source:** Crash report: when the habit splash screen appears concurrently with the achievement splash screen, they clash and the green background of the habit splash remains on screen. They need proper queuing/synchronization because multiple habits and/or achievements may complete at the same time. The habit splash background should use the habit’s color, animate in sync with the text, and auto-skipping should be removed in favor of an explicit continue action.
 
@@ -1992,7 +1992,7 @@
 **Completion notes:** Pending implementation.
 
 <a id="replace-partner-status-dots-with-filled-mini-rings-and-align-completed-state-to-habit-color"></a>
-### [ ] Replace Partner Status Dots With Filled Mini Rings And Align Completed State To Habit Color
+### [x] Replace Partner Status Dots With Filled Mini Rings And Align Completed State To Habit Color
 
 **Raw source:** The partners on habit cards should show check-in status through a small ring around their avatar, like the main profile ring, instead of a separate status dot. The ring should fill with color based on status, and completed state should turn into the habit color.
 
@@ -2030,7 +2030,7 @@
 
 **Dependencies:** `Developement/sys_social_and_analytics.md`, `Developement/ux_mud_and_animations.md`, `Developement/qa_testing.md`
 
-**Completion notes:** Pending implementation.
+**Completion notes:** Completed on 2026-07-13. Reworked `lib/widgets/habit_partner_row.dart` so partner avatars now carry a single miniature ring container around the avatar instead of a detached corner dot. The ring palette is shared across collapsed and expanded partner views, with completed partners now using the current habit color, nudged partners using a tinted habit-color ring, supporters staying lavender, and pending partners keeping a muted neutral ring. Updated `test/habit_partner_row_test.dart` to assert the revised ring contract and the completed-state habit-color mapping, and refreshed the manual QA wording in `Developement/qa_testing.md` so the verification language now matches the mini-ring surface. Focused verification: `flutter test test/habit_partner_row_test.dart`.
 
 <a id="complete-habit-creation-form-as-a-cohesive-onboarding-style-create-edit-surface"></a>
 ### [ ] Complete Habit Creation Form As A Cohesive Onboarding-Style Create/Edit Surface

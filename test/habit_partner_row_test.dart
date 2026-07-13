@@ -184,6 +184,40 @@ void main() {
     expect(find.byKey(const Key('partner-status-ring-p1')), findsOneWidget);
   });
 
+  testWidgets('HabitPartnerRow completed ring uses the habit color', (
+    tester,
+  ) async {
+    const habitColor = Color(0xFF4D8C57);
+    final partner = _partner(
+      id: 'p1',
+      name: 'Alex',
+      role: PartnershipRole.partner,
+      completed: true,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: Scaffold(
+          body: HabitPartnerRow(partners: [partner], habitColor: habitColor),
+        ),
+      ),
+    );
+
+    final ring = tester.widget<Container>(
+      find.byKey(const Key('partner-status-ring-p1')),
+    );
+    final decoration = ring.decoration! as BoxDecoration;
+    final border = decoration.border! as Border;
+    final size = tester.getSize(find.byKey(const Key('partner-status-ring-p1')));
+
+    expect(size.width, 36);
+    expect(size.height, 36);
+    expect(border.top.color, habitColor);
+    expect(decoration.color, habitColor.withValues(alpha: 0.18));
+    expect(border.top.color, isNot(AppTheme.completionGreen));
+  });
+
   testWidgets('HabitPartnerRow shows empty state when no partners', (
     tester,
   ) async {
