@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../l10n/app_localizations.dart';
 import '../providers/locale_provider.dart';
 
 class LanguageSelector extends ConsumerWidget {
@@ -9,6 +10,7 @@ class LanguageSelector extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentLocale = ref.watch(localeProvider);
+    final loc = AppLocalizations.of(context)!;
 
     final languages = [
       {'code': 'en', 'name': 'English'},
@@ -42,7 +44,7 @@ class LanguageSelector extends ConsumerWidget {
 
     return ListTile(
       leading: const Icon(Icons.language),
-      title: const Text('Language'),
+      title: Text(loc.settingsLanguage),
       trailing: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: currentLocale.languageCode,

@@ -46,6 +46,17 @@ class _OnboardingCompleteScreenState
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.of(context).disableAnimations) {
+      _animController.duration = Duration.zero;
+      _animController.value = 1.0;
+    } else {
+      _animController.duration = const Duration(milliseconds: 600);
+    }
+  }
+
+  @override
   void dispose() {
     _animController.dispose();
     super.dispose();

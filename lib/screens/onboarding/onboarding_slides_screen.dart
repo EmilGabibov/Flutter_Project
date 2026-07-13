@@ -6,6 +6,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/skeletons.dart';
 import '../../widgets/usage_tracked_screen.dart';
 import '../../widgets/language_selector.dart';
+import '../../widgets/accessibility_selector.dart';
 
 class OnboardingSlidesScreen extends ConsumerStatefulWidget {
   final VoidCallback onGetStarted;
@@ -125,6 +126,7 @@ class _OnboardingSlidesScreenState
                               ?.copyWith(fontWeight: FontWeight.w900),
                         ),
                         const Spacer(),
+                        const AccessibilitySelector(),
                         const LanguageSelector(compact: true),
                         const SizedBox(width: 8),
                         TextButton(
@@ -330,7 +332,9 @@ class _ProgressDots extends StatelessWidget {
       children: List.generate(count, (index) {
         final isActive = index == currentIndex;
         return AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
+          duration: MediaQuery.of(context).disableAnimations
+              ? Duration.zero
+              : const Duration(milliseconds: 180),
           width: isActive ? 24 : 8,
           height: 8,
           margin: const EdgeInsets.symmetric(horizontal: 4),

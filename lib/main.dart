@@ -9,6 +9,7 @@ import 'providers/habit_providers.dart';
 import 'providers/usage_diagnostics_provider.dart';
 import 'providers/sync_provider.dart';
 import 'providers/locale_provider.dart';
+import 'providers/accessibility_provider.dart';
 import 'screens/auth_screen.dart';
 import 'screens/first_run_quote_screen.dart';
 import 'screens/main_navigation_shell.dart';
@@ -37,11 +38,23 @@ class HableApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(usageDiagnosticsProvider);
     final locale = ref.watch(localeProvider);
+    final accessibility = ref.watch(accessibilityProvider);
     return MaterialApp(
       title: 'Hable',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
+      theme: accessibility.highContrast ? AppTheme.highContrastTheme : AppTheme.lightTheme,
       locale: locale,
+      builder: (context, child) {
+        final data = MediaQuery.of(context);
+        return MediaQuery(
+          data: data.copyWith(
+            textScaler: accessibility.largerText ? const TextScaler.linear(1.3) : data.textScaler,
+            highContrast: accessibility.highContrast ? true : data.highContrast,
+            disableAnimations: accessibility.reducedMotion ? true : data.disableAnimations,
+          ),
+          child: child!,
+        );
+      },
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
@@ -142,8 +155,11 @@ class _AppGateState extends ConsumerState<_AppGate>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Restored local session on macOS.'),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)?.appGateRestoredLocalSession ??
+                'Restored local session on macOS.',
+          ),
           behavior: SnackBarBehavior.floating,
           duration: Duration(seconds: 2),
         ),
@@ -224,6 +240,7 @@ class _AppGateState extends ConsumerState<_AppGate>
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
+    final loc = AppLocalizations.of(context);
 
     if (_webVersionGateAction != WebVersionGateAction.allow) {
       final isBlocking = _webVersionGateAction == WebVersionGateAction.blocked;
@@ -237,7 +254,9 @@ class _AppGateState extends ConsumerState<_AppGate>
                 if (!isBlocking) const CircularProgressIndicator(),
                 if (!isBlocking) const SizedBox(height: 16),
                 Text(
-                  _webVersionGateMessage ?? 'Updating Hable...',
+                  _webVersionGateMessage ??
+                      loc?.appGateUpdatingHable ??
+                      'Updating Hable...',
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -248,16 +267,16 @@ class _AppGateState extends ConsumerState<_AppGate>
     }
 
     if (!authState.isInitialized) {
-      return const Scaffold(
+      return Scaffold(
         body: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
               Text(
-                'Restoring session...',
-                style: TextStyle(color: Colors.grey),
+                loc?.appGateRestoringSession ?? 'Restoring session...',
+                style: const TextStyle(color: Colors.grey),
               ),
             ],
           ),
@@ -307,16 +326,16 @@ class _AppGateState extends ConsumerState<_AppGate>
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _resolveFirstRunQuoteSplash(userId);
           });
-          return const Scaffold(
+          return Scaffold(
             body: Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
                   Text(
-                    'Preparing your habits...',
-                    style: TextStyle(color: Colors.grey),
+                    loc?.appGatePreparingHabits ?? 'Preparing your habits...',
+                    style: const TextStyle(color: Colors.grey),
                   ),
                 ],
               ),
@@ -330,16 +349,16 @@ class _AppGateState extends ConsumerState<_AppGate>
         }
         return MainNavigationShell(key: _shellKey, userId: userId);
       },
-      loading: () => const Scaffold(
+      loading: () => Scaffold(
         body: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
               Text(
-                'Loading profile state...',
-                style: TextStyle(color: Colors.grey),
+                loc?.appGateLoadingProfileState ?? 'Loading profile state...',
+                style: const TextStyle(color: Colors.grey),
               ),
             ],
           ),

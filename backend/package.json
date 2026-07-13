@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "setup:doppler": "doppler setup",
-    "dev": "wrangler pages dev public --port 8787",
+    "sync:pages-secrets": "node scripts/sync-pages-secrets.mjs",
+    "dev": "doppler run -- wrangler pages dev public --port 8787",
     "deploy": "wrangler pages deploy public --project-name hable",
     "web:build": "cd .. && flutter build web --release --base-href /",
     "web:deploy": "cd .. && flutter build web --release --base-href / && wrangler pages deploy ../build/web --project-name hable --branch main --commit-dirty=true --cwd backend",

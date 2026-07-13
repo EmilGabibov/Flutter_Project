@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../models/habit_visual_state.dart';
 import '../providers/mud_tuning_provider.dart';
@@ -152,8 +153,9 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     if (widget.visualState == HabitVisualState.checkInComplete) {
-      return _buildCompletionFlashState();
+      return _buildCompletionFlashState(loc);
     }
 
     if (widget.visualState == HabitVisualState.established) {
@@ -172,8 +174,8 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
 
     return Semantics(
       button: true,
-      label: 'Complete Habit',
-      hint: 'Long press to complete',
+      label: loc.mudCompleteHabitLabel,
+      hint: loc.mudLongPressHint,
       value: '${(_curveAnimation.value * 100).toInt()}%',
       onLongPress: isDisabled ? null : () => widget.onCompletion(),
       child: Listener(
@@ -182,32 +184,32 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
         onPointerUp: isDisabled ? null : (_) => _cancelHold(),
         onPointerCancel: isDisabled ? null : (_) => _cancelHold(),
         child: AnimatedBuilder(
-        animation: _curveAnimation,
-        builder: (context, child) {
-          return CustomPaint(
-            painter: _MudButtonPainter(
-              progress: _curveAnimation.value,
-              resistance: widget.resistanceCoefficient,
-              habitColor: widget.habitColor,
-              ringThickness: Tween<double>(
-                begin: widget.visualParameters.idleRingThickness,
-                end: widget.visualParameters.progressingRingThickness,
-              ).evaluate(_curveAnimation),
-              isDimmed: isDimmed,
+          animation: _curveAnimation,
+          builder: (context, child) {
+            return CustomPaint(
+              painter: _MudButtonPainter(
+                progress: _curveAnimation.value,
+                resistance: widget.resistanceCoefficient,
+                habitColor: widget.habitColor,
+                ringThickness: Tween<double>(
+                  begin: widget.visualParameters.idleRingThickness,
+                  end: widget.visualParameters.progressingRingThickness,
+                ).evaluate(_curveAnimation),
+                isDimmed: isDimmed,
+              ),
+              child: child,
+            );
+          },
+          child: SizedBox(
+            width: 180,
+            height: 180,
+            child: Center(
+              child: isDimmed
+                  ? Opacity(opacity: 0.5, child: _buildIconContent())
+                  : _buildIconContent(),
             ),
-            child: child,
-          );
-        },
-        child: SizedBox(
-          width: 180,
-          height: 180,
-          child: Center(
-            child: isDimmed
-                ? Opacity(opacity: 0.5, child: _buildIconContent())
-                : _buildIconContent(),
           ),
         ),
-      ),
       ),
     );
   }
@@ -235,7 +237,7 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
     );
   }
 
-  Widget _buildCompletionFlashState() {
+  Widget _buildCompletionFlashState(AppLocalizations loc) {
     return SizedBox(
       width: 180,
       height: 180,
@@ -257,7 +259,7 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
               ),
               const SizedBox(height: 8),
               Text(
-                'Done!',
+                loc.mudDone,
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 16,
@@ -341,7 +343,7 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
           ),
           const SizedBox(height: 8),
           Text(
-            'Hold to Complete',
+            AppLocalizations.of(context)!.mudHoldToComplete,
             style: TextStyle(
               fontWeight: FontWeight.w500,
               letterSpacing: 0.5,

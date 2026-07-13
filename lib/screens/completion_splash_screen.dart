@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hable/database/database.dart';
 import 'package:hable/models/celebration_feedback.dart';
-import 'package:hable/theme/app_theme.dart';
 import 'package:hable/providers/quote_provider.dart';
 
 /// A dynamic typographic splash screen triggered upon final habit completion.
@@ -52,6 +51,17 @@ class _CompletionSplashScreenState extends ConsumerState<CompletionSplashScreen>
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
 
     _controller.forward();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.of(context).disableAnimations) {
+      _controller.duration = Duration.zero;
+      _controller.value = 1.0;
+    } else {
+      _controller.duration = const Duration(milliseconds: 600);
+    }
   }
 
   void _dismiss() {

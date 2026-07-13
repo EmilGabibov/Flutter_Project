@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../database/database.dart';
 import '../database/tables.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import 'user_avatar.dart';
 
@@ -38,11 +39,12 @@ class _HabitPartnerRowState extends State<HabitPartnerRow> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     if (widget.partners.isEmpty) {
       return Semantics(
-        label: 'No partners on this habit yet.',
+        label: loc.partnerNoPartnersYet,
         child: Text(
-          'No partners',
+          loc.partnerNoPartnersShort,
           style: Theme.of(
             context,
           ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),
@@ -55,8 +57,7 @@ class _HabitPartnerRowState extends State<HabitPartnerRow> {
 
     if (!_isExpanded) {
       return Semantics(
-        label:
-            'Partner stack. ${widget.partners.length} partner${widget.partners.length == 1 ? '' : 's'}. Long press to expand partner states.',
+        label: loc.partnerStackCollapsedSemantics(widget.partners.length),
         button: true,
         child: GestureDetector(
           onLongPress: _toggleExpanded,
@@ -114,8 +115,7 @@ class _HabitPartnerRowState extends State<HabitPartnerRow> {
     }
 
     return Semantics(
-      label:
-          'Expanded partner states. Tap to collapse. Each row shows completion, pending, or nudged state.',
+      label: loc.partnerExpandedSemantics,
       child: GestureDetector(
         onLongPress: _toggleExpanded,
         onTap: _toggleExpanded,
@@ -135,7 +135,7 @@ class _HabitPartnerRowState extends State<HabitPartnerRow> {
               Row(
                 children: [
                   Text(
-                    'Partners',
+                    loc.partnerSectionTitle,
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: AppTheme.deepCharcoal,
@@ -143,7 +143,7 @@ class _HabitPartnerRowState extends State<HabitPartnerRow> {
                   ),
                   const Spacer(),
                   Text(
-                    'Tap to collapse',
+                    loc.partnerTapToCollapse,
                     style: Theme.of(
                       context,
                     ).textTheme.bodySmall?.copyWith(color: AppTheme.warmGray),
@@ -182,15 +182,18 @@ class _PartnerAvatar extends StatelessWidget {
     required this.habitColor,
   });
 
-  String get _stateLabel {
-    if (partner.hasCompletedToday) return 'completed';
-    if (_wasNudgedRecently(partner.lastNudgeAt)) return 'nudged';
-    if (partner.role == PartnershipRole.supporter) return 'supporter';
-    return 'pending';
+  String _stateLabel(AppLocalizations loc) {
+    if (partner.hasCompletedToday) return loc.partnerStateCompleted;
+    if (_wasNudgedRecently(partner.lastNudgeAt)) return loc.partnerStateNudged;
+    if (partner.role == PartnershipRole.supporter) {
+      return loc.partnerStateSupporter;
+    }
+    return loc.partnerStatePending;
   }
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final wasNudgedRecently = _wasNudgedRecently(partner.lastNudgeAt);
     final ringStyle = _PartnerRingStyle.resolve(
       partner: partner,
@@ -199,7 +202,7 @@ class _PartnerAvatar extends StatelessWidget {
     );
 
     return Semantics(
-      label: '${partner.username} status $_stateLabel',
+      label: loc.partnerStatusSemantics(partner.username, _stateLabel(loc)),
       child: Container(
         key: Key('partner-status-ring-${partner.partnerUserId}'),
         width: 36,
@@ -296,19 +299,20 @@ class _PartnerChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final roleLabel = switch (partner.role) {
-      PartnershipRole.owner => 'owner',
-      PartnershipRole.partner => 'partner',
-      PartnershipRole.supporter => 'supporter',
+      PartnershipRole.owner => loc.partnerRoleOwner,
+      PartnershipRole.partner => loc.partnerRolePartner,
+      PartnershipRole.supporter => loc.partnerRoleSupporter,
     };
     final wasNudgedRecently = _wasNudgedRecently(partner.lastNudgeAt);
     final stateLabel = partner.hasCompletedToday
-        ? 'completed today'
+        ? loc.partnerStateCompletedToday
         : wasNudgedRecently
-        ? 'nudged'
+        ? loc.partnerStateNudged
         : partner.role == PartnershipRole.supporter
-        ? 'supporting'
-        : 'pending';
+        ? loc.partnerStateSupporting
+        : loc.partnerStatePending;
     final ringStyle = _PartnerRingStyle.resolve(
       partner: partner,
       habitColor: habitColor,
@@ -332,8 +336,11 @@ class _PartnerChip extends StatelessWidget {
         children: [
           Expanded(
             child: Semantics(
-              label:
-                  '${partner.username}, $roleLabel, $stateLabel. Opens profile.',
+              label: loc.partnerProfileSemantics(
+                partner.username,
+                roleLabel,
+                stateLabel,
+              ),
               button: onProfileTap != null,
               child: InkWell(
                 key: Key('partner-profile-${partner.partnerUserId}'),
@@ -393,10 +400,10 @@ class _PartnerChip extends StatelessWidget {
           ),
           if (onNudgeTap != null)
             Semantics(
-              label: 'Nudge ${partner.username} on this habit.',
+              label: loc.partnerNudgeSemantics(partner.username),
               button: true,
               child: Tooltip(
-                message: 'Nudge ${partner.username}',
+                message: loc.partnerNudgeTooltip(partner.username),
                 child: IconButton(
                   key: Key('partner-nudge-${partner.partnerUserId}'),
                   onPressed: onNudgeTap,

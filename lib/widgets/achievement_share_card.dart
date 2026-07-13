@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -48,10 +49,6 @@ class _AchievementSharePreviewState
 
       if (pngBytes == null) return;
 
-      final tempDir = await getTemporaryDirectory();
-      final file = File('${tempDir.path}/hable_achievement.png');
-      await file.writeAsBytes(pngBytes);
-
       if (!mounted) return;
 
       final box = context.findRenderObject() as RenderBox?;
@@ -62,11 +59,28 @@ class _AchievementSharePreviewState
         rect = offset & size;
       }
 
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text: 'Check out my progress on Hable! 🚀',
-        sharePositionOrigin: rect,
-      );
+      if (kIsWeb) {
+        final xFile = XFile.fromData(
+          pngBytes,
+          mimeType: 'image/png',
+          name: 'hable_achievement.png',
+        );
+        await Share.shareXFiles(
+          [xFile],
+          text: 'Check out my progress on Hable! 🚀',
+          sharePositionOrigin: rect,
+        );
+      } else {
+        final tempDir = await getTemporaryDirectory();
+        final file = File('${tempDir.path}/hable_achievement.png');
+        await file.writeAsBytes(pngBytes);
+        
+        await Share.shareXFiles(
+          [XFile(file.path)],
+          text: 'Check out my progress on Hable! 🚀',
+          sharePositionOrigin: rect,
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

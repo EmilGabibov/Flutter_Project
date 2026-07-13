@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/standard_habits.dart';
 import '../database/database.dart';
+import '../l10n/app_localizations.dart';
 import '../providers/habit_actions_provider.dart';
 import '../providers/social_providers.dart';
 import '../services/app_error.dart';
@@ -136,6 +137,7 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
+        final loc = AppLocalizations.of(context)!;
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(20),
@@ -144,14 +146,14 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Choose an icon',
+                  loc.habitFormChooseIconTitle,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Custom habits can keep this icon with the title.',
+                  loc.habitFormChooseIconBody,
                   style: Theme.of(
                     context,
                   ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),
@@ -215,6 +217,7 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
   }
 
   Future<void> _saveHabit() async {
+    final loc = AppLocalizations.of(context)!;
     setState(() {
       _hasAttemptedSubmit = true;
       _submissionError = null;
@@ -264,7 +267,7 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
       final appError = AppError.fromAny(
         error,
         fallbackCode: 'habit_form_save_failed',
-        fallbackMessage: 'That habit did not stick yet. Please try again.',
+        fallbackMessage: loc.habitFormSaveFailed,
       );
       setState(() {
         _submissionError = appError.message;
@@ -283,9 +286,9 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final presetDescription =
-        _selectedPreset?.subtitle ??
-        'Name the behavior clearly so future you can understand it at a glance.';
+        _selectedPreset?.subtitle ?? loc.habitFormPresetDescriptionFallback;
 
     return SafeArea(
       top: false,
@@ -354,7 +357,9 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
                             ),
                           )
                         : Text(
-                            _isCreateFlow ? 'Create habit' : 'Save changes',
+                            _isCreateFlow
+                                ? loc.habitFormCreateButton
+                                : loc.habitFormSaveChangesButton,
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
@@ -371,6 +376,7 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -380,17 +386,15 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
             children: [
               Text(
                 _isCreateFlow
-                    ? 'Build a habit worth repeating'
-                    : 'Refine this habit',
+                    ? loc.habitFormCreateTitle
+                    : loc.habitFormEditTitle,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w800,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                _isCreateFlow
-                    ? 'Choose a pattern, tune the duration, and invite the right people before you commit.'
-                    : 'Adjust the title, timeline, and color without breaking the habit you already started.',
+                _isCreateFlow ? loc.habitFormCreateBody : loc.habitFormEditBody,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppTheme.warmGray,
                   height: 1.5,
@@ -408,6 +412,7 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
   }
 
   Widget _buildIdentityRow(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -436,10 +441,9 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
             controller: _titleController,
             textInputAction: TextInputAction.next,
             decoration: InputDecoration(
-              labelText: 'Habit name',
-              hintText: 'Morning pages, no phone after 10, daily walk...',
-              helperText:
-                  'Tap the icon to the left to personalize custom habits.',
+              labelText: loc.habitFormNameLabel,
+              hintText: loc.habitFormNameHint,
+              helperText: loc.habitFormNameHelper,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(18),
               ),
@@ -454,8 +458,8 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
             },
             validator: (value) {
               final title = value?.trim() ?? '';
-              if (title.isEmpty) return 'Give this habit a clear name.';
-              if (title.length < 3) return 'Use at least 3 characters.';
+              if (title.isEmpty) return loc.habitFormNameErrorEmpty;
+              if (title.length < 3) return loc.habitFormNameErrorShort;
               return null;
             },
           ),
@@ -465,18 +469,19 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
   }
 
   Widget _buildPresetSection(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Start from a proven pattern',
+          loc.habitFormPresetTitle,
           style: Theme.of(
             context,
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 6),
         Text(
-          'Pick a template to preload the title, duration, color, and cue copy.',
+          loc.habitFormPresetBody,
           style: Theme.of(
             context,
           ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),
@@ -506,18 +511,19 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
   }
 
   Widget _buildDescriptionSection(BuildContext context, String description) {
+    final loc = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Description',
+          loc.habitFormDescriptionTitle,
           style: Theme.of(
             context,
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 6),
         Text(
-          'Use one or two lines to make the habit specific enough to repeat on rough days.',
+          loc.habitFormDescriptionBody,
           style: Theme.of(
             context,
           ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),
@@ -530,13 +536,13 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
           maxLines: 3,
           decoration: InputDecoration(
             hintText: description,
-            helperText: 'This can surface on the primary habit card.',
+            helperText: loc.habitFormDescriptionHelper,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(18)),
           ),
           validator: (value) {
             final text = value?.trim() ?? '';
             if (text.isNotEmpty && text.length > 160) {
-              return 'Keep the description under 160 characters.';
+              return loc.habitFormDescriptionErrorLong;
             }
             return null;
           },
@@ -546,18 +552,19 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
   }
 
   Widget _buildDurationSection(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Duration',
+          loc.habitFormDurationTitle,
           style: Theme.of(
             context,
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 6),
         Text(
-          'Popular challenge lengths help users commit to a finite promise.',
+          loc.habitFormDurationBody,
           style: Theme.of(
             context,
           ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),
@@ -570,7 +577,7 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
             final selected = _durationController.text.trim() == '$days';
             return ChoiceChip(
               key: Key('duration-$days'),
-              label: Text('$days days'),
+              label: Text(loc.habitFormDurationChip(days)),
               selected: selected,
               onSelected: (_) {
                 setState(() {
@@ -586,14 +593,14 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
           controller: _durationController,
           keyboardType: TextInputType.number,
           decoration: InputDecoration(
-            labelText: 'Custom number of days',
+            labelText: loc.habitFormCustomDaysLabel,
             hintText: '21',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(18)),
           ),
           validator: (value) {
             final parsed = int.tryParse(value?.trim() ?? '');
-            if (parsed == null) return 'Enter a number of days.';
-            if (parsed < 1) return 'Duration must be at least 1 day.';
+            if (parsed == null) return loc.habitFormDurationErrorInvalid;
+            if (parsed < 1) return loc.habitFormDurationErrorMin;
             return null;
           },
         ),
@@ -602,18 +609,19 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
   }
 
   Widget _buildColorSection(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Ring color',
+          loc.habitFormColorTitle,
           style: Theme.of(
             context,
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 6),
         Text(
-          'Choose the color this habit will carry across its card and celebrations.',
+          loc.habitFormColorBody,
           style: Theme.of(
             context,
           ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),
@@ -658,18 +666,19 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
   }
 
   Widget _buildPartnersSection(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Invite partners',
+          loc.habitFormPartnersTitle,
           style: Theme.of(
             context,
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 6),
         Text(
-          'Shared habits can start with friends who already follow you.',
+          loc.habitFormPartnersBody,
           style: Theme.of(
             context,
           ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),
@@ -682,7 +691,7 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
               data: (friends) {
                 if (friends.isEmpty) {
                   return Text(
-                    'No friends found. Add friends from the Social tab first.',
+                    loc.habitFormNoFriends,
                     style: Theme.of(
                       context,
                     ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),
@@ -733,8 +742,7 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
                 AppError.fromAny(
                   err,
                   fallbackCode: 'habit_form_friends_load_failed',
-                  fallbackMessage:
-                      'Hable could not load your friend list right now.',
+                  fallbackMessage: loc.habitFormFriendsLoadFailed,
                   fallbackKind: AppErrorKind.inline,
                 ).message,
               ),

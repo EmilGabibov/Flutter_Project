@@ -8,6 +8,16 @@ Initialize the local Doppler project for backend secrets:
 cd /Flutter/hable/backend && npm run setup:doppler
 ```
 
+Run the local Pages dev server with Doppler secrets loaded:
+```bash
+cd /Flutter/hable/backend && npm run dev
+```
+
+Sync the Hable email secrets from Doppler `hable/dev` into the Pages project:
+```bash
+cd /Flutter/hable/backend && npm run sync:pages-secrets
+```
+
 ## Web Deployment
 Deploy the web version of the Flutter app to Cloudflare Pages:
 ```bash

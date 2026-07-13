@@ -50,7 +50,10 @@ To participate in social/cloud sync features, users must verify their email. Thi
 
 ### Email Delivery Configuration
 - `PRIVATE_EMAIL_SENDER_HABLE`: Verified sender address used by Hable's email flow.
+- `CLOUDFLARE_ACCOUNT_ID`: Cloudflare account ID for the email-sending API.
+- `PRIVATE_CLOUDFLARE_EMAIL_API_TOKEN`: API token with permission to send email for the Hable account.
 - `EMAIL_WORKER`: Optional Cloudflare service binding for PIN delivery without duplicating sender/API-token secrets.
+- To push the current Doppler values into the Hable Pages project, run `cd /Flutter/hable/backend && npm run sync:pages-secrets`.
 
 ## 5. Error Handling and Normalization
 

@@ -54,6 +54,7 @@ const levelTiers = [
   { id: 'legend', name: 'Legend', minPoints: 1000 },
 ] as const
 const quotableDailyQuoteUrl = 'https://api.quotable.io/quotes/random?tags=inspirational'
+const cloudflareEmailRequestTimeoutMs = 4500
 
 // --- Helpers ---
 async function hashPassword(password: string): Promise<string> {
@@ -317,8 +318,11 @@ async function sendPinEmail(
     throw new Error('Cloudflare email binding and REST credentials are both unavailable.')
   }
 
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), cloudflareEmailRequestTimeoutMs)
   const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/email/sending/send`, {
     method: 'POST',
+    signal: controller.signal,
     headers: {
       'Authorization': `Bearer ${apiToken}`,
       'Content-Type': 'application/json',
@@ -330,7 +334,7 @@ async function sendPinEmail(
       html,
       text,
     }),
-  })
+  }).finally(() => clearTimeout(timeout))
 
   if (!response.ok) {
     const details = await response.text().catch(() => '')

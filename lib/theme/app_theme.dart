@@ -135,4 +135,19 @@ class AppTheme {
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
     ),
   );
+
+  static ThemeData get highContrastTheme {
+    final base = lightTheme;
+    return base.copyWith(
+      colorScheme: base.colorScheme.copyWith(
+        primary: const Color(0xFF4A6839), // much darker green
+        secondary: const Color(0xFF69488B), // much darker purple
+        error: const Color(0xFFC01533), // much darker red
+      ),
+      textTheme: base.textTheme.apply(
+        bodyColor: Colors.black, // True black
+        displayColor: Colors.black,
+      ),
+    );
+  }
 }

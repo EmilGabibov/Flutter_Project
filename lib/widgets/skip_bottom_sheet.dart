@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 
 /// Glassmorphic bottom sheet requiring a journal entry to process a skip.
@@ -47,6 +48,7 @@ class _SkipBottomSheetState extends State<SkipBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return Padding(
@@ -83,14 +85,14 @@ class _SkipBottomSheetState extends State<SkipBottomSheet> {
 
                 // Title
                 Text(
-                  'Skipping "${widget.habitTitle}"',
+                  loc.skipSheetTitle(widget.habitTitle),
                   style: Theme.of(
                     context,
                   ).textTheme.titleLarge?.copyWith(color: AppTheme.overdueRose),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'This will add +2 days to your journey. Write a quick journal entry to continue.',
+                  loc.skipSheetBody,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 20),
@@ -100,9 +102,7 @@ class _SkipBottomSheetState extends State<SkipBottomSheet> {
                   controller: _controller,
                   maxLines: 3,
                   autofocus: true,
-                  decoration: const InputDecoration(
-                    hintText: 'Why are you skipping today?',
-                  ),
+                  decoration: InputDecoration(hintText: loc.skipSheetHint),
                   onChanged: (value) {
                     setState(() {
                       _isValid = value.trim().isNotEmpty;
@@ -126,7 +126,7 @@ class _SkipBottomSheetState extends State<SkipBottomSheet> {
                           ? AppTheme.skipAmber
                           : AppTheme.warmGray,
                     ),
-                    child: const Text('Confirm Skip'),
+                    child: Text(loc.skipSheetConfirm),
                   ),
                 ),
               ],

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hable/l10n/app_localizations.dart';
-import 'package:hable/l10n/app_localizations.dart';
+
 
 import '../theme/app_theme.dart';
 import '../widgets/usage_tracked_screen.dart';
@@ -133,11 +133,15 @@ class MainNavigationShellState extends ConsumerState<MainNavigationShell> {
   void switchToTab(int index, {int? socialSubTab, String? homeHabitId}) {
     if (_selectedIndex != index) {
       setState(() => _selectedIndex = index);
-      _pageController.animateToPage(
-        index,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+      if (MediaQuery.of(context).disableAnimations) {
+        _pageController.jumpToPage(index);
+      } else {
+        _pageController.animateToPage(
+          index,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
     }
     if (index == 1 && socialSubTab != null) {
       // Post-frame to ensure the Social tab is built before switching.

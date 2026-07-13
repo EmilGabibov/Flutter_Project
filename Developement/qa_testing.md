@@ -449,8 +449,8 @@ All acceptance criteria met:
 **Repair:**
 - Ran `npx wrangler d1 execute hable_db --remote --file=./schema.sql`.
 - Ran `npm run deploy` from `backend/` so Pages Functions were deployed with the API bundle.
-- Added `EMAIL_WORKER` service binding to Hable's Pages config, pointing to the existing `campusweb-mailer` Worker.
-- Updated `sendPinEmail` so an `EMAIL_WORKER` binding can send PIN emails without requiring duplicate sender/API-token secrets in Hable; Hable uses `PRIVATE_EMAIL_SENDER_HABLE` when it needs a direct sender value.
+- `sendPinEmail` now uses Hable's direct Cloudflare Email Sending path with `PRIVATE_EMAIL_SENDER_HABLE`, `CLOUDFLARE_ACCOUNT_ID`, and `PRIVATE_CLOUDFLARE_EMAIL_API_TOKEN`.
+- Added a Doppler-to-Pages secret sync helper so the email secrets can be pushed into the Hable Pages project from `hable/dev`.
 
 **Production checks:**
 - `POST https://hable.pages.dev/api/auth/register` returned `200` and a JWT/user payload.

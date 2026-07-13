@@ -30,6 +30,7 @@ import '../providers/mud_tuning_provider.dart';
 import '../widgets/usage_tracked_screen.dart';
 import '../widgets/narrow_layout.dart';
 import '../widgets/language_selector.dart';
+import '../widgets/accessibility_selector.dart';
 
 /// Profile Screen — heavy data layer.
 /// All historical data and charts belong here exclusively.
@@ -827,11 +828,11 @@ class SettingsScreen extends ConsumerWidget {
               const SizedBox(height: 12),
               const _MudTuningCard(),
               const SizedBox(height: 12),
-              const _SettingsPlaceholderCard(
-                icon: Icons.accessibility_new_rounded,
-                title: 'Accessibility',
-                description:
-                    'Foundation placeholder for reduced motion, larger text, and contrast preferences.',
+              const Card(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 4),
+                  child: AccessibilitySelector(compact: false),
+                ),
               ),
               const SizedBox(height: 12),
               const Card(
@@ -1002,49 +1003,6 @@ class _SettingsAccountCard extends StatelessWidget {
   }
 }
 
-class _SettingsPlaceholderCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String description;
-
-  const _SettingsPlaceholderCard({
-    required this.icon,
-    required this.title,
-    required this.description,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      label: '$title settings placeholder. $description',
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icon, color: AppTheme.warmGray),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 6),
-                    Text(
-                      description,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _MudTuningCard extends ConsumerWidget {
   const _MudTuningCard();
@@ -1135,7 +1093,7 @@ class _CloudSyncActivationCardState
   void didUpdateWidget(covariant _CloudSyncActivationCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     final newEmail = widget.user?.email ?? '';
-    if (oldWidget.user?.email != newEmail && !_pinSent) {
+    if (!_pinSent && _emailController.text.isEmpty && newEmail.isNotEmpty) {
       _emailController.text = newEmail;
     }
   }

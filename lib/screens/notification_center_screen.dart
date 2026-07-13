@@ -239,7 +239,7 @@ class NotificationCenterScreen extends ConsumerWidget {
             if (habitId != null) {
               await Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => HabitDashboardScreen(habitId: habitId),
+                  builder: (_) => HabitDashboardScreen(userId: userId),
                 ),
               );
             }

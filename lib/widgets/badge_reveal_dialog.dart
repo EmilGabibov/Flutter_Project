@@ -62,6 +62,17 @@ class _BadgeRevealDialogState extends State<BadgeRevealDialog>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.of(context).disableAnimations) {
+      _controller.duration = Duration.zero;
+      _controller.value = 1.0;
+    } else {
+      _controller.duration = const Duration(seconds: 3);
+    }
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();

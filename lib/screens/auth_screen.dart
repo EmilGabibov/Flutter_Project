@@ -7,6 +7,8 @@ import '../widgets/skeletons.dart';
 import '../widgets/usage_tracked_screen.dart';
 import 'onboarding/onboarding_slides_screen.dart';
 import '../widgets/language_selector.dart';
+import '../widgets/accessibility_selector.dart';
+import '../l10n/app_localizations.dart';
 
 enum AuthView { login, register, forgotPasswordRequest, forgotPasswordVerify }
 
@@ -56,6 +58,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   Future<void> _submit() async {
     final notifier = ref.read(authProvider.notifier);
+    final loc = AppLocalizations.of(context)!;
 
     if (_currentView == AuthView.login) {
       final username = _usernameController.text.trim();
@@ -92,11 +95,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       final success = await notifier.resetPassword(email, pin, newPassword);
       if (success && mounted) {
         setState(() => _currentView = AuthView.login);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Password reset successful. Please log in.'),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(loc.authResetSuccessMessage)));
       }
     }
   }
@@ -119,6 +120,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
+    final loc = AppLocalizations.of(context)!;
 
     if (_isAutoLoggingIn) {
       return const Scaffold(body: SafeArea(child: _AuthLoadingSkeleton()));
@@ -137,25 +139,24 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
     switch (_currentView) {
       case AuthView.login:
-        title = 'Welcome to\nHable.';
-        subtitle = 'Log in to continue your journey.';
-        buttonText = 'Log In';
+        title = loc.authWelcomeTitle;
+        subtitle = loc.authLoginSubtitle;
+        buttonText = loc.authLoginButton;
         break;
       case AuthView.register:
-        title = 'Join Hable.';
-        subtitle =
-            'Choose a username and password. You can activate cloud recovery from Profile later.';
-        buttonText = 'Sign Up';
+        title = loc.authJoinTitle;
+        subtitle = loc.authJoinSubtitle;
+        buttonText = loc.authSignUpButton;
         break;
       case AuthView.forgotPasswordRequest:
-        title = 'Reset Password';
-        subtitle = 'Enter your email to receive a verification PIN.';
-        buttonText = 'Send PIN';
+        title = loc.authResetTitle;
+        subtitle = loc.authResetSubtitle;
+        buttonText = loc.authSendPinButton;
         break;
       case AuthView.forgotPasswordVerify:
-        title = 'Verify PIN';
-        subtitle = 'Enter the PIN sent to your email and your new password.';
-        buttonText = 'Reset Password';
+        title = loc.authVerifyTitle;
+        subtitle = loc.authVerifySubtitle;
+        buttonText = loc.authResetTitle;
         break;
     }
 
@@ -176,7 +177,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
-                      children: const [LanguageSelector(compact: true)],
+                      children: const [
+                        AccessibilitySelector(),
+                        LanguageSelector(compact: true),
+                      ],
                     ),
                     const Spacer(flex: 2),
                     Text(
@@ -194,9 +198,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         _currentView == AuthView.register)
                       TextField(
                         controller: _usernameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Username',
-                          prefixIcon: Icon(Icons.person_outline_rounded),
+                        decoration: InputDecoration(
+                          labelText: loc.authUsernameLabel,
+                          prefixIcon: const Icon(Icons.person_outline_rounded),
                         ),
                         autocorrect: false,
                         enableSuggestions: false,
@@ -206,9 +210,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     if (_currentView == AuthView.forgotPasswordRequest)
                       TextField(
                         controller: _emailController,
-                        decoration: const InputDecoration(
-                          labelText: 'Email',
-                          prefixIcon: Icon(Icons.email_outlined),
+                        decoration: InputDecoration(
+                          labelText: loc.authEmailLabel,
+                          prefixIcon: const Icon(Icons.email_outlined),
                         ),
                         keyboardType: TextInputType.emailAddress,
                         textInputAction:
@@ -223,9 +227,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     if (_currentView == AuthView.forgotPasswordVerify)
                       TextField(
                         controller: _pinController,
-                        decoration: const InputDecoration(
-                          labelText: '6-digit PIN',
-                          prefixIcon: Icon(Icons.pin_outlined),
+                        decoration: InputDecoration(
+                          labelText: loc.authPinLabel,
+                          prefixIcon: const Icon(Icons.pin_outlined),
                         ),
                         keyboardType: TextInputType.number,
                         textInputAction: TextInputAction.next,
@@ -239,8 +243,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           decoration: InputDecoration(
                             labelText:
                                 _currentView == AuthView.forgotPasswordVerify
-                                ? 'New Password'
-                                : 'Password',
+                                ? loc.authNewPasswordLabel
+                                : loc.authPasswordLabel,
                             prefixIcon: const Icon(Icons.lock_outline_rounded),
                           ),
                           onSubmitted: (_) => _submit(),
@@ -252,8 +256,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         child: TextButton(
                           onPressed: () =>
                               _switchView(AuthView.forgotPasswordRequest),
-                          child: const Text(
-                            'Forgot Password?',
+                          child: Text(
+                            loc.authForgotPassword,
                             style: TextStyle(color: AppTheme.sageGreen),
                           ),
                         ),
@@ -274,7 +278,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     ElevatedButton(
                       onPressed: authState.isLoading ? null : _submit,
                       child: Text(
-                        authState.isLoading ? 'Working...' : buttonText,
+                        authState.isLoading ? loc.authWorking : buttonText,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -290,8 +294,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                               ),
                         child: Text(
                           _currentView == AuthView.login
-                              ? 'Need an account? Sign up'
-                              : 'Already have an account? Log in',
+                              ? loc.authNeedAccount
+                              : loc.authAlreadyHaveAccount,
                           style: const TextStyle(color: AppTheme.sageGreen),
                         ),
                       )
@@ -300,14 +304,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         onPressed: authState.isLoading
                             ? null
                             : () => _switchView(AuthView.login),
-                        child: const Text(
-                          'Back to Login',
+                        child: Text(
+                          loc.authBackToLogin,
                           style: TextStyle(color: AppTheme.sageGreen),
                         ),
                       ),
                     const SizedBox(height: 16),
                     Text(
-                      'Hable complies with European data protection requirements, including GDPR.',
+                      loc.authGdprFooter,
                       key: const Key('auth-data-protection-footer'),
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(

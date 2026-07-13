@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../database/database.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../screens/profile_screen.dart';
 
@@ -18,6 +19,7 @@ class PartnerTicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     if (partners.isEmpty) return const SizedBox.shrink();
 
     return Column(
@@ -26,7 +28,7 @@ class PartnerTicker extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
           child: Text(
-            'Partners',
+            loc.partnerSectionTitle,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -72,13 +74,18 @@ class _PartnerAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final initial = partner.username.isNotEmpty
         ? partner.username[0].toUpperCase()
         : '?';
 
     return Semantics(
-      label:
-          '${partner.username}, ${partner.hasCompletedToday ? "completed today" : "not completed yet"}. Opens profile.',
+      label: loc.partnerTickerProfileSemantics(
+        partner.username,
+        partner.hasCompletedToday
+            ? loc.partnerStateCompletedToday
+            : loc.partnerTickerStateNotCompletedYet,
+      ),
       button: true,
       child: Column(
         mainAxisSize: MainAxisSize.min,

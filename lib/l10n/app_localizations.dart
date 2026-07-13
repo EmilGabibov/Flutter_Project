@@ -639,6 +639,420 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No habits yet. Tap the + to start your first challenge.'**
   String get dashboardNoHabits;
+
+  /// No description provided for @appGateRestoredLocalSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Restored local session on macOS.'**
+  String get appGateRestoredLocalSession;
+
+  /// No description provided for @appGateUpdatingHable.
+  ///
+  /// In en, this message translates to:
+  /// **'Updating Hable...'**
+  String get appGateUpdatingHable;
+
+  /// No description provided for @appGateRestoringSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring session...'**
+  String get appGateRestoringSession;
+
+  /// No description provided for @appGatePreparingHabits.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing your habits...'**
+  String get appGatePreparingHabits;
+
+  /// No description provided for @appGateLoadingProfileState.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading profile state...'**
+  String get appGateLoadingProfileState;
+
+  /// No description provided for @skipSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipping \"{habitTitle}\"'**
+  String skipSheetTitle(String habitTitle);
+
+  /// No description provided for @skipSheetBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This will add +2 days to your journey. Write a quick journal entry to continue.'**
+  String get skipSheetBody;
+
+  /// No description provided for @skipSheetHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Why are you skipping today?'**
+  String get skipSheetHint;
+
+  /// No description provided for @skipSheetConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Skip'**
+  String get skipSheetConfirm;
+
+  /// No description provided for @mudCompleteHabitLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete Habit'**
+  String get mudCompleteHabitLabel;
+
+  /// No description provided for @mudLongPressHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Long press to complete'**
+  String get mudLongPressHint;
+
+  /// No description provided for @mudDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done!'**
+  String get mudDone;
+
+  /// No description provided for @mudHoldToComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold to Complete'**
+  String get mudHoldToComplete;
+
+  /// No description provided for @socialSyncNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync now'**
+  String get socialSyncNow;
+
+  /// No description provided for @socialFindFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'Find friends'**
+  String get socialFindFriends;
+
+  /// No description provided for @partnerSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Partners'**
+  String get partnerSectionTitle;
+
+  /// No description provided for @partnerTickerStateNotCompletedYet.
+  ///
+  /// In en, this message translates to:
+  /// **'not completed yet'**
+  String get partnerTickerStateNotCompletedYet;
+
+  /// No description provided for @partnerTickerProfileSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}, {state}. Opens profile.'**
+  String partnerTickerProfileSemantics(String name, String state);
+
+  /// No description provided for @partnerNoPartnersYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No partners on this habit yet.'**
+  String get partnerNoPartnersYet;
+
+  /// No description provided for @partnerNoPartnersShort.
+  ///
+  /// In en, this message translates to:
+  /// **'No partners'**
+  String get partnerNoPartnersShort;
+
+  /// No description provided for @partnerStackCollapsedSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Partner stack. {count} total. Long press to expand partner states.'**
+  String partnerStackCollapsedSemantics(int count);
+
+  /// No description provided for @partnerExpandedSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Expanded partner states. Tap to collapse. Each row shows completion, pending, or nudged state.'**
+  String get partnerExpandedSemantics;
+
+  /// No description provided for @partnerTapToCollapse.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to collapse'**
+  String get partnerTapToCollapse;
+
+  /// No description provided for @partnerStateCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'completed'**
+  String get partnerStateCompleted;
+
+  /// No description provided for @partnerStateNudged.
+  ///
+  /// In en, this message translates to:
+  /// **'nudged'**
+  String get partnerStateNudged;
+
+  /// No description provided for @partnerStateSupporter.
+  ///
+  /// In en, this message translates to:
+  /// **'supporter'**
+  String get partnerStateSupporter;
+
+  /// No description provided for @partnerStatePending.
+  ///
+  /// In en, this message translates to:
+  /// **'pending'**
+  String get partnerStatePending;
+
+  /// No description provided for @partnerStateCompletedToday.
+  ///
+  /// In en, this message translates to:
+  /// **'completed today'**
+  String get partnerStateCompletedToday;
+
+  /// No description provided for @partnerStateSupporting.
+  ///
+  /// In en, this message translates to:
+  /// **'supporting'**
+  String get partnerStateSupporting;
+
+  /// No description provided for @partnerStatusSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} status {state}'**
+  String partnerStatusSemantics(String name, String state);
+
+  /// No description provided for @partnerRoleOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'owner'**
+  String get partnerRoleOwner;
+
+  /// No description provided for @partnerRolePartner.
+  ///
+  /// In en, this message translates to:
+  /// **'partner'**
+  String get partnerRolePartner;
+
+  /// No description provided for @partnerRoleSupporter.
+  ///
+  /// In en, this message translates to:
+  /// **'supporter'**
+  String get partnerRoleSupporter;
+
+  /// No description provided for @partnerProfileSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}, {role}, {state}. Opens profile.'**
+  String partnerProfileSemantics(String name, String role, String state);
+
+  /// No description provided for @partnerNudgeSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Nudge {name} on this habit.'**
+  String partnerNudgeSemantics(String name);
+
+  /// No description provided for @partnerNudgeTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Nudge {name}'**
+  String partnerNudgeTooltip(String name);
+
+  /// No description provided for @habitFormChooseIconTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an icon'**
+  String get habitFormChooseIconTitle;
+
+  /// No description provided for @habitFormChooseIconBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom habits can keep this icon with the title.'**
+  String get habitFormChooseIconBody;
+
+  /// No description provided for @habitFormSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'That habit did not stick yet. Please try again.'**
+  String get habitFormSaveFailed;
+
+  /// No description provided for @habitFormPresetDescriptionFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Name the behavior clearly so future you can understand it at a glance.'**
+  String get habitFormPresetDescriptionFallback;
+
+  /// No description provided for @habitFormCreateButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Create habit'**
+  String get habitFormCreateButton;
+
+  /// No description provided for @habitFormSaveChangesButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get habitFormSaveChangesButton;
+
+  /// No description provided for @habitFormCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Build a habit worth repeating'**
+  String get habitFormCreateTitle;
+
+  /// No description provided for @habitFormEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Refine this habit'**
+  String get habitFormEditTitle;
+
+  /// No description provided for @habitFormCreateBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a pattern, tune the duration, and invite the right people before you commit.'**
+  String get habitFormCreateBody;
+
+  /// No description provided for @habitFormEditBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust the title, timeline, and color without breaking the habit you already started.'**
+  String get habitFormEditBody;
+
+  /// No description provided for @habitFormNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Habit name'**
+  String get habitFormNameLabel;
+
+  /// No description provided for @habitFormNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Morning pages, no phone after 10, daily walk...'**
+  String get habitFormNameHint;
+
+  /// No description provided for @habitFormNameHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the icon to the left to personalize custom habits.'**
+  String get habitFormNameHelper;
+
+  /// No description provided for @habitFormNameErrorEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Give this habit a clear name.'**
+  String get habitFormNameErrorEmpty;
+
+  /// No description provided for @habitFormNameErrorShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Use at least 3 characters.'**
+  String get habitFormNameErrorShort;
+
+  /// No description provided for @habitFormPresetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start from a proven pattern'**
+  String get habitFormPresetTitle;
+
+  /// No description provided for @habitFormPresetBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a template to preload the title, duration, color, and cue copy.'**
+  String get habitFormPresetBody;
+
+  /// No description provided for @habitFormDescriptionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get habitFormDescriptionTitle;
+
+  /// No description provided for @habitFormDescriptionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Use one or two lines to make the habit specific enough to repeat on rough days.'**
+  String get habitFormDescriptionBody;
+
+  /// No description provided for @habitFormDescriptionHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'This can surface on the primary habit card.'**
+  String get habitFormDescriptionHelper;
+
+  /// No description provided for @habitFormDescriptionErrorLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the description under 160 characters.'**
+  String get habitFormDescriptionErrorLong;
+
+  /// No description provided for @habitFormDurationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get habitFormDurationTitle;
+
+  /// No description provided for @habitFormDurationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Popular challenge lengths help users commit to a finite promise.'**
+  String get habitFormDurationBody;
+
+  /// No description provided for @habitFormDurationChip.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days'**
+  String habitFormDurationChip(int days);
+
+  /// No description provided for @habitFormCustomDaysLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom number of days'**
+  String get habitFormCustomDaysLabel;
+
+  /// No description provided for @habitFormDurationErrorInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a number of days.'**
+  String get habitFormDurationErrorInvalid;
+
+  /// No description provided for @habitFormDurationErrorMin.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration must be at least 1 day.'**
+  String get habitFormDurationErrorMin;
+
+  /// No description provided for @habitFormColorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ring color'**
+  String get habitFormColorTitle;
+
+  /// No description provided for @habitFormColorBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the color this habit will carry across its card and celebrations.'**
+  String get habitFormColorBody;
+
+  /// No description provided for @habitFormPartnersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite partners'**
+  String get habitFormPartnersTitle;
+
+  /// No description provided for @habitFormPartnersBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared habits can start with friends who already follow you.'**
+  String get habitFormPartnersBody;
+
+  /// No description provided for @habitFormNoFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'No friends found. Add friends from the Social tab first.'**
+  String get habitFormNoFriends;
+
+  /// No description provided for @habitFormFriendsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Hable could not load your friend list right now.'**
+  String get habitFormFriendsLoadFailed;
 }
 
 class _AppLocalizationsDelegate

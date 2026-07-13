@@ -544,7 +544,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
                 child: Row(
                   children: [
                     Text(
-                      'Social',
+                      loc?.socialTabTitle ?? 'Social',
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
                     const Spacer(),
@@ -560,7 +560,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
                     else
                       IconButton(
                         icon: const Icon(Icons.sync_rounded),
-                        tooltip: 'Sync now',
+                        tooltip: loc?.socialSyncNow ?? 'Sync now',
                         onPressed: () {
                           ref
                               .read(foregroundSyncControllerProvider.notifier)
@@ -568,10 +568,10 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
                         },
                       ),
                     Semantics(
-                      label: 'Find friends',
+                      label: loc?.socialFindFriends ?? 'Find friends',
                       button: true,
                       child: IconButton(
-                        tooltip: 'Find friends',
+                        tooltip: loc?.socialFindFriends ?? 'Find friends',
                         icon: const Icon(Icons.person_search_rounded),
                         onPressed: () => _showFindFriendsSheet(context),
                       ),

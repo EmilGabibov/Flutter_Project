@@ -294,4 +294,245 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get dashboardNoHabits =>
       'Noch keine Gewohnheiten. Tippe auf das +, um deine erste Herausforderung zu starten.';
+
+  @override
+  String get appGateRestoredLocalSession => 'Restored local session on macOS.';
+
+  @override
+  String get appGateUpdatingHable => 'Updating Hable...';
+
+  @override
+  String get appGateRestoringSession => 'Restoring session...';
+
+  @override
+  String get appGatePreparingHabits => 'Preparing your habits...';
+
+  @override
+  String get appGateLoadingProfileState => 'Loading profile state...';
+
+  @override
+  String skipSheetTitle(String habitTitle) {
+    return 'Skipping \"$habitTitle\"';
+  }
+
+  @override
+  String get skipSheetBody =>
+      'This will add +2 days to your journey. Write a quick journal entry to continue.';
+
+  @override
+  String get skipSheetHint => 'Why are you skipping today?';
+
+  @override
+  String get skipSheetConfirm => 'Confirm Skip';
+
+  @override
+  String get mudCompleteHabitLabel => 'Complete Habit';
+
+  @override
+  String get mudLongPressHint => 'Long press to complete';
+
+  @override
+  String get mudDone => 'Done!';
+
+  @override
+  String get mudHoldToComplete => 'Hold to Complete';
+
+  @override
+  String get socialSyncNow => 'Sync now';
+
+  @override
+  String get socialFindFriends => 'Find friends';
+
+  @override
+  String get partnerSectionTitle => 'Partners';
+
+  @override
+  String get partnerTickerStateNotCompletedYet => 'not completed yet';
+
+  @override
+  String partnerTickerProfileSemantics(String name, String state) {
+    return '$name, $state. Opens profile.';
+  }
+
+  @override
+  String get partnerNoPartnersYet => 'No partners on this habit yet.';
+
+  @override
+  String get partnerNoPartnersShort => 'No partners';
+
+  @override
+  String partnerStackCollapsedSemantics(int count) {
+    return 'Partner stack. $count total. Long press to expand partner states.';
+  }
+
+  @override
+  String get partnerExpandedSemantics =>
+      'Expanded partner states. Tap to collapse. Each row shows completion, pending, or nudged state.';
+
+  @override
+  String get partnerTapToCollapse => 'Tap to collapse';
+
+  @override
+  String get partnerStateCompleted => 'completed';
+
+  @override
+  String get partnerStateNudged => 'nudged';
+
+  @override
+  String get partnerStateSupporter => 'supporter';
+
+  @override
+  String get partnerStatePending => 'pending';
+
+  @override
+  String get partnerStateCompletedToday => 'completed today';
+
+  @override
+  String get partnerStateSupporting => 'supporting';
+
+  @override
+  String partnerStatusSemantics(String name, String state) {
+    return '$name status $state';
+  }
+
+  @override
+  String get partnerRoleOwner => 'owner';
+
+  @override
+  String get partnerRolePartner => 'partner';
+
+  @override
+  String get partnerRoleSupporter => 'supporter';
+
+  @override
+  String partnerProfileSemantics(String name, String role, String state) {
+    return '$name, $role, $state. Opens profile.';
+  }
+
+  @override
+  String partnerNudgeSemantics(String name) {
+    return 'Nudge $name on this habit.';
+  }
+
+  @override
+  String partnerNudgeTooltip(String name) {
+    return 'Nudge $name';
+  }
+
+  @override
+  String get habitFormChooseIconTitle => 'Choose an icon';
+
+  @override
+  String get habitFormChooseIconBody =>
+      'Custom habits can keep this icon with the title.';
+
+  @override
+  String get habitFormSaveFailed =>
+      'That habit did not stick yet. Please try again.';
+
+  @override
+  String get habitFormPresetDescriptionFallback =>
+      'Name the behavior clearly so future you can understand it at a glance.';
+
+  @override
+  String get habitFormCreateButton => 'Create habit';
+
+  @override
+  String get habitFormSaveChangesButton => 'Save changes';
+
+  @override
+  String get habitFormCreateTitle => 'Build a habit worth repeating';
+
+  @override
+  String get habitFormEditTitle => 'Refine this habit';
+
+  @override
+  String get habitFormCreateBody =>
+      'Choose a pattern, tune the duration, and invite the right people before you commit.';
+
+  @override
+  String get habitFormEditBody =>
+      'Adjust the title, timeline, and color without breaking the habit you already started.';
+
+  @override
+  String get habitFormNameLabel => 'Habit name';
+
+  @override
+  String get habitFormNameHint =>
+      'Morning pages, no phone after 10, daily walk...';
+
+  @override
+  String get habitFormNameHelper =>
+      'Tap the icon to the left to personalize custom habits.';
+
+  @override
+  String get habitFormNameErrorEmpty => 'Give this habit a clear name.';
+
+  @override
+  String get habitFormNameErrorShort => 'Use at least 3 characters.';
+
+  @override
+  String get habitFormPresetTitle => 'Start from a proven pattern';
+
+  @override
+  String get habitFormPresetBody =>
+      'Pick a template to preload the title, duration, color, and cue copy.';
+
+  @override
+  String get habitFormDescriptionTitle => 'Description';
+
+  @override
+  String get habitFormDescriptionBody =>
+      'Use one or two lines to make the habit specific enough to repeat on rough days.';
+
+  @override
+  String get habitFormDescriptionHelper =>
+      'This can surface on the primary habit card.';
+
+  @override
+  String get habitFormDescriptionErrorLong =>
+      'Keep the description under 160 characters.';
+
+  @override
+  String get habitFormDurationTitle => 'Duration';
+
+  @override
+  String get habitFormDurationBody =>
+      'Popular challenge lengths help users commit to a finite promise.';
+
+  @override
+  String habitFormDurationChip(int days) {
+    return '$days days';
+  }
+
+  @override
+  String get habitFormCustomDaysLabel => 'Custom number of days';
+
+  @override
+  String get habitFormDurationErrorInvalid => 'Enter a number of days.';
+
+  @override
+  String get habitFormDurationErrorMin => 'Duration must be at least 1 day.';
+
+  @override
+  String get habitFormColorTitle => 'Ring color';
+
+  @override
+  String get habitFormColorBody =>
+      'Choose the color this habit will carry across its card and celebrations.';
+
+  @override
+  String get habitFormPartnersTitle => 'Invite partners';
+
+  @override
+  String get habitFormPartnersBody =>
+      'Shared habits can start with friends who already follow you.';
+
+  @override
+  String get habitFormNoFriends =>
+      'No friends found. Add friends from the Social tab first.';
+
+  @override
+  String get habitFormFriendsLoadFailed =>
+      'Hable could not load your friend list right now.';
 }
