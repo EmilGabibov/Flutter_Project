@@ -10,6 +10,7 @@ import 'dart:async';
 import '../database/tables.dart';
 
 class LocalReminderService {
+  static const int _slotFamilyMultiplier = 1000;
   final FlutterLocalNotificationsPlugin _plugin;
   bool _initialized = false;
   bool _pluginAvailable = true;
@@ -17,9 +18,8 @@ class LocalReminderService {
   final _payloadStreamController = StreamController<String?>.broadcast();
   Stream<String?> get onPayloadTapped => _payloadStreamController.stream;
 
-  LocalReminderService({
-    FlutterLocalNotificationsPlugin? plugin,
-  }) : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
+  LocalReminderService({FlutterLocalNotificationsPlugin? plugin})
+    : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
   bool get supportsScheduling =>
       !kIsWeb &&
@@ -131,6 +131,7 @@ class LocalReminderService {
   }
 
   Future<void> scheduleReminder({
+    required int notificationId,
     required String userId,
     required ReminderType type,
     required int hour,
@@ -157,7 +158,7 @@ class LocalReminderService {
     }
 
     await _plugin.zonedSchedule(
-      id: LocalReminderService.notificationIdForSlot(type),
+      id: notificationId,
       title: title,
       body: body,
       scheduledDate: scheduled,
@@ -187,28 +188,71 @@ class LocalReminderService {
     return null;
   }
 
-  Future<void> cancelReminder(String userId, ReminderType type) async {
+  Future<void> cancelReminder(
+    int notificationId, {
+    String? userId,
+    ReminderType? type,
+  }) async {
     if (!supportsScheduling) return;
     await initialize();
     if (!_pluginAvailable) return;
-    // Cancel any legacy hash-based ID that may still be scheduled from a prior build,
-    // then cancel the new stable slot ID.
-    await _plugin.cancel(id: _legacyHashIdForUserAndType(userId, type));
-    await _plugin.cancel(id: notificationIdForSlot(type));
+
+    // Cancel legacy hash-based ID if provided, for backwards compatibility
+    if (userId != null && type != null) {
+      await _plugin.cancel(id: _legacyHashIdForUserAndType(userId, type));
+    }
+
+    await _plugin.cancel(id: notificationId);
   }
 
-  /// Returns the stable, slot-based OS notification ID for [type].
+  Future<void> cancelReminderVariants({
+    required int notificationId,
+    int? legacySlotNotificationId,
+    String? userId,
+    ReminderType? type,
+  }) async {
+    if (!supportsScheduling) return;
+    await initialize();
+    if (!_pluginAvailable) return;
+
+    if (userId != null && type != null) {
+      await _plugin.cancel(id: _legacyHashIdForUserAndType(userId, type));
+    }
+    if (legacySlotNotificationId != null) {
+      await _plugin.cancel(id: legacySlotNotificationId);
+    }
+    await _plugin.cancel(id: notificationId);
+  }
+
+  /// Returns the base OS notification ID for [type].
   ///
   /// Reserved ranges:
   ///   100 – 199  → self-habit daily reminders  (dailyHabit = 100)
   ///   200 – 299  → friend-activity reminders   (friendActivity = 200, reserved)
   ///
   /// IDs are global to the device (one user at a time) and require no user hash.
-  static int notificationIdForSlot(ReminderType type) {
+  static int baseNotificationIdForSlot(ReminderType type) {
     switch (type) {
       case ReminderType.dailyHabit:
         return 100;
+      // Future: add friendActivity to ReminderType
+      // case ReminderType.friendActivity:
+      //   return 200;
     }
+  }
+
+  /// Stable per-reminder notification id inside a slot family.
+  static int notificationIdForReminder(ReminderType type, int reminderId) {
+    return baseNotificationIdForSlot(type) * _slotFamilyMultiplier + reminderId;
+  }
+
+  /// Previous slot-family mapping used after the schema first allowed
+  /// multiple rows. Retained so updated builds can cancel old schedules.
+  static int legacySlotNotificationIdForReminder(
+    ReminderType type,
+    int reminderId,
+  ) {
+    return baseNotificationIdForSlot(type) + (reminderId % 100);
   }
 
   /// Legacy: hash-based ID used before slot ranges were introduced.

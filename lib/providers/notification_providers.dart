@@ -13,6 +13,10 @@ import '../data/mascot_reminder_copy.dart';
 import 'auth_provider.dart';
 import 'database_provider.dart';
 
+final backgroundSyncServiceProvider = Provider<BackgroundSyncService>((ref) {
+  return BackgroundSyncService();
+});
+
 final notificationsForUserProvider =
     StreamProvider.family<List<NotificationEvent>, String>((ref, userId) {
       final db = ref.watch(databaseProvider);
@@ -38,17 +42,13 @@ final unreadNotificationCountProvider = StreamProvider<int>((ref) async* {
   }
 });
 
-final reminderSettingForUserProvider =
-    StreamProvider.family<ReminderSetting?, String>((ref, userId) {
+final reminderSettingsForUserProvider =
+    StreamProvider.family<List<ReminderSetting>, String>((ref, userId) {
       final db = ref.watch(databaseProvider);
-      return db.watchReminderSetting(userId, ReminderType.dailyHabit);
+      return db.watchReminderSettings(userId, ReminderType.dailyHabit);
     });
 
-enum ReminderUpdateResult {
-  success,
-  denied,
-  unsupported,
-}
+enum ReminderUpdateResult { success, denied, unsupported }
 
 class NotificationActions {
   final Ref ref;
@@ -57,6 +57,8 @@ class NotificationActions {
 
   AppDatabase get _db => ref.read(databaseProvider);
   LocalReminderService get _reminders => ref.read(localReminderServiceProvider);
+  BackgroundSyncService get _backgroundSync =>
+      ref.read(backgroundSyncServiceProvider);
 
   Future<void> markRead(String notificationId) async {
     await _db.markNotificationRead(notificationId);
@@ -66,13 +68,92 @@ class NotificationActions {
     await _db.markAllNotificationsRead(userId);
   }
 
-  Future<ReminderUpdateResult> updateDailyReminder({
+  Future<ReminderUpdateResult> addDailyReminder({
     required String userId,
+    required int hour,
+    required int minute,
+  }) async {
+    if (!_reminders.supportsScheduling) {
+      return ReminderUpdateResult.unsupported;
+    }
+
+    final granted = await _reminders.requestPermission();
+    if (!granted) {
+      // Add a disabled reminder
+      await _db.insertReminderSetting(
+        ReminderSettingsCompanion.insert(
+          userId: userId,
+          type: const Value(ReminderType.dailyHabit),
+          isEnabled: const Value(false),
+          isPermissionDenied: const Value(true),
+          hour: Value(hour),
+          minute: Value(minute),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+      return ReminderUpdateResult.denied;
+    }
+
+    // Insert to get ID
+    final dbId = await _db.insertReminderSetting(
+      ReminderSettingsCompanion.insert(
+        userId: userId,
+        type: const Value(ReminderType.dailyHabit),
+        isEnabled: const Value(true),
+        isPermissionDenied: const Value(false),
+        hour: Value(hour),
+        minute: Value(minute),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+
+    final notificationId = LocalReminderService.notificationIdForReminder(
+      ReminderType.dailyHabit,
+      dbId,
+    );
+
+    final copy = MascotReminderCopyHelper.getCopyForType(
+      ReminderType.dailyHabit,
+    );
+    await _reminders.scheduleReminder(
+      notificationId: notificationId,
+      userId: userId,
+      type: ReminderType.dailyHabit,
+      hour: hour,
+      minute: minute,
+      title: copy.title,
+      body: copy.body,
+    );
+    await _backgroundSync.scheduleReminderPrefetch(
+      userId: userId,
+      type: ReminderType.dailyHabit,
+      reminderId: dbId,
+      targetHour: hour,
+      targetMinute: minute,
+    );
+
+    // Record notification event for logging
+    await _logReminderEvent(userId, true, hour, minute);
+
+    return ReminderUpdateResult.success;
+  }
+
+  Future<ReminderUpdateResult> updateDailyReminder({
+    required ReminderSetting setting,
     required bool enabled,
     required int hour,
     required int minute,
   }) async {
     bool permissionDenied = false;
+    final notificationId = LocalReminderService.notificationIdForReminder(
+      ReminderType.dailyHabit,
+      setting.id,
+    );
+    final legacySlotNotificationId =
+        LocalReminderService.legacySlotNotificationIdForReminder(
+          ReminderType.dailyHabit,
+          setting.id,
+        );
 
     if (enabled) {
       if (!_reminders.supportsScheduling) {
@@ -83,32 +164,53 @@ class NotificationActions {
         permissionDenied = true;
         enabled = false;
       } else {
-        final copy = MascotReminderCopyHelper.getCopyForType(ReminderType.dailyHabit);
+        await _reminders.cancelReminderVariants(
+          notificationId: notificationId,
+          legacySlotNotificationId: legacySlotNotificationId,
+          userId: setting.userId,
+          type: ReminderType.dailyHabit,
+        );
+        final copy = MascotReminderCopyHelper.getCopyForType(
+          ReminderType.dailyHabit,
+        );
         await _reminders.scheduleReminder(
-          userId: userId,
+          notificationId: notificationId,
+          userId: setting.userId,
           type: ReminderType.dailyHabit,
           hour: hour,
           minute: minute,
           title: copy.title,
           body: copy.body,
         );
-        await BackgroundSyncService().scheduleReminderPrefetch(userId, hour, minute);
+        await _backgroundSync.scheduleReminderPrefetch(
+          userId: setting.userId,
+          type: ReminderType.dailyHabit,
+          reminderId: setting.id,
+          targetHour: hour,
+          targetMinute: minute,
+        );
       }
     } else {
-      await _reminders.cancelReminder(userId, ReminderType.dailyHabit);
-      await BackgroundSyncService().cancelReminderPrefetch(userId);
+      await _reminders.cancelReminderVariants(
+        notificationId: notificationId,
+        legacySlotNotificationId: legacySlotNotificationId,
+        userId: setting.userId,
+        type: ReminderType.dailyHabit,
+      );
+      await _backgroundSync.cancelReminderPrefetch(
+        userId: setting.userId,
+        type: ReminderType.dailyHabit,
+        reminderId: setting.id,
+      );
     }
 
-    final now = DateTime.now();
-    await _db.saveReminderSetting(
-      ReminderSettingsCompanion(
-        userId: Value(userId),
-        type: const Value(ReminderType.dailyHabit),
-        isEnabled: Value(enabled),
-        isPermissionDenied: Value(permissionDenied),
-        hour: Value(hour),
-        minute: Value(minute),
-        updatedAt: Value(now),
+    await _db.updateReminderSetting(
+      setting.copyWith(
+        isEnabled: enabled,
+        isPermissionDenied: permissionDenied,
+        hour: hour,
+        minute: minute,
+        updatedAt: DateTime.now(),
       ),
     );
 
@@ -116,15 +218,141 @@ class NotificationActions {
       return ReminderUpdateResult.denied;
     }
 
+    await _logReminderEvent(setting.userId, enabled, hour, minute);
+
+    return ReminderUpdateResult.success;
+  }
+
+  Future<void> removeDailyReminder(ReminderSetting setting) async {
+    final notificationId = LocalReminderService.notificationIdForReminder(
+      ReminderType.dailyHabit,
+      setting.id,
+    );
+    await _reminders.cancelReminderVariants(
+      notificationId: notificationId,
+      legacySlotNotificationId:
+          LocalReminderService.legacySlotNotificationIdForReminder(
+            ReminderType.dailyHabit,
+            setting.id,
+          ),
+      userId: setting.userId,
+      type: ReminderType.dailyHabit,
+    );
+    await _backgroundSync.cancelReminderPrefetch(
+      userId: setting.userId,
+      type: ReminderType.dailyHabit,
+      reminderId: setting.id,
+    );
+    await _db.deleteReminderSetting(setting.id);
+  }
+
+  Future<void> restoreRemindersForUser(String userId) async {
+    final settings = await _db.getReminderSettings(
+      userId,
+      ReminderType.dailyHabit,
+    );
+    for (final setting in settings) {
+      if (!setting.isEnabled) continue;
+      try {
+        final hasPerm = await _reminders.checkPermission();
+        if (!hasPerm) {
+          await _db.updateReminderSetting(
+            setting.copyWith(
+              isPermissionDenied: true,
+              isEnabled: false,
+              updatedAt: DateTime.now(),
+            ),
+          );
+          continue;
+        }
+
+        final notificationId = LocalReminderService.notificationIdForReminder(
+          ReminderType.dailyHabit,
+          setting.id,
+        );
+        await _reminders.cancelReminderVariants(
+          notificationId: notificationId,
+          legacySlotNotificationId:
+              LocalReminderService.legacySlotNotificationIdForReminder(
+                ReminderType.dailyHabit,
+                setting.id,
+              ),
+          userId: userId,
+          type: ReminderType.dailyHabit,
+        );
+        await _reminders.scheduleReminder(
+          notificationId: notificationId,
+          userId: userId,
+          type: ReminderType.dailyHabit,
+          hour: setting.hour,
+          minute: setting.minute,
+          title: 'Hable reminder',
+          body: 'Open Hable and check today\'s habits.',
+          payload: 'home',
+        );
+        await _backgroundSync.scheduleReminderPrefetch(
+          userId: userId,
+          type: ReminderType.dailyHabit,
+          reminderId: setting.id,
+          targetHour: setting.hour,
+          targetMinute: setting.minute,
+        );
+      } catch (error) {
+        debugPrint('Failed to restore reminder schedule: $error');
+      }
+    }
+  }
+
+  Future<void> cancelRemindersForUser(String userId) async {
+    final settings = await _db.getReminderSettings(
+      userId,
+      ReminderType.dailyHabit,
+    );
+    for (final setting in settings) {
+      try {
+        final notificationId = LocalReminderService.notificationIdForReminder(
+          ReminderType.dailyHabit,
+          setting.id,
+        );
+        await _reminders.cancelReminderVariants(
+          notificationId: notificationId,
+          legacySlotNotificationId:
+              LocalReminderService.legacySlotNotificationIdForReminder(
+                ReminderType.dailyHabit,
+                setting.id,
+              ),
+          userId: userId,
+          type: ReminderType.dailyHabit,
+        );
+        await _backgroundSync.cancelReminderPrefetch(
+          userId: userId,
+          type: ReminderType.dailyHabit,
+          reminderId: setting.id,
+        );
+      } catch (error) {
+        debugPrint('Failed to cancel reminder schedule: $error');
+      }
+    }
+  }
+
+  Future<void> _logReminderEvent(
+    String userId,
+    bool enabled,
+    int hour,
+    int minute,
+  ) async {
+    final now = DateTime.now();
     final timeLabel = _formatTime(hour, minute);
-    final title = enabled ? 'Daily reminder enabled' : 'Daily reminder turned off';
+    final title = enabled ? 'Daily reminder set' : 'Daily reminder turned off';
     final body = enabled
         ? 'Hable will remind you each day at $timeLabel.'
-        : 'Daily habit reminders are turned off on this device.';
+        : 'Daily habit reminders are turned off for $timeLabel.';
 
     await _db.upsertNotificationEvent(
       NotificationEventsCompanion(
-        notificationId: Value('reminder_setting:$userId'),
+        notificationId: Value(
+          'reminder_setting_${userId}_${now.millisecondsSinceEpoch}',
+        ),
         userId: Value(userId),
         type: const Value(NotificationEventType.reminderSetting),
         sourceType: const Value('reminder_setting'),
@@ -140,53 +368,6 @@ class NotificationActions {
         updatedAt: Value(now),
       ),
     );
-
-    return ReminderUpdateResult.success;
-  }
-
-  Future<void> updateReminderPreferenceTime({
-    required String userId,
-    required bool enabled,
-    required int hour,
-    required int minute,
-  }) async {
-    await _db.saveReminderSetting(
-      ReminderSettingsCompanion(
-        userId: Value(userId),
-        type: const Value(ReminderType.dailyHabit),
-        isEnabled: Value(enabled),
-        hour: Value(hour),
-        minute: Value(minute),
-        updatedAt: Value(DateTime.now()),
-      ),
-    );
-  }
-
-  Future<void> restoreReminderForUser(String userId) async {
-    final setting = await _db.getReminderSetting(userId, ReminderType.dailyHabit);
-    if (setting == null || !setting.isEnabled) return;
-    try {
-      await _reminders.scheduleReminder(
-        userId: userId,
-        type: ReminderType.dailyHabit,
-        hour: setting.hour,
-        minute: setting.minute,
-        title: 'Hable reminder',
-        body: 'Open Hable and check today\'s habits.',
-      );
-      await BackgroundSyncService().scheduleReminderPrefetch(userId, setting.hour, setting.minute);
-    } catch (error) {
-      debugPrint('Failed to restore reminder schedule: $error');
-    }
-  }
-
-  Future<void> cancelReminderForUser(String userId) async {
-    try {
-      await _reminders.cancelReminder(userId, ReminderType.dailyHabit);
-      await BackgroundSyncService().cancelReminderPrefetch(userId);
-    } catch (error) {
-      debugPrint('Failed to cancel reminder schedule: $error');
-    }
   }
 
   String _formatTime(int hour, int minute) {

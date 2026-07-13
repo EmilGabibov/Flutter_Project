@@ -14,14 +14,15 @@ Because Hable involves mutual habit tracking and a offline-first sync engine, it
 2. Cloudflare Worker backend running locally (`npm run dev` in `backend/`).
 3. Local D1 schema applied: `npm run db:setup` in `backend/`.
 4. Port forwarding active: `adb reverse tcp:8787 tcp:8787`.
-5. Normal debug auth now uses `http://127.0.0.1:8787` by default; use `--dart-define=HABLE_API_BASE_URL=...` only when targeting a non-default host such as `10.0.2.2` on an emulator.
+5. Normal debug auth now resolves through the explicit backend-target contract: `HABLE_API_BASE_URL` override first, then `HABLE_APP_ENV` (`local`, `staging`, `production`), then fallback with debug/profile -> local and release -> production.
+6. For the standard local twin pass, use `HABLE_APP_ENV=local`; add `--dart-define=HABLE_API_BASE_URL=...` only when targeting a non-default host such as `10.0.2.2` on an emulator.
 
 ### Execution
 1. Install the primary app (Alice):
-   `flutter build apk --debug --flavor primary --dart-define=SEED_USER_ID=local-user-1 --dart-define=SEED_USERNAME=Alice`
+   `flutter build apk --debug --flavor primary --dart-define=HABLE_APP_ENV=local --dart-define=SEED_USER_ID=local-user-1 --dart-define=SEED_USERNAME=Alice`
    `adb install build/app/outputs/flutter-apk/app-primary-debug.apk`
 2. Install the friend app (Bob):
-   `flutter build apk --debug --flavor friend --dart-define=SEED_USER_ID=local-user-2 --dart-define=SEED_USERNAME=Bob`
+   `flutter build apk --debug --flavor friend --dart-define=HABLE_APP_ENV=local --dart-define=SEED_USER_ID=local-user-2 --dart-define=SEED_USERNAME=Bob`
    `adb install build/app/outputs/flutter-apk/app-friend-debug.apk`
 
 ### Smoke Verification Checklist
@@ -35,9 +36,10 @@ Because Hable involves mutual habit tracking and a offline-first sync engine, it
 - **Nested Settings:** From Profile, tap the gear icon and verify Settings opens with account/avatar, cloud activation, daily reminder, accessibility/language placeholders, and sign out. Settings must not appear as a fourth tab.
 - **Preset Habit Partner Invite:** Create a preset habit in Alice's app, select Bob from the accepted-friend chips, verify the queued habit sync runs before `sendHabitInvitation`, then open Bob's app and accept/decline the invitation banner.
 - **Shared Check-In Retention:** After Bob accepts Alice's habit invite, have Bob complete the shared habit on his app. Verify Bob's shared habit card remains visible on Home after check-in instead of disappearing from active habits.
+- **Solo Challenge Auto-Archive:** Complete the final remaining day on a solo habit and verify the card leaves Home, appears under Profile → Archived history, and still exposes history/rerun actions without affecting backend-owned achievement badges.
 - **Nudges:** Tap the separate hand/nudge action on a partnered habit card to enqueue a habit-scoped nudge. Wait for background sync and verify the receiving twin app shows a card-local ring pulse/chip such as "Nudged by Alice" and also records the notification-center row.
 - **Notification Center:** After sending a nudge, message, invite, or friend request, verify the receiver's Home bell switches to Social → Activity tab showing the event. Verify the unread badge clears after "Mark all read" is tapped.
-- **Daily Reminder:** From Profile, enable the daily reminder, grant OS permission, choose a time, restart the app, and verify the setting persists locally and restores scheduling without another prompt. Then disable it and verify the scheduled reminder is canceled.
+- **Daily Reminder:** From Profile, add two daily reminder times, grant OS permission, restart the app, and verify both settings persist locally and both schedules restore without another prompt. Delete one reminder and verify the remaining reminder still exists and still fires on its own schedule. Then disable the remaining reminder and verify its schedule is canceled.
 - **Friend Profile Drilldown:** From a habit card, tap a partner identity and verify it opens the friend's profile. Tap the separate hand/nudge action and verify a `sendNudge` queue item is created for that partner without navigating away. From the friend profile, tap `Follow` on an active habit and verify `HabitFormSheet` opens with the title prefilled; tap encourage and verify it uses the same queued nudge path.
 
 *(Note: Automated Flutter `integration_test` scripts are currently known to time out during the ADB install phase on physical devices, so this manual twin-harness remains the primary smoke procedure for Android hardware.)*
@@ -45,6 +47,7 @@ Because Hable involves mutual habit tracking and a offline-first sync engine, it
 ### Automated Web E2E Alternative (Playwright)
 To combat regressions without manual Android ADB passes, there is an automated Playwright suite located in the `e2e/` directory. It uses isolated browser contexts to simulate Alice and Bob interacting concurrently.
 1. Ensure the Flutter web build is running locally (e.g. `flutter run -d web-server --web-port 8080`).
+   Prefer `flutter run -d web-server --web-port 8080 --dart-define=HABLE_APP_ENV=local` for local Worker testing, or `--dart-define=HABLE_APP_ENV=production` when intentionally exercising the deployed backend from a local web shell.
 2. Ensure the Cloudflare backend is running (`cd backend && npm run dev`).
 3. Run the E2E suite:
    ```bash

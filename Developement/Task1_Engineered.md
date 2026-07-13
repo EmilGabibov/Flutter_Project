@@ -2,6 +2,12 @@
 
 ## Completed Tasks
 
+- 2026-07-13 16:12 CEST: [Introduce Explicit Environment-Based Backend Targeting For Flutter And Release Builds](Task2_Archived.md#introduce-explicit-environment-based-backend-targeting-for-flutter-and-release-builds)
+
+- 2026-07-12 14:35 Z: [Add Playwright Multi-User Regression Harness For Shared Habits And Social Interactions](Task2_Archived.md#add-playwright-multi-user-regression-harness-for-shared-habits-and-social-interactions)
+
+- 2026-07-13 11:46 CEST: [Auto-Archive Completed Habits Into Profile History And Expand Lifecycle Actions](Task2_Archived.md#auto-archive-completed-habits-into-profile-history-and-expand-lifecycle-actions)
+
 - 2026-07-12 14:28 CEST: [x] Fix Shared-Habit Hold-To-Complete Cancellation Before Threshold — **Completion notes:** 2026-07-12: Switched `GestureDetector` to `Listener` (`onPointerDown`/`Up`/`Cancel`) in `MudLongPressButton` to avoid 500ms delay and capture early releases reliably. Added `_isHolding` and `_completedDuringCurrentHold` flags to prevent completion callback from firing after cancellation. Implemented widget tests in `test/mud_long_press_button_test.dart` to verify early release cancellation and full hold completion. Tests pass.
 
 - 2026-07-11 21:19 CEST: Reorganize Social Hub From 5 Tabs To 3 (Friends + Inline Requests, Activity Feed, Leaderboard) — Merged Inbox and Notification Center into Activity tab, moved Find Friends to bottom sheet, Home bell switches to Social→Activity.
@@ -66,53 +72,6 @@
 - 2026-07-12 09:20 UTC+2: [Refine And Organize Development Documentation](Task2_Archived.md#refine-and-organize-development-documentation)
 - 2026-07-12 10:37 UTC+2: [Design Web Multi-User Browser Test Plan For Core Social Habit And Leaderboard Flows](Task2_Archived.md#design-web-multi-user-browser-test-plan-for-core-social-habit-and-leaderboard-flows)
 - 2026-07-12 10:37 UTC+2: [Document Scoring Leaderboard Quotes Rewards And Habit State Moments](Task2_Archived.md#document-scoring-leaderboard-quotes-rewards-and-habit-state-moments)
-
-## Remaining Tasks
-
-<a id="add-playwright-multi-user-regression-harness-for-shared-habits-and-social-interactions"></a>
-### [x] Add Playwright Multi-User Regression Harness For Shared Habits And Social Interactions
-
-**Raw source:** Add an end-to-end regression harness for partner shared habits that covers invite acceptance, mirrored completion state on both cards, nudge delivery in Social Activity, and score/flame award only after all participants complete.
-
-**Issue:** Testing the core multi-user loop (Alice and Bob) currently requires a manual, time-consuming ADB twin-app pass or manual browser juggling. Regressions in shared habit states, nudges, or scoring can easily slip through because single-user unit/widget tests cannot validate the asynchronous sync and state mirrored across two isolated clients.
-
-**Ponytail triage:**
-- *Should exist:* Yes. The social check-in and scoring loop is the app's primary interaction. Automated verification is essential.
-- *Smallest safe scope:* Create a Playwright (or similar multi-context) test script targeting the Web build. It should spawn two isolated browser contexts (Alice and Bob), register/login, and walk through the exact steps defined in `qa_web_multi_user_plan.md` up to mutual check-in and scoring.
-- *Skipped scope:* Do not attempt dual-device Appium/Flutter Driver tests on Android. Limit to Web for the multi-user E2E regression. No new UI features.
-- *Boundaries:* The harness must respect the offline-first sync (waiting for sync flushes) and not manipulate the database directly—only through the UI as a real user would.
-
-**Action:** Set up a Node/Playwright test project (e.g., in a new `e2e/` directory). Write a script that orchestrates two browser contexts. Implement the flow: Alice creates a habit and invites Bob -> Bob accepts -> Alice completes -> Bob completes -> Verify both cards update and leaderboard scores increment only after mutual completion.
-
-**Hable perspective:** Hable's offline-first architecture means UI state often relies on background sync. The test harness will need to handle async waits (e.g., waiting for the sync indicator to finish or UI to update) rather than expecting synchronous API responses.
-
-**Implementation scope:**
-- `e2e/package.json` & Playwright config: Setup for multi-context web testing.
-- `e2e/tests/shared_habit.spec.ts`: The main test script handling Alice and Bob's interactions.
-- `Developement/qa_testing.md`: Document the new automated web harness and how to run it.
-
-**Scalability considerations:** Scalability impact: Playwright tests can be flaky if they rely on hardcoded timeouts. The harness must scale by using smart locator waits (e.g., waiting for a specific DOM element or semantics label to update after sync) rather than arbitrary delays.
-
-**Future split guidance:** If the test suite grows to cover push notifications or offline scenarios (toggling network offline in Playwright), those should be split into separate tasks. This task is only for the happy path mutual completion and scoring loop.
-
-**Edge cases:** Network sync delays causing timeouts, animations (like the mud button) delaying state checks, seeded user cleanup to prevent test data pollution.
-
-**Acceptance criteria:**
-- A single command (e.g., `npm run test:e2e`) runs the dual-browser test.
-- The test verifies friend request, habit invite, invite acceptance, nudge delivery, and mutual completion.
-- The test verifies that points/flames are only awarded after *both* participants complete the habit.
-- The test runs reliably without arbitrary `sleep` commands, relying on UI/DOM state.
-- Documentation is updated.
-
-**Dependencies:** `Developement/qa_web_multi_user_plan.md`, `Developement/qa_testing.md`
-
-**Completion notes:** 
-- Initialized new Playwright project in `e2e/`.
-- Configured `e2e/playwright.config.ts` to support dual-browser-context tests targeting the web build via `BASE_URL`.
-- Implemented `e2e/tests/shared_habit.spec.ts` testing the complete mutual shared habit, nudge, and leaderboard score progression.
-- Updated `Developement/qa_testing.md` to document the new `npm run test` harness.
-- Updated `Developement/qa_web_multi_user_plan.md` explicitly referencing the new Playwright scripts.
-- Completed At: 2026-07-12 14:35 Z
 
 <a id="resolve-shared-habit-daily-check-in-and-lifecycle-sync-separation"></a>
 ### [x] Resolve Shared Habit Daily Check-In And Lifecycle Sync Separation
@@ -268,7 +227,127 @@
 
 **Dependencies:** `Developement/ux_habit_states_and_scoring.md`, `Developement/sys_social_and_analytics.md`, `Developement/qa_testing.md`
 
-**Completion notes:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+**Completion notes:** Completed on 2026-07-13. The completion splash screen (`lib/screens/completion_splash_screen.dart`) is implemented and integrated. It shows a dynamic congratulatory message, animation, and quotes from the daily sync when a habit is completed.
+
+<a id="add-swipeable-pageview-shell-for-home-social-and-profile-tabs"></a>
+### [x] Add Swipeable PageView Shell For Home Social And Profile Tabs
+
+**Raw source:** Smooth Tab Navigation. Action: Implement a horizontal `PageView` for the three primary tabs (Home, Social, Profile) to allow for smooth swiping, replacing the static bottom navigation taps.
+
+**Issue:** Hable’s authenticated shell currently uses a `NavigationBar` plus an `Offstage`/`TickerMode` stack in `lib/screens/main_navigation_shell.dart`. That preserves tab state, but it makes top-level navigation tap-only and prevents horizontal swiping between Home, Social, and Profile. Because the three-tab IA is now a core product contract, adding swipe navigation must preserve existing shell invariants: Home back behavior, Social’s internal tab routing, Home bell deep-linking into Social → Activity, and the current local-first screen state preservation. A naive swap to `PageView` could easily break lazy tab instantiation, reset nested Social state, or cause gesture conflicts with internal horizontal surfaces.
+
+**Triage:**
+- *Should exist:* Yes. This is a shell-level UX improvement on an already-stable three-tab information architecture.
+- *Smallest safe scope:* Replace the root `Offstage` stack with a controlled horizontal `PageView` that keeps the same three destinations and synchronizes with the bottom `NavigationBar`.
+- *Skipped scope:* Do not redesign the three-tab IA, change Social’s internal tabs, add gesture-driven nested routing, or animate deeper screen transitions in this task.
+- *Boundaries:* Keep this at the authenticated shell layer only. Home, Social, and Profile should continue to own their own content/state; the shell should only change how the user moves between them.
+
+**Action:** Introduce a `PageController`-driven `PageView` in `MainNavigationShell` so users can swipe horizontally across Home, Social, and Profile while still using the bottom navigation bar. Maintain programmatic tab switching for existing callers such as Home’s notification bell (`switchToTab(1, socialSubTab: 1)`) and preserve Android back behavior that returns to Home before exiting. Ensure the selected nav destination and the visible page stay in sync whether navigation starts from a tap, a swipe, or a shell-triggered deep link.
+
+**Hable perspective:** Hable’s shell already intentionally collapsed the product into exactly three primary destinations. Swipe navigation should reinforce that cohesive app structure without creating new destinations or mutating the ownership boundaries: Home remains the daily habit/action surface, Social remains friends/activity/leaderboard, and Profile remains identity/history/settings. The shell should feel smoother, but not “smarter” than the screens it hosts.
+
+**Implementation scope:**
+- `lib/screens/main_navigation_shell.dart`: replace or wrap the current `Offstage` destination switching with a state-preserving `PageView`/`PageController` solution, and keep `switchToTab()` working for internal callers.
+- Shell/back behavior: preserve the current PopScope rule where Android back from Social/Profile returns to Home first.
+- Existing widget coverage, likely `test/main_navigation_shell_test.dart`, plus any focused shell test needed to verify nav tap sync, swipe sync, and Home-bell → Social Activity routing still work.
+- Documentation: update `Developement/qa_testing.md` if the manual checklist should now explicitly verify swipe navigation across the three primary tabs.
+
+**Scalability considerations:** Scalability impact: none expected. The key scale concern is state preservation and rebuild churn: the shell must not recreate heavy tab trees on every swipe or lose nested Social/Home state as the user moves repeatedly across tabs.
+
+**Future split guidance:** If later work needs custom page transition physics, parallax shell motion, gesture disabling on specific platforms, or deeper nested swipe models inside Social/Profile, split those into follow-up tasks. This task is only for the top-level three-tab shell swipe contract.
+
+**Edge cases:** Rapid repeated swipes, Android back after partial swipe progress, `switchToTab()` called before the target page is fully built, Home bell opening Social → Activity while the user is mid-gesture, potential conflicts with nested horizontal widgets, and preserving current tab state after device rotation or rebuilds.
+
+**Acceptance criteria:**
+- Users can swipe horizontally between Home, Social, and Profile in the authenticated shell.
+- The bottom `NavigationBar` stays synchronized with the visible page for both tap and swipe navigation.
+- Existing shell-triggered routing, including Home bell → Social Activity, still works correctly.
+- Android back from Social/Profile still returns to Home before exiting.
+- Focused widget/test coverage verifies the new shell navigation contract.
+- Relevant docs are verified and updated where they previously described tap-only top-level tab behavior.
+
+**Dependencies:** `Developement/qa_testing.md`
+
+**Completion notes:** Completed on 2026-07-13. Replaced the static `Stack`/`Offstage` shell in `lib/screens/main_navigation_shell.dart` with a `PageView` and `PageController`. To maintain the state of the tabs lazily, introduced a `_KeepAlivePage` wrapper using `AutomaticKeepAliveClientMixin`. The shell now synchronizes programmatic tab switches, tap-based navigation, and swipe gestures seamlessly.
+
+<a id="remove-home-3d-visualizer-and-anchor-it-to-social-friends-surface"></a>
+### [x] Remove Home 3D Visualizer And Anchor It To Social Friends Surface
+
+**Raw source:** Viewport Optimization & 3D Environment. Observation: The 3D animation is currently heavy and occupies valuable viewport space on the Home screen. Action: Remove the 3D visualizer from the Home list. Relocate it to the Social Hub (Friends section) as a pinned card element. This ensures the Home screen remains fast and focused on action tiles.
+
+**Issue:** Hable already duplicated the `HabitEnvironmentVisualizer` into Social, but the raw objective is still not fully satisfied. `HomeScreen` continues to render the 3D visualizer high in the scroll stack above invitations and habits, which costs viewport space on the app’s primary daily-action surface. In `SocialHubScreen`, the visualizer is currently mounted above the whole tab body rather than being a deliberate Friends-tab pinned card. That leaves Home overloaded and Social ambiguous about whether the visualization belongs to the relationship surface or to the shell chrome.
+
+**Triage:**
+- *Should exist:* Yes. This is a concrete information-density and performance/attention issue on the most frequently used screen.
+- *Smallest safe scope:* Remove the visualizer from Home entirely and rehome the existing widget into the Friends tab as a pinned card near friend/request context, without redesigning the visualizer itself.
+- *Skipped scope:* Do not rewrite the 3D renderer, change particle behavior, add profiling infrastructure, or redesign the entire Social Hub layout in this task.
+- *Boundaries:* Reuse the existing `HabitEnvironmentVisualizer` widget and current Social/Home structure. This is a surface-placement correction, not a new graphics feature.
+
+**Action:** Delete the `HabitEnvironmentVisualizer` from the Home sliver stack so Home returns to quote, invitations, suggestions, and habit cards as its primary content. Move the Social copy out of the tab-shell header area and into the Friends tab as a pinned card element that reads as a social/ambient visualization rather than a global header. Keep the widget visually bounded so it does not dominate the friends list or collapse smaller viewports. Update the smallest relevant tests/docs to reflect the new ownership of the 3D surface.
+
+**Hable perspective:** Hable’s Home tab is for repeated scanning and check-ins, not for decorative ambient weight above the action list. The 3D environment belongs to the social/aspirational side of the product, which maps more naturally to Social → Friends where users think about people, shared habits, and future inspiration. That placement also preserves the vision register in `ux_social_vision.md` without burdening the operational Home flow.
+
+**Implementation scope:**
+- `lib/screens/home_screen.dart`: remove the 3D visualizer from the Home content stack.
+- `lib/screens/social/social_hub_screen.dart`: pin the existing `HabitEnvironmentVisualizer` into the Friends tab surface instead of placing it above all three Social sub-tabs.
+- Existing widget/layout tests, likely `test/main_navigation_shell_test.dart` plus one focused Social/Home widget assertion, to verify the visualizer is absent from Home and present in the Friends tab path.
+- Documentation: update the relevant UX/testing docs so they no longer describe the 3D environment as Home content.
+
+**Scalability considerations:** Scalability impact: none expected. The main benefit is reducing unnecessary render cost and vertical contention on Home while keeping the heavy visual in a less frequently scanned surface.
+
+**Future split guidance:** If Hable later wants interactive friend-space exploration, per-friend 3D drilldown, collapsible social ambient cards, or performance profiling of the renderer itself, split those into dedicated tasks. This task is only for correcting surface ownership and viewport pressure.
+
+**Edge cases:** Empty friends list, empty habits list, small mobile viewport, tab switching rebuilds, accessibility/semantics of the pinned visualizer card, and ensuring Social Activity/Leaderboard do not inherit extra vertical chrome they do not need.
+
+**Acceptance criteria:**
+- Home no longer renders `HabitEnvironmentVisualizer`.
+- Social Hub still exposes the visualizer, but specifically through the Friends surface rather than as a global header above all Social sub-tabs.
+- Home’s main scroll path becomes more action-dense without breaking invitation, suggested-habit, or habit-card rendering.
+- Focused widget/test coverage verifies the new surface placement.
+- Relevant docs are verified and updated where they previously implied the 3D visualizer belongs on Home.
+
+**Dependencies:** `Developement/ux_social_vision.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Completed on 2026-07-13. Removed `HabitEnvironmentVisualizer` from `lib/screens/home_screen.dart` and relocated it into the slivers list of the Friends tab in `lib/screens/social/social_hub_screen.dart` to save viewport space on the Home screen.
+
+<a id="remove-redundant-home-empty-state-add-habit-button-and-keep-fab-as-sole-cta"></a>
+### [x] Remove Redundant Home Empty-State Add Habit Button And Keep FAB As Sole CTA
+
+**Raw source:** Home Page Empty State Cleanup. Action: Consolidate the "Add Habit" buttons. Remove the secondary button and rely solely on the Floating Action Button (FAB) to reduce visual debt.
+
+**Issue:** Hable’s Home screen already exposes a persistent `FloatingActionButton.extended` labeled `Habit`, but the empty-habits state in `lib/screens/home_screen.dart` also renders an inline `ElevatedButton.icon` labeled `Add habit`. That duplicates the same creation action in the same viewport, adds visual noise to the empty state, and conflicts with the intended three-tab shell pattern where the primary Home creation affordance is the persistent FAB. The testing docs still encode the older dual-CTA expectation, so the product rule and QA guidance are out of sync.
+
+**Triage:**
+- *Should exist:* Yes. This is a small but real Home-screen polish issue with a clear current-state mismatch.
+- *Smallest safe scope:* Remove the duplicate inline empty-state add button, keep the explanatory empty-state copy, and preserve the Home FAB as the only habit-creation CTA.
+- *Skipped scope:* Do not redesign the full Home empty state, suggested habits section, quote card, or FAB styling/placement in this task.
+- *Boundaries:* Keep this limited to CTA consolidation and the related documentation/tests. Do not fold it into broader Home layout or 3D-environment changes.
+
+**Action:** Update the Home empty-state rendering so users are instructed to use the persistent FAB rather than being offered a second inline button that opens the same `HabitFormSheet`. Adjust the smallest relevant widget tests and QA docs to reflect that Home creation remains available through the FAB in both populated and empty states. Preserve accessibility semantics so the remaining FAB still clearly announces habit creation.
+
+**Hable perspective:** Hable’s Home tab is ring-first and action-focused. The FAB is already the durable entry point for creating a habit from Home, while Profile owns management/history and Social owns relationship flows. The empty state should therefore guide the user toward that existing affordance instead of introducing a second creation button that competes with it.
+
+**Implementation scope:**
+- `lib/screens/home_screen.dart`: remove the duplicate inline `Add habit` button from the empty state while keeping concise guidance text.
+- `test/main_navigation_shell_test.dart` or a focused Home/widget test: verify the Home FAB remains visible/usable as the sole creation CTA and that the empty state no longer renders a second add button.
+- `Developement/qa_testing.md`: update the manual checklist so empty-state verification confirms the FAB is the creation path rather than expecting a second button.
+
+**Scalability considerations:** Scalability impact: none expected. This is a presentation cleanup with no new data, sync, or provider behavior.
+
+**Future split guidance:** If the empty state later needs richer onboarding copy, illustration treatment, contextual quotes, or suggested-habit redesign, split that into a separate Home empty-state UX task. This task is only for consolidating duplicate creation CTAs.
+
+**Edge cases:** Empty habit list on narrow screens, accessibility/semantics of the remaining FAB, users landing on Home before sync populates habits, and tests/docs that still assume the inline button exists.
+
+**Acceptance criteria:**
+- Home no longer shows a second inline `Add habit` button when the habit list is empty.
+- The persistent Home FAB remains the sole habit-creation CTA and still opens `HabitFormSheet`.
+- The empty-state copy still clearly guides the user without leaving the screen actionless.
+- Focused widget/test coverage reflects the single-CTA behavior.
+- Relevant docs are verified and updated where they previously described two Home add-habit entry points.
+
+**Dependencies:** `Developement/ux_habit_states_and_scoring.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Completed on 2026-07-13. Removed the duplicate `ElevatedButton.icon` from the empty state in `lib/screens/home_screen.dart` and updated the instructional text to point users to the persistent `Habit` floating action button.
 
 <a id="add-local-shareable-achievement-card-render-from-server-owned-progression-data"></a>
 ### [x] Add Local Shareable Achievement Card Render From Server-Owned Progression Data
@@ -698,3 +777,1215 @@
 **Dependencies:** `Developement/sys_schema_and_logic.md`, `Developement/sys_offline_architecture.md`, `Developement/qa_testing.md`
 
 **Completion notes:** Completed on 2026-07-12. Replaced `_notificationIdForUserAndType()` hash derivation with `static int notificationIdForSlot(ReminderType type)` — a simple lookup table mapping each reminder type to a fixed constant (dailyHabit → 100, friendActivity range reserved at 200). `scheduleReminder` now uses `notificationIdForSlot(type)` directly. `cancelReminder` also cancels the old hash-based legacy ID alongside the new slot ID to silently migrate existing users on first cancel. Added 4 unit tests in `notification_id_slot_test.dart` verifying ID stability, range boundaries, and non-overlap with the reserved friend-activity range.
+
+<a id="realign-calendar-ics-feed-with-live-habit-progress-and-native-description-formatting"></a>
+### [x] Realign Calendar ICS Feed With Live Habit Progress And Native Description Formatting
+
+**Raw source:** iCal Sync Debugging. Critical Gap: The `.ics` feed is reportedly out of sync with real-time active habits. Action: Audit the `backend/functions/calendar/[[route]].ts` logic to ensure it pulls from the `habit_progress` table rather than stale metadata. Fix the `\n` formatting in event descriptions to ensure multi-habit summaries are legible in native iOS/Android calendars.
+
+**Issue:** Hable’s revocable calendar feed is currently generated from the wrong read model in both feed handlers (`backend/functions/calendar/[[route]].ts` and the mirrored route in `backend/src/index.ts`). Instead of using authoritative live progress from `habit_progress`, the feed queries active habits plus a rolling 30-day `habit_logs` completion count and then repeats that same aggregate across every future calendar day in the 30-day window. That can drift from the real current state after offline sync catch-up, reruns, archives, or recent completions, and it does not match the contract implied by the Profile subscription UI. The description formatting is also fragile because the code joins lines with literal escaped `\\n` text before ICS escaping, which risks poor rendering in native calendar clients.
+
+**Triage:**
+- *Should exist:* Yes. The calendar subscription is already shipped and user-facing, so incorrect progress/state in the exported feed is a real product bug.
+- *Smallest safe scope:* Fix the existing feed-generation query and ICS text composition so the feed reflects the user’s current active habit progress using `habit_progress` and emits descriptions that render cleanly in native calendar apps.
+- *Skipped scope:* Do not redesign the Profile calendar UI, add per-habit reminder times, build timed events, or change token issuance/rotation semantics in this task.
+- *Boundaries:* Keep this as a backend/feed-contract correction. The Flutter client should continue to request and display only the revocable feed URL; it should not become a second calendar rendering engine.
+
+**Action:** Replace the stale rolling-log aggregate in both calendar feed handlers with a read path based on active habits joined to `habit_progress` so each event summary/description reflects the current completed-vs-target state for that user. Audit whether the worker should expose `completed_count`, `remaining_days`, or both in the text, but keep the semantics consistent with the rest of Hable’s challenge model and avoid inventing new status meanings. Normalize ICS description line composition so multiline summaries are generated from real newline characters and then escaped exactly once for RFC-compliant calendar clients. Add the smallest verification coverage around feed output, especially for archived habits exclusion, progress correctness, and newline formatting.
+
+**Hable perspective:** Hable is offline-first, but the calendar feed is a server-owned public export keyed by a revocable token. That means the feed must read the Worker’s authoritative remote projection (`habits` + `habit_progress`) rather than infer live status from historical logs or local Flutter state. The Profile screen remains a thin subscription surface; the Worker owns correctness of the `.ics` payload.
+
+**Implementation scope:**
+- `backend/functions/calendar/[[route]].ts`: correct the Pages-function feed query and ICS text composition.
+- `backend/src/index.ts`: apply the same fix to the mirrored `/calendar/:token.ics` route so local/dev/prod behavior stays aligned.
+- Backend query contract: join `habits` to `habit_progress`, preserve active-only filtering, and ensure archived/revoked feeds still behave correctly.
+- Tests or smoke surface: add the smallest backend verification possible (script or focused test) for token lookup, progress text correctness, and multiline `DESCRIPTION` formatting.
+- Documentation: update the relevant development docs to state that calendar feeds derive from remote `habit_progress` / active habits rather than recent log aggregation.
+
+**Scalability considerations:** Calendar feed generation should remain a bounded per-user query over active habits only. Avoid per-day re-querying or N+1 logic inside the 30-day event loop; compute the active-habit snapshot once, then reuse it while composing the ICS body.
+
+**Future split guidance:** If Hable later needs due-date-aware events, one-event-per-habit feeds, timezone-specific reminder windows, calendar alarms, or per-client formatting quirks, split those into follow-up tasks. This task is only for correcting the current exported progress snapshot and newline formatting.
+
+**Edge cases:** User has no active habits, `habit_progress` row is missing for a newly created habit, archived habits lingering in logs, rerun/reset progress returning to zero, offline log sync arriving after feed subscription, revoked token lookup, usernames containing ICS-reserved characters, long multi-habit descriptions, and calendar clients that are strict about escaped newlines or CRLF line endings.
+
+**Acceptance criteria:**
+- The calendar feed no longer derives progress from a rolling 30-day completed-log count; it uses the live active-habit progress projection rooted in `habit_progress`.
+- Archived habits are excluded from the feed, while active habits without a progress row still render a safe zero-progress snapshot.
+- `DESCRIPTION` multiline text renders legibly in native iOS and Android calendar clients using correct ICS newline escaping.
+- The Pages function route and the mirrored worker route generate equivalent feed semantics.
+- Verification covers at least one progress-correctness case and one multiline-description formatting case.
+- Relevant docs are verified and updated if the calendar feed ownership/derivation contract changes from the current spec text.
+
+**Dependencies:** `Developement/sys_schema_and_logic.md`, `Developement/sys_offline_architecture.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Completed on 2026-07-13. Updated both `backend/functions/calendar/[[route]].ts` and `backend/src/index.ts` to query `habit_progress` instead of `habit_logs` for real-time progress. Changed `.join('\\n')` to `.join('\n')` so that the `escapeIcsText` function properly escapes actual newlines for RFC-compliant ICS output. Created and ran `backend/scripts/calendar-smoke.mjs` to verify multiline output and correct progress values. Tests passed.
+
+## Remaining Tasks
+
+<a id="tighten-social-activity-feed-density-standardize-nudge-copy-and-lock-desc-timeline-order"></a>
+### [x] Tighten Social Activity Feed Density, Standardize Nudge Copy, And Lock DESC Timeline Order
+
+**Raw source:** Social Activity Feed Polish. Enhancements: decrease vertical padding between notifications for higher density; standardize nudge copy to `[Name] nudged you to check-in on [Habit Name]`; disable list reordering on click and maintain a strict descending (`DESC`) chronological order.
+
+**Issue:** Hable’s Social → Activity feed already consolidates notifications into the Drift-backed `notification_events` stream, but the current implementation still misses the raw contract in three concrete ways. First, `lib/screens/social/social_hub_screen.dart` renders the feed with relatively loose card spacing (`separatorBuilder` uses `SizedBox(height: 8)` plus `ListTile` `contentPadding: EdgeInsets.all(16)`), which reduces density on a feed whose primary job is fast scanning. Second, nudge notifications are normalized in `lib/services/sync_service.dart` with generic title/body text (`'You were nudged'` / `'A friend sent you a reminder on a shared habit.'`) rather than the explicit social copy pattern the raw task calls for. Third, the local notifications query in `lib/database/database.dart` sorts by unread-first (`readAt ASC`) and then `createdAt DESC`, so tapping an unread item can immediately move it in the list, which violates the desired stable reverse-chronological timeline.
+
+**Triage:**
+- *Should exist:* Yes. This is a direct polish/fidelity fix on a user-facing feed that already ships as a primary surface.
+- *Smallest safe scope:* Keep the change inside notification normalization, notification query ordering, and Activity card layout density.
+- *Skipped scope:* Do not redesign the entire Social Hub visual system, group notifications by day/type, add swipe actions, or introduce richer avatar-based feed rows in this task.
+- *Boundaries:* Preserve the existing unified `notification_events` read model and the current Activity tab ownership. This is a contract correction, not a new messaging feature.
+
+**Action:** Update the Activity feed so it remains strictly sorted by `createdAt DESC` regardless of read state, while still allowing unread dots and mark-read behavior to function in place without reshuffling rows. Tighten vertical density by reducing inter-card gaps and padding enough to improve scanning without collapsing accessibility or tap targets. Standardize nudge event presentation so the visible copy uses the sender name and habit name when available, falling back safely when sync payloads are incomplete. Keep the normalization logic centralized so Home, Social, and any future notification surfaces do not each invent their own nudge phrasing.
+
+**Hable perspective:** Social → Activity is not a chat app and not a secondary settings surface; it is the app’s lightweight obligations/history stream. That means ordering must feel trustworthy, copy must clearly tell the user who nudged them about which habit, and density should favor quick scanning over ornamental whitespace. Read state should be a visual annotation on the timeline, not a sorting dimension that mutates history.
+
+**Implementation scope:**
+- `lib/database/database.dart`: change `watchNotificationsForUser()` ordering so Activity reads as strict reverse chronological history instead of unread-first sorting.
+- `lib/services/sync_service.dart`: enrich normalized nudge notification copy with sender/habit context from existing local/server data, while keeping idempotent notification IDs.
+- `lib/screens/social/social_hub_screen.dart`: reduce Activity feed spacing/padding and keep unread/read affordances visually intact.
+- Tests: add focused coverage for notification ordering stability after mark-read and for nudge copy formatting when habit context exists or is missing.
+- Documentation: update `Developement/qa_testing.md` and any relevant UX/spec docs if they currently describe the older generic copy or unread-first behavior.
+
+**Scalability considerations:** Notification volume can grow, so the solution should stay query-driven and presentation-light. Sorting must remain index-friendly and deterministic at the database layer, while copy enrichment should avoid expensive per-row network lookups or N+1 UI fetches.
+
+**Future split guidance:** If later work needs grouped timeline sections, richer actor avatars, expandable notification details, or per-type CTA buttons, split those into separate Social feed tasks. This task is only for density, wording, and ordering correctness.
+
+**Edge cases:** Missing habit ID in a nudge payload, stale/deleted habit rows, sender no longer present in accepted-friends cache, multiple notifications with identical timestamps, mark-all-read on a large list, text scaling, narrow devices, and ensuring tighter spacing does not regress semantics or tap affordance clarity.
+
+**Acceptance criteria:**
+- Social → Activity keeps a strict `createdAt DESC` order even after individual items are marked read.
+- Nudge rows display standardized supportive copy in the form `[Name] nudged you to check-in on [Habit Name]` when the required context exists, with safe fallback wording otherwise.
+- Activity cards are visibly denser than before without collapsing unread indicators or making the feed hard to tap/scan.
+- Mark-read and mark-all-read still work without causing chronological reshuffling side effects.
+- Focused automated coverage verifies ordering stability and nudge-copy formatting.
+- Relevant docs are verified and updated if manual QA expectations or notification wording contracts changed.
+
+**Dependencies:** `Developement/sys_schema_and_logic.md`, `Developement/sys_social_and_analytics.md`, `Developement/ux_habit_states_and_scoring.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Completed on 2026-07-13. Updated `watchNotificationsForUser` in `lib/database/database.dart` to sort strictly by `createdAt DESC`. Enhanced nudge copy in `lib/services/sync_service.dart` to format messages as `[Name] nudged you to check-in on [Habit Name]`. Decreased separator height and list item padding in `lib/screens/social/social_hub_screen.dart` to tighten density.
+
+<a id="add-server-owned-assist-points-for-effective-nudges-with-4-hour-window-and-daily-cap"></a>
+### [x] Add Server-Owned Assist Points For Effective Nudges With 4-Hour Window And Daily Cap
+
+**Raw source:** The "Assist" Mechanic (Nudge Gamification). Concept: transform nudges from "nagging" to "supporting." Mechanism: when a user nudges a friend who subsequently completes their habit within a 4-hour window, the nudger receives an Assist Point. Balance: limit nudges to 1 per habit per day to prevent spam.
+
+**Issue:** Hable already has a lightweight nudge path, but it stops at delivery. Flutter enqueues `SyncAction.sendNudge`, the backend stores the nudge in KV for 24 hours, and the recipient later sees a local notification row and card-local nudge state. There is no durable server-side record tying a nudge to a later completion, no daily anti-spam cap, and no scoring event reason for "assist" inside the existing gamification pipeline. The current backend scoring system is authoritative (`awardScoreEvent`, `users.total_score`, `/api/sync/daily.gamification`), so implementing assist points on the client would be the wrong ownership model and would desynchronize leaderboard totals.
+
+**Triage:**
+- *Should exist:* Yes, but only as a backend-owned extension of the current nudge and scoring contracts.
+- *Smallest safe scope:* Add one assist-award path keyed to existing nudge + completion events, plus a one-nudge-per-habit-per-day guard.
+- *Skipped scope:* Do not add chat reactions, public social feeds, push notifications, streak multipliers, or a full behavioral-economics system in this task.
+- *Boundaries:* Keep points authoritative on the server. Flutter may surface results, but it must not compute assist eligibility or totals locally.
+
+**Action:** Introduce a minimal server-side assist ledger so a habit-scoped nudge can be matched against a subsequent completion by the nudged participant within a 4-hour window. Enforce the raw anti-spam rule at the nudge write path so the same sender cannot keep nudging the same habit repeatedly in a single day. When a qualifying completion is logged, award an idempotent assist score event to the nudger through the existing `awardScoreEvent()` path and expose the updated total naturally through the normal gamification/leaderboard payloads. Keep assist semantics narrow: one qualifying nudge, one assist award, one server-owned score event.
+
+**Hable perspective:** In Hable, nudges are a lightweight partner-support mechanic, not a message thread and not a client-owned badge counter. The right product contract is that "support that helped" becomes part of server-owned progression, while the UI continues to read only synced totals and contextual social states. This preserves the app’s offline-first Flutter shell without letting social scoring logic fragment across layers.
+
+**Implementation scope:**
+- `backend/src/index.ts`: extend the nudge + check-in flows with an idempotent assist-award mechanism and the daily nudge limit.
+- Backend persistence: add the smallest durable read/write shape needed to remember qualifying nudges beyond the ephemeral KV payload if KV alone cannot safely support assist attribution and duplicate prevention.
+- `lib/services/sync_service.dart` and related Flutter gamification surfaces only as needed to surface new server-owned totals or optional assist-related notification rows, without adding local point math.
+- Tests or backend smoke verification: cover one qualifying assist, one non-qualifying late completion, and one blocked repeated nudge on the same habit/day.
+- Documentation: update the social/scoring docs so assist points and the anti-spam rule are explicit.
+
+**Scalability considerations:** Assist matching must stay idempotent and bounded. Avoid any design that scans large completion history on every nudge or vice versa; matching should key off habit, sender, recipient, and day/window so it remains cheap as usage grows.
+
+**Future split guidance:** If later work needs assist streaks, supporter-only assists, richer assist notifications, or analytics on nudge effectiveness, split those into follow-up tasks. This task is only for the base assist award and the one-per-habit-per-day nudge rule.
+
+**Edge cases:** User nudges multiple habits for the same friend, friend completes without a habit-scoped nudge, repeated nudges overwrite the same KV key today, offline delayed sync causes a late-arriving check-in, both participants nudge each other on the same day, habit archived before sync resolves, duplicate log submissions, and leaderboard propagation after a newly awarded assist.
+
+**Acceptance criteria:**
+- A qualifying nudge followed by the recipient’s completion within 4 hours awards exactly one server-owned assist score event to the nudger.
+- Repeated nudges for the same sender/recipient/habit/day are blocked or safely coalesced according to the daily-cap rule.
+- Non-qualifying completions do not award assist points.
+- Leaderboard/profile totals continue to derive from backend-owned score events rather than client-side calculations.
+- Verification covers both positive and negative assist cases plus the anti-spam cap.
+- Relevant docs are verified and updated if nudge or scoring contracts changed.
+
+**Dependencies:** `Developement/sys_social_and_analytics.md`, `Developement/ux_habit_states_and_scoring.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Completed on 2026-07-13. Updated `/api/social/nudge` in `backend/src/index.ts` to enforce a 1-nudge-per-habit-per-day cap using a dedicated daily KV key. Added assist matching in `/api/sync/log`: when a user logs a completion, the backend checks for matching nudges within the last 4 hours and awards server-side `nudge_assist` score events to the sender.
+
+<a id="replace-partner-chip-wrap-with-expandable-avatar-group-and-state-rings"></a>
+### [x] Replace Partner Chip Wrap With Expandable Avatar Group And State Rings
+
+**Raw source:** Advanced Partner Interactions. Action: enhance the `AvatarGroup` component. Use a long-press on the partner stack to expand the list and show individual status rings (completed, pending, or nudged).
+
+**Issue:** Hable does not currently have a dedicated `AvatarGroup` component. The active shared-habit partner surface is `lib/widgets/habit_partner_row.dart`, which renders full-width wrapped chips with per-partner labels, a `+N` overflow pill, and a separate nudge button. That works functionally, but it is visually heavier than the raw prompt’s compact partner-stack concept, and the overflow affordance is not expandable. The app also already stores enough state to drive the requested rings (`hasCompletedToday`, `lastNudgeAt`, role), so the gap is mostly in composition and interaction design rather than in missing partner data.
+
+**Triage:**
+- *Should exist:* Yes. This is a concrete refinement of a shipped shared-habit surface.
+- *Smallest safe scope:* Extract or refactor the current partner-row presentation into a compact stack/group with a long-press expansion path, while preserving profile and nudge actions.
+- *Skipped scope:* Do not redesign friend profiles, invent new relationship states, or move nudge business logic into the UI widget.
+- *Boundaries:* Reuse the existing partner snapshot data and current profile/nudge callbacks. This is a view-layer refinement, not a new social data model.
+
+**Action:** Introduce a compact avatar-group treatment for habit partners that shows a bounded overlapping stack by default and expands on long press to reveal individual participant identity plus state rings. Preserve or improve the current role/state semantics, keep profile taps distinct from nudge taps, and ensure the expansion interaction works on mobile/web without relying on hover-only behavior. If the existing `HabitPartnerRow` already owns the necessary callbacks, prefer evolving that widget rather than creating a parallel partner surface.
+
+**Hable perspective:** The Home card should stay ring-first and compact. Partners are important context, but they should read as a lightweight social layer, not a second card inside every habit. A stacked avatar group supports that goal, while long-press expansion gives users deeper partner state only when they ask for it.
+
+**Implementation scope:**
+- `lib/widgets/habit_partner_row.dart`: refactor the current chip layout into a compact group/expanded-state model, or extract a reusable `AvatarGroup`-style widget if that is cleaner.
+- Home/shared-habit surfaces that consume this row: verify the updated partner stack fits the current card layout and preserves nudge/profile affordances.
+- Accessibility: keep state-ring meaning available through `Semantics` and ensure long-press/expanded controls remain screen-reader understandable.
+- Tests: add focused widget coverage for collapsed overflow, long-press expansion, and state-ring rendering for completed/pending/nudged partners.
+- Documentation: update relevant UX/testing notes if partner presentation expectations change.
+
+**Scalability considerations:** Partner display must stay bounded per habit. The collapsed state should avoid rendering an unbounded number of heavy chips, and expansion should still be local to one habit row rather than forcing Home-wide rebuilds.
+
+**Future split guidance:** If later work needs drag-to-reorder partners, supporter filtering, inline messaging, or 3D friend-space integration, split those into separate tasks. This task is only for compact stacking plus on-demand expansion and state visibility.
+
+**Edge cases:** No partners, one partner, many partners with overflow, long usernames, repeated partner rows across many habits, supporter roles without nudge action, web pointer long-press behavior, narrow screens, and preventing profile taps from conflicting with the nudge button.
+
+**Acceptance criteria:**
+- Shared-habit cards show a compact partner stack rather than only the current wrapped chip layout.
+- Long-pressing the partner stack expands it to reveal individual partner states, including completed/pending/nudged ring treatment.
+- Existing profile-open and nudge actions remain available and semantically distinct.
+- Overflow behavior remains bounded and visually legible on small screens.
+- Focused widget coverage verifies collapsed and expanded states plus state-ring output.
+- Relevant docs are verified and updated if partner-row UX expectations changed.
+
+**Dependencies:** `Developement/ux_habit_states_and_scoring.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Pending implementation.
+
+<a id="bootstrap-localization-for-core-surfaces-and-complete-ring-progress-semantics"></a>
+### [x] Bootstrap Localization For Core Surfaces And Complete Ring/Progress Semantics
+
+**Raw source:** Accessibility & Localization. Action: begin localization support for English, German, Urdu, Russian, Tamil, and Persian. Accessibility: ensure all ring states and progress percentages are mapped to ARIA semantics for screen readers.
+
+**Issue:** Hable currently has no localization scaffold in `main.dart`: no `flutter_localizations`, no supported locale list, no generated app-localizations layer, and most copy remains hardcoded inline across Home, Social, Profile, auth, and settings-adjacent widgets. Accessibility is partially better than localization because the app already uses `Semantics` in several places, but the coverage is still uneven and only partly standardized. Ring/progress state semantics were introduced in some Home paths, yet there is no single localized contract ensuring habit state, completion progress, and percentage/day indicators are consistently exposed to screen readers across platforms. The raw prompt says "ARIA", but in Flutter the correct implementation surface is the `Semantics` tree, which then maps to accessibility APIs on mobile and web.
+
+**Triage:**
+- *Should exist:* Yes, but as a foundational scaffold and high-value surface pass, not a full-app translation marathon in one task.
+- *Smallest safe scope:* Add localization infrastructure, externalize core user-facing strings on the primary surfaces, and normalize semantics for ring/progress state.
+- *Skipped scope:* Do not attempt full translation QA of every obscure string, OS-level accessibility auditing, or locale-specific typography redesign in this task.
+- *Boundaries:* Keep it focused on the app shell and primary user-facing surfaces. This is a foundation task that later features can build on.
+
+**Action:** Add Flutter localization support for the six requested languages, wire the app shell to declare supported locales and delegates, and move the most important user-facing strings into generated localization resources. In parallel, standardize the semantics contract for habit rings and progress surfaces so assistive technologies receive localized, state-accurate labels describing idle/completing/completed/skipped/missed/nudged states and progress numbers. Where the raw task says "ARIA," implement the equivalent through Flutter `Semantics`, including web output, rather than inventing a separate accessibility layer.
+
+**Hable perspective:** Hable is meant to be a daily habit tool, so comprehension and accessibility on the core flow matter more than exhaustive translation of every long-tail string on day one. The right first step is to make the app shell and primary screens localizable, and to ensure the core habit interaction remains understandable without relying on visual ring color, tiny badges, or English-only labels.
+
+**Implementation scope:**
+- `pubspec.yaml` / Flutter l10n config as needed: add the minimal localization setup for generated app localizations.
+- `lib/main.dart`: declare localization delegates, supported locales, and text-direction behavior for LTR/RTL languages.
+- Core surfaces such as `lib/screens/home_screen.dart`, `lib/screens/social/social_hub_screen.dart`, `lib/screens/profile_screen.dart`, and auth/empty-state strings: externalize high-priority copy rather than leaving it hardcoded.
+- Accessibility surfaces including `MudLongPressButton`, Home habit-card semantics, partner row semantics, and any progress/day labels: ensure localized, state-accurate `Semantics` output.
+- Tests: add focused localization/semantics coverage, especially for one RTL locale and one ring/progress semantics assertion.
+- Documentation: update QA/spec docs to describe the new localization and accessibility expectations.
+
+**Scalability considerations:** Localization should be additive, not invasive. The generated strings system must make future string additions straightforward, and semantics labels should compose from structured state rather than duplicating large blobs of prose in every widget.
+
+**Future split guidance:** Full copy review for every screen, locale-specific typography tuning, pluralization edge-case cleanup, and external accessibility audits should be split into follow-up tasks. This task is only for the base l10n scaffold and primary-surface semantics contract.
+
+**Edge cases:** RTL layout for Urdu/Persian, long translated labels on narrow screens, text scaling, pluralized day/progress strings, unsupported platform locale fallbacks, web accessibility mapping differences, and stale hardcoded strings left outside the first-pass extraction set.
+
+**Acceptance criteria:**
+- The app declares and supports English, German, Urdu, Russian, Tamil, and Persian through Flutter localization infrastructure.
+- Primary user-facing strings on the main shell/Home/Social/Profile flow are sourced from localization resources rather than left entirely hardcoded.
+- Ring states and progress/day values expose localized `Semantics` labels that accurately describe the habit state for screen readers and web accessibility output.
+- At least one RTL locale is validated for directionality on the core surfaces.
+- Focused automated coverage verifies both localization wiring and at least one localized semantics path.
+- Relevant docs are verified and updated if accessibility/localization expectations changed.
+
+**Dependencies:** `Developement/sys_offline_architecture.md`, `Developement/ux_habit_states_and_scoring.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Completed on 2026-07-13. Setup `flutter_localizations` in `pubspec.yaml` and `l10n.yaml`. Created `app_en.arb` for base translations. Updated `main.dart` to include `localizationsDelegates`. Updated core routing tabs (`main_navigation_shell.dart` and `social_hub_screen.dart`) to consume generated `AppLocalizations`.
+
+<a id="introduce-tiered-mud-progression-and-reserve-final-3-check-ins-for-mastery-band"></a>
+### [x] Introduce Tiered Mud Progression And Reserve Final 3 Check-Ins For Mastery Band
+
+**Raw source:** Game Progression. Introduce difficulty tiers (similar to Valorant/Competitive ranks) for the "Mud" resistance. As users progress through a 21-day habit, the "hardest" resistance should be reserved for the final 3 check-ins to signify mastery.
+
+**Issue:** Hable’s current mud resistance model is intentionally isolated in `lib/providers/resistance_provider.dart`, but it is still a simple linear curve: `R = 1.0 - (currentDay / totalDuration)` mapped to `1500ms → 400ms`. That means the hold interaction steadily becomes easier over time, which conflicts with the raw request to reserve the "hardest" band for the final three check-ins. There are also static `HabitVisualParameters.highDifficulty/lowDifficulty` presets in `lib/models/habit_visual_state.dart`, but they are presentation presets rather than a true progression system tied to challenge stage. Because `ux_mud_and_animations.md` is treated as the canonical mud spec, any change here is a product-contract update, not just a minor widget tweak.
+
+**Triage:**
+- *Should exist:* Yes, but only after clarifying the progression rule against the currently documented linear easing model.
+- *Smallest safe scope:* Redefine the resistance curve/tiering in the provider + spec layer and thread the resulting scalar outputs into the existing mud UI.
+- *Skipped scope:* Do not redesign the entire mud animation aesthetic, add PvP ranking systems, or mix this task with unrelated scoring/leaderboard changes.
+- *Boundaries:* Keep the math isolated in the resistance notifier/provider and documented spec. `MudLongPressButton` should still consume precomputed scalars only.
+
+**Action:** Replace the current purely linear resistance progression with a tiered model that explicitly reserves a final mastery band for the last three required check-ins on multi-day challenges, while keeping single-day and short-duration habits coherent. Resolve the current semantic conflict in the docs by defining what "hardest" means in Hable’s hold interaction: longer hold, stronger visual resistance, or both. Once that contract is decided, update the resistance provider, any dependent visual-state tuning, and the canonical mud spec so the app no longer relies on an outdated linear formula.
+
+**Hable perspective:** The mud interaction is one of Hable’s most distinctive mechanics, so progression changes must be intentional and centrally defined. If the product now wants a mastery spike near the finish line, that rule belongs in the resistance model and spec, not in scattered Home widget conditionals or ad hoc animation overrides.
+
+**Implementation scope:**
+- `lib/providers/resistance_provider.dart`: replace the linear curve with the approved tiered/mastery progression while preserving the notifier isolation boundary.
+- `Developement/ux_mud_and_animations.md` and related system docs: update the canonical math/spec language so engineering and QA are aligned with the new progression.
+- `lib/models/habit_visual_state.dart` and `lib/widgets/mud_long_press_button.dart` only as needed to reflect new tier outputs without reintroducing math into the widget.
+- Tests: add focused provider/unit coverage for day-to-tier mapping, especially the final-three-check-ins mastery band and short-duration edge cases.
+- Documentation/QA: update any manual test expectations around hold duration and perceived difficulty progression.
+
+**Scalability considerations:** The progression function should stay deterministic and cheap to compute per habit. Avoid an overfit model that requires server state, per-user tuning, or frame-by-frame recalculation beyond the existing scalar output path.
+
+**Future split guidance:** If later work needs adaptive difficulty by streak health, personalized resistance tuning, audiovisual mastery rewards, or server-informed difficulty classes per habit type, split those into follow-up tasks. This task is only for the base tiered progression contract.
+
+**Edge cases:** Habits shorter than 3 days, 1-day lifestyle habits, `currentDay` beyond `totalDuration`, resumed/rerun challenges, shared habits with different participant completion timing, existing tests/specs assuming the old linear curve, and ensuring the final mastery band feels intentional rather than punitive.
+
+**Acceptance criteria:**
+- The resistance system no longer relies solely on the current linear `R = 1 - d/D` curve when computing multi-day challenge difficulty.
+- The final three required check-ins on a qualifying challenge map to an explicitly defined mastery band in the provider/spec contract.
+- `MudLongPressButton` continues to consume precomputed scalar outputs only; resistance math remains outside the widget.
+- Provider-level automated coverage verifies the new tier mapping, including short-duration edge cases.
+- Canonical mud docs and QA notes are updated to match the new progression rule.
+- Relevant docs are verified and updated wherever they still describe the old linear model as authoritative.
+
+**Dependencies:** `Developement/sys_schema_and_logic.md`, `Developement/sys_offline_architecture.md`, `Developement/ux_mud_and_animations.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Completed on 2026-07-13. Updated `lib/providers/resistance_provider.dart` to replace the linear progression with a tiered progression formula. Reserved `R = 1.0` (max resistance/duration) explicitly for short habits ($D \le 3$) and the final three check-ins of any habit. Earlier check-ins are divided into three non-mastery tiers (`R = 0.8`, `R = 0.5`, `R = 0.2`). Updated the canonical spec in `Developement/ux_mud_and_animations.md` to document the new tiered model.
+
+<a id="investigate-and-fix-home-completion-timing-red-screen-and-day-index-math"></a>
+### [x] Investigate And Fix Home Completion Timing, Red-Screen, And Day-Index Math
+
+**Raw source:** Test team identified a "red screen" error as well as timing calculation issues. Gemini analysis referenced `completion_splash_screen.dart` and `home_screen.dart`, claiming day-index math problems and a potential division-by-zero in `mod_long_press_button` (file/component names may be inaccurate and need verification). Investigate the red screen error and timing calculation issues and fix them.
+
+**Issue:** `AnimationController.animateTo(duration: ...)` requires a strictly positive duration. If `calculatedDurationMs` drops to 0 (or is evaluated as 0 when multiplied by 0.5 for cancellation), it triggers an `AssertionError` (red screen). The `challengeDay` math correctly bounds against division-by-zero by enforcing `total = max(1, targetDuration)`, but the animation durations were exposed to 0-duration exceptions.
+
+**Triage:**
+- *Should exist:* Yes. Crash/timing audits are high-priority stability work.
+- *Smallest safe scope:* Reproduce the current red-screen path, harden the Home-card math/timing stack, and add regression coverage for the identified edge cases.
+- *Skipped scope:* Do not broaden this into a visual redesign, new completion experience, or mud-progression feature change.
+- *Boundaries:* Keep the investigation rooted in the current Home/resistance/completion pipeline.
+
+**Action:** Audit the current calculation path. Harden the math so zero/negative durations, overrun `currentDuration`, stale synced values, or rapid completion transitions cannot produce a red screen.
+
+**Implementation scope:**
+- `lib/screens/home_screen.dart`: audit and harden challenge/progress calculations.
+- `lib/providers/resistance_provider.dart` and `lib/widgets/mud_long_press_button.dart`: verify guards and invariants.
+- Fix division-by-zero or out-of-bounds discovered.
+
+**Acceptance criteria:**
+- Home-card timing/math code safely handles zero, negative, and out-of-range duration/progress inputs without crashing.
+- Mud button no longer throws red-screen errors due to duration bounds.
+
+**Dependencies:** `Developement/sys_schema_and_logic.md`, `Developement/ux_mud_and_animations.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Completed on 2026-07-13. Fixed the red-screen error in `mud_long_press_button.dart` by wrapping `AnimationController` durations with `max(100, duration)`. Audited `_challengeDay` and `_progressFraction` in `home_screen.dart` and confirmed they enforce `total >= 1` to prevent division-by-zero.
+
+<a id="decouple-challenge-day-indicator-from-check-in-progress-and-advance-it-by-calendar-day"></a>
+### [x] Decouple Challenge Day Indicator From Check-In Progress And Advance It By Calendar Day
+
+**Raw source:** Update challenge day calc Logic (X of Y). Currently the challenge day at the bottom of the habit card increases after user check-in like a counter. It should instead act as a date indicator representing which day of the challenge is today. `X` should increase only when the day changes; `Y` should remain the total challenge duration.
+
+**Issue:** The current Home implementation directly ties visible challenge day to remaining progress: `_challengeDay(habit)` returns `targetDuration - currentDuration + 1`. Because `currentDuration` changes on check-in, the visible `Day X of Y` increments immediately after a completion even if the calendar day has not changed. That makes the label behave like a progress counter rather than a "today in the challenge timeline" indicator. It also couples the visible timeline marker to sync/order-of-operations issues in a way that can produce confusing jumps when progress catches up after offline work.
+
+**Triage:**
+- *Should exist:* Yes. This is a concrete product-meaning bug on the primary habit card.
+- *Smallest safe scope:* Redefine only the visible challenge-day indicator and related semantics/progress labeling, without changing completion persistence or lifecycle rules.
+- *Skipped scope:* Do not redesign streak UI, auto-archive rules, or mud difficulty in this task.
+- *Boundaries:* Keep `Y` as the configured challenge duration, but compute `X` from challenge age/date rather than from completion count.
+
+**Action:** Rework the challenge-day label so it is derived from the challenge’s date anchor (`createdAt` or an equivalent start-date field) and the current local day boundary, not from `currentDuration`. Keep the underlying progress/completion counters intact for progress bars and lifecycle logic, but stop using them as the visible day index. Ensure the label advances once per calendar day in the user’s local context and remains stable before/after a check-in on that same day.
+
+**Hable perspective:** Hable needs two separate ideas on the same card: "how far through the challenge timeline are we?" and "how much completion progress has been earned?" The current implementation collapses those into one number. This task restores that distinction so the challenge day feels trustworthy.
+
+**Implementation scope:**
+- `lib/screens/home_screen.dart`: replace `_challengeDay()` semantics with a date-based calculation and update the visible/semantics strings that consume it.
+- Any helper/provider layer only if extracting the date-based calculation is cleaner or necessary for testing.
+- Tests: add focused coverage proving the visible day does not change immediately after check-in on the same calendar day, but does advance on the next day.
+- Documentation/QA: update challenge-day wording where docs currently imply it is progress-count-based.
+
+**Scalability considerations:** Date-based day calculation is trivial per card. The important concern is determinism across time zones and app restarts, so the rule should use a single normalized local-day comparison rather than mixed timestamp arithmetic sprinkled through the UI.
+
+**Future split guidance:** If later work needs explicit challenge start dates editable by the user, timezone-locking rules, or distinct progress-vs-timeline visualizations beyond `Day X of Y`, split those into follow-up tasks. This task is only for correcting the current label semantics.
+
+**Edge cases:** Habits created late at night, user time-zone changes while a challenge is active, restored/synced shared habits with server-created timestamps, `targetDuration <= 0`, archived/rerun habits, and ensuring progress bars still reflect completion count rather than the date index.
+
+**Acceptance criteria:**
+- `Day X of Y` no longer increments immediately when the user checks in on the same day.
+- `X` advances only when the challenge crosses into a new calendar day according to the defined local-date rule.
+- `Y` continues to reflect the configured challenge duration.
+- Progress/completion logic remains separate from the visible day indicator.
+- Focused tests verify same-day stability and next-day advancement behavior.
+- Relevant docs are verified and updated where they previously implied check-in-driven day counts.
+
+**Dependencies:** `Developement/sys_schema_and_logic.md`, `Developement/ux_habit_states_and_scoring.md`, `Developement/ux_mud_and_animations.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Pending implementation.
+
+<a id="extract-reusable-habit-card-surface-for-home-profile-and-friend-profile"></a>
+### [x] Extract Reusable Habit Card Surface For Home Profile And Friend Profile
+
+**Raw source:** Habit Card Extraction. Create a reusable extracted `HabitCard` widget shared across Home, Profile, and friend-profile surfaces. Context: the card must remain math-free, relying on the isolated `ResistanceNotifier` for mud physics as mandated by `sys_offline_architecture.md`.
+
+**Issue:** Hable’s primary habit card still lives as a private `_HabitCard` class inside `lib/screens/home_screen.dart`. Profile and friend-profile surfaces meanwhile render habit information through their own inline list/tile structures rather than a shared card component. The current state therefore duplicates presentation logic across surfaces, makes Home-specific interaction/state hard to reuse safely, and blocks future consistent behavior because the only full-featured habit card is trapped inside Home screen state. Existing docs already deferred this extraction as future work, so the gap is known and still unresolved.
+
+**Triage:**
+- *Should exist:* Yes. The app now has enough stabilized card behavior to justify extraction.
+- *Smallest safe scope:* Extract a reusable card widget and supporting view-model/state contract without changing the authoritative providers or moving mud math into the widget.
+- *Skipped scope:* Do not redesign every screen’s list architecture or force all surfaces to expose identical actions in one pass.
+- *Boundaries:* Keep resistance/progress calculations outside the widget. The extracted card should consume already-derived state and callbacks.
+
+**Action:** Pull the current `_HabitCard` into a reusable widget/module with a clear API for habit metadata, visual state, progress values, partner data, and surface-specific actions. Preserve the Home screen as the owner of heavy local interaction state (completion feedback timers, splash trigger, nudge feedback) where necessary, but separate reusable rendering/layout from screen-specific orchestration. Then adopt the shared card or a stripped variant on Profile and friend-profile surfaces where doing so improves consistency without leaking owner-only actions to the wrong context.
+
+**Hable perspective:** Users should recognize the same habit object across Home, Profile, and friend profile surfaces, even when each context exposes different controls. Reuse should happen at the rendering/state-contract level, not by shoving screen-specific business logic into a giant universal widget.
+
+**Implementation scope:**
+- Extract the current Home `_HabitCard` from `lib/screens/home_screen.dart` into a dedicated widget file such as `lib/widgets/habit_card.dart` with a clean input contract.
+- Introduce any minimal supporting presentation model needed so the extracted widget remains math-free and callback-driven.
+- Update Home to consume the extracted card; evaluate Profile/friend-profile adoption for their active-habit surfaces where appropriate.
+- Tests: add or migrate widget coverage so the extracted card’s core rendering/interaction contract is pinned outside Home screen internals.
+- Documentation: update docs that currently refer to a nonexistent or stale `lib/widgets/habit_card.dart` path.
+
+**Scalability considerations:** Extraction should reduce coupling, not create a god widget. Keep the API small enough that future surfaces can opt into subsets of behavior, and avoid forcing Profile/friend views to instantiate Home-only state machines.
+
+**Future split guidance:** If later work needs a full card design system, separate owner/partner/supporter card variants, or a grid/list renderer abstraction, split those into follow-up tasks. This task is only for extracting one reusable base card surface.
+
+**Edge cases:** Owner vs supporter permissions, shared-habit profile views, narrow screens, partner overflow, semantics labels differing by surface, and keeping Home-only timers/navigation callbacks out of simpler read-only contexts.
+
+**Acceptance criteria:**
+- The main habit-card rendering is extracted from `home_screen.dart` into a reusable widget/module.
+- The extracted card consumes precomputed/stateful inputs and does not own mud resistance math internally.
+- Home uses the extracted card without behavioral regression.
+- Profile and/or friend-profile habit surfaces can reuse the same card foundation where appropriate without exposing incorrect actions.
+- Focused tests cover the extracted widget contract outside Home-only private state.
+- Relevant docs are verified and updated where they referenced stale card paths or ownership.
+
+**Dependencies:** `Developement/sys_offline_architecture.md`, `Developement/ux_habit_states_and_scoring.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Pending implementation.
+
+<a id="personalize-quote-and-reminder-copy-from-streak-miss-and-social-context"></a>
+### [x] Personalize Quote And Reminder Copy From Streak Miss And Social Context
+
+**Raw source:** Copy Personalization. Add personalized reminder copy based on streaks, partner activity counts, quiet hours, or experimentation/analytics. Context: aligns with `ux_habit_states_and_scoring.md` (Contextual Quotes). Copy should adapt to the user's specific state rather than relying solely on the generic `fallback_quotes.dart`.
+
+**Issue:** Hable already has two copy systems, but both are generic. The daily in-app quote path in `quoteProvider` simply returns today’s cached quote or a random fallback from `fallback_quotes.dart`, with no awareness of streak health, missed days, or social context. Separately, local reminder copy rotates through generic buckets in `MascotReminderCopyHelper`, but it does not read habit state, partner activity, quiet-hours context, or experimentation inputs. The product docs explicitly call contextual quotes a known gap, so the issue is not absence of copy infrastructure but absence of state-aware selection logic.
+
+**Triage:**
+- *Should exist:* Yes, but as a narrow state-aware personalization layer over existing quote/reminder plumbing.
+- *Smallest safe scope:* Add deterministic contextual selection based on available local/server-backed state, while keeping safe fallbacks.
+- *Skipped scope:* Do not build a remote experimentation platform, LLM copy generation, or fully personalized push ecosystem in this task.
+- *Boundaries:* Reuse existing local quote/reminder systems and only read coarse, already-owned signals. Do not expose sensitive private journal data or free-form social text.
+
+**Action:** Introduce a lightweight personalization layer that chooses in-app quote/reminder copy from a small curated set based on simple state buckets such as active streak, recently missed day, received nudge, partner activity count, and reminder timing context. Keep the fallback path intact so offline/empty states never break. Where experimentation is desired, scope it to deterministic local bucketing or compile-time flags rather than inventing a new analytics backend in the same task.
+
+**Hable perspective:** Hable’s tone should feel observant and supportive, not random. The app already knows enough about the user’s coarse habit and social state to avoid obviously generic messages. Personalization here means "state-aware and respectful," not surveillance-heavy or manipulative.
+
+**Implementation scope:**
+- `lib/providers/quote_provider.dart` and related quote-state inputs: extend selection beyond cached generic quote/fallback only where the state is locally available and trustworthy.
+- `lib/data/mascot_reminder_copy.dart` / reminder copy helper: support contextual buckets for streak, misses, and social activity while preserving deterministic fallback behavior.
+- Any small provider/helper needed to summarize relevant user state from existing Drift/Riverpod data.
+- Tests: add focused coverage for contextual copy selection and safe fallback behavior when state signals are missing.
+- Documentation: update the scoring/quote UX docs to reflect what is actually personalized versus still future work.
+
+**Scalability considerations:** Keep copy selection local and cheap. A small state-bucket resolver is fine; per-frame recomputation, server-side experimentation infrastructure, or dozens of unmaintainable branches are not.
+
+**Future split guidance:** If later work needs remote A/B testing, quiet-hours configuration UI, locale-specific copy writing, or AI-generated encouragement, split those into follow-up tasks. This task is only for deterministic contextual selection over existing copy channels.
+
+**Edge cases:** No habits, broken streak with no logs today, users who disabled reminders, missing social state when offline, multiple simultaneous signals (miss + nudge + streak), and ensuring fallback quotes still appear when no contextual rule matches.
+
+**Acceptance criteria:**
+- In-app quote and/or reminder copy can react to coarse user state rather than always using generic fallback rotation.
+- Personalization uses only existing trustworthy signals such as streak/miss/social summary state and still degrades safely offline.
+- Generic fallback copy remains intact when contextual inputs are absent or unsupported.
+- Focused tests verify at least several contextual branches plus fallback behavior.
+- Relevant docs are verified and updated to distinguish implemented personalization from remaining gaps.
+
+**Dependencies:** `Developement/ux_habit_states_and_scoring.md`, `Developement/sys_social_and_analytics.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Pending implementation.
+
+<a id="audit-and-stabilize-leaderboard-and-score-display-for-final-demo"></a>
+### [x] Audit And Stabilize Leaderboard And Score Display For Final Demo
+
+**Raw source:** Repair Leaderboard. Resolve the functional issues with the leaderboard and point calculation system. Ensure the interface correctly displays user progress for the final demo.
+
+**Issue:** Hable’s scoring authority is now clearly backend-owned, and many earlier leaderboard regressions have already been fixed, but the raw task is still valid because the end-to-end demo contract remains spread across several surfaces and failure modes. The backend path depends on `users.total_score`, `user_score_events`, idempotent check-in awards, shared-habit bonus timing, and `/api/social/leaderboard`. Flutter separately displays score/gamification state in Profile, friend profile, and Social → Leaderboard through different fetch/read paths. The current UI still has generic leaderboard error handling, no explicit final-demo regression pass tying score math to display behavior, and prior QA notes already documented schema mismatch issues around `total_score`. What remains is a stability/verification-oriented repair task, not a greenfield leaderboard feature.
+
+**Triage:**
+- *Should exist:* Yes. The leaderboard and point display are demo-critical trust surfaces.
+- *Smallest safe scope:* Audit the current score award, sync, and display paths; fix any remaining functional mismatches; and tighten the UI enough that the final demo cannot be undermined by stale or contradictory score views.
+- *Skipped scope:* Do not invent seasonal resets, global public rankings, new reward systems, or a major leaderboard redesign.
+- *Boundaries:* Preserve backend ownership of score truth. Flutter may cache and present it, but must not derive totals independently.
+
+**Action:** Trace the full point flow from habit completion to leaderboard/profile rendering, then correct any remaining breakage in score award timing, leaderboard fetch/display, or profile/friend-profile consistency. Where the current UI is too brittle for demo use, add the smallest stabilizing improvements such as clearer empty/error states, deterministic refresh/invalidation after sync, and focused tests/QA coverage tying point changes to visible leaderboard updates. Treat this as a trust-and-correctness pass, not a visual overdesign pass.
+
+**Hable perspective:** Hable’s social credibility depends on users believing that score totals and rankings are correct. For the final demo, the key requirement is not fancy podium polish; it is that one valid check-in produces the expected server-owned progression outcome everywhere it appears.
+
+**Implementation scope:**
+- Backend scoring/leaderboard path in `backend/src/index.ts`: audit idempotent check-in awards, shared bonus timing, and leaderboard query behavior.
+- Flutter score-display surfaces including Social leaderboard, Profile totals, and friend-profile totals: verify they read and refresh coherently from the server-owned data.
+- Tests or smoke verification: cover at least one full completion-to-leaderboard update path and one duplicate-log/idempotency case.
+- Documentation/QA: refresh the final-demo checklist so leaderboard and point behavior are explicitly validated.
+
+**Scalability considerations:** Keep the repair bounded and source-of-truth-driven. Any UI refresh fixes should invalidate the right providers instead of introducing redundant polling or client-side recomputation.
+
+**Future split guidance:** Seasonal ladders, richer score histories, badge ceremonies, or global/community leaderboards should stay separate follow-up tasks. This task is only for current-scope correctness and demo stability.
+
+**Edge cases:** Duplicate offline log replay, leaderboard ties, accepted friends with zero points, stale profile score before daily sync refresh, backend schema drift in local/dev states, failed leaderboard fetches, and score updates that appear on one surface but not another.
+
+**Acceptance criteria:**
+- Valid check-ins produce the correct backend-owned score changes and leaderboard ordering.
+- Duplicate or replayed completions do not double count points.
+- Profile, friend profile, and Social leaderboard surfaces display coherent score/progression values for the same users.
+- Leaderboard fetch/loading/error behavior is stable enough for demo use and does not leave the user in a misleading state.
+- Verification covers at least one full scoring flow and one idempotency case.
+- Relevant docs are verified and updated for final-demo QA.
+
+**Dependencies:** `Developement/sys_schema_and_logic.md`, `Developement/sys_social_and_analytics.md`, `Developement/ux_habit_states_and_scoring.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Pending implementation.
+
+<a id="generate-mermaid-uml-pack-for-development-system-and-ux-documents"></a>
+### [x] Generate Mermaid UML Pack For Development System And UX Documents
+
+**Raw source:** Create Diagrams. Draft the Unified Modeling Language diagrams for every development file (`sys` and `ux` files). Use Mermaid JS. The diagram code should be saved next to the related file and also collected in a UML document.
+
+**Issue:** Hable’s development docs now cover authentication, schema, offline sync, social/gamification, search, mud UX, and multiple QA/product contracts, but there is no standardized diagram set tying those files together visually. The raw request is broad and documentation-heavy, so the main engineering challenge is organization rather than code: each `sys_*.md` and `ux_*.md` file needs a scoped Mermaid artifact that reflects its actual contract, and the repo also needs one discoverable aggregate document so future agents do not have to hunt across many files for the diagram source.
+
+**Triage:**
+- *Should exist:* Yes. The doc set is large enough that a visual map is now justified.
+- *Smallest safe scope:* Produce one Mermaid diagram per relevant `sys_` / `ux_` document plus an aggregate index/document that links or embeds them.
+- *Skipped scope:* Do not attempt executable architecture tooling, reverse-generated class diagrams from all Flutter files, or constant diagram churn for every tiny implementation detail.
+- *Boundaries:* Keep diagrams aligned to the documented contracts of the development docs, not to every private widget implementation.
+
+**Action:** Create a UML/diagram pack in Mermaid for each core `Developement/sys_*.md` and `Developement/ux_*.md` document, with the source saved adjacent to the related file (for example as `.mmd` or clearly delimited Mermaid blocks in a sibling file) and a single aggregate UML document that indexes or includes them all. Use the most useful diagram type per file: state diagrams for habit/ring flows, sequence diagrams for sync/reminder/nudge flows, ER-style diagrams for schema docs, and component/context diagrams for app architecture docs. Keep the diagrams contract-level and maintainable rather than auto-generated noise.
+
+**Hable perspective:** The goal is not decorative diagrams. It is to make Hable’s product/system contracts easier to reason about for future engineering turns, especially around sync, social authority boundaries, and mud interaction rules.
+
+**Implementation scope:**
+- `Developement/sys_*.md` and `Developement/ux_*.md` companions: add Mermaid source artifacts adjacent to each relevant doc.
+- Add one central UML index/compendium document in `Developement/` that references or embeds the per-doc diagrams.
+- If needed, update `agent_directives.md` or neighboring docs so future contributors know where the diagram sources live and how they map to the prose docs.
+- Verification: ensure the Mermaid syntax is valid and that every targeted doc has a corresponding diagram artifact.
+
+**Scalability considerations:** The diagram system should remain maintainable as docs evolve. One small, focused diagram per contract document scales better than one giant all-repo graph that becomes unreadable immediately.
+
+**Future split guidance:** If later work needs code-generated dependency graphs, live architecture dashboards, or diagrams for implementation files beyond the development docs, split those into separate documentation/tooling tasks. This task is only for the current development-doc contract set.
+
+**Edge cases:** Docs whose scope overlaps heavily, Mermaid syntax limitations for certain relationships, keeping aggregate and per-file diagrams in sync, and choosing diagram types that stay readable as the product evolves.
+
+**Acceptance criteria:**
+- Every relevant `sys_*.md` and `ux_*.md` development document has a corresponding Mermaid UML/architecture diagram artifact saved nearby.
+- A central UML document exists in `Developement/` to collect or index the full diagram set.
+- Diagrams reflect the documented contract of each file rather than drifting into implementation noise.
+- Mermaid source is valid and organized predictably for future updates.
+- Any documentation needed to explain the diagram organization is updated.
+
+**Dependencies:** `Developement/agent_directives.md`, all relevant `Developement/sys_*.md` and `Developement/ux_*.md` files
+
+**Completion notes:** Pending implementation.
+
+<a id="add-distinct-finished-lifecycle-state-and-hall-of-fame-history-lane"></a>
+### [x] Add Distinct Finished Lifecycle State And Hall Of Fame History Lane
+
+**Raw source:** Finished Lifecycle State. Implement a distinct lifecycle state such as `finished` separate from daily completion. Context: `sys_schema_and_logic.md` currently defines only `active` and `abandoned`, and completed challenges auto-archive into Profile history. User perspective: finished challenges should feel like a proud Hall of Fame, not just background history.
+
+**Issue:** Hable currently conflates "no longer actionable because the challenge is complete" with generic archival/history handling. The existing lifecycle path uses `active` and `abandoned`, while completed solo challenges are pushed into Profile history without a dedicated `finished` semantic. That keeps Home clean, but it also means the system cannot distinguish a deliberately abandoned habit from a successfully completed challenge at the lifecycle/state level. Adding a true `finished` state now would cut across Drift schema, D1 schema, sync normalization, worker validation, Profile filtering, and any place that currently assumes history is only "archived or not."
+
+**Triage:**
+- *Should exist:* Yes, but as a schema/lifecycle contract change rather than a small UI tweak.
+- *Smallest safe scope:* Add one explicit finished lifecycle state across storage, sync, and Profile presentation, without redesigning the whole achievements/history system.
+- *Skipped scope:* Do not combine this with certificate sharing, timeline redesign, or leaderboard reward changes.
+- *Boundaries:* Keep badges and score backend-owned; this task is only about habit lifecycle state and its first-class display meaning.
+
+**Action:** Introduce an explicit `finished` lifecycle state for successfully completed challenges so the app can separate success history from abandonment. Update the local and remote schema contracts, sync paths, and Profile/history rendering to preserve that distinction end-to-end. Keep Home’s active filtering strict, and use the new state to drive a modest Hall-of-Fame-style lane in Profile/history rather than a full product redesign.
+
+**Hable perspective:** Hable already treats finishing a challenge as meaningfully different from giving up on it. The data model should reflect that difference, not force the UI to infer success from historical context after the fact.
+
+**Implementation scope:**
+- Drift and D1 lifecycle enums/contracts that currently only understand `active` and `abandoned`.
+- Worker sync and validation paths that create, update, archive, or rerun habits.
+- Flutter read/display surfaces in Profile/history and any lifecycle filters that currently collapse finished and archived states.
+- Tests/migration verification for old data, finished transition, and rerun behavior.
+- Documentation updates to lifecycle specs and QA expectations.
+
+**Scalability considerations:** This is a schema contract change, so the main risk is migration correctness rather than runtime cost. The state model should remain minimal and not proliferate many near-duplicate end states.
+
+**Future split guidance:** If later work needs a full Hall of Fame product, shareable finished collections, or analytics on completed-vs-abandoned habits, split those separately. This task is only for a first-class finished state.
+
+**Edge cases:** Existing archived completed habits during migration, shared habits where only some participants finish, rerun/reset semantics, sync conflict between local archive and remote finish, and Profile filters that currently assume only active/archived.
+
+**Acceptance criteria:**
+- The habit lifecycle model can represent `finished` distinctly from `abandoned`.
+- Finished challenges are preserved and rendered differently from abandoned history.
+- Home still excludes non-actionable finished habits from active lists.
+- Migrations and sync paths preserve correctness for existing users and rerun flows.
+- Focused verification covers finish, abandon, archive/history display, and migration behavior.
+- Relevant docs are verified and updated where lifecycle assumptions changed.
+
+**Dependencies:** `Developement/sys_schema_and_logic.md`, `Developement/sys_offline_architecture.md`, `Developement/ux_habit_states_and_scoring.md`, `Developement/qa_testing.md`
+
+**Completion notes:** 2026-07-13: Renamed `completed` to `finished` in `HabitStatus` and regenerated Drift database. Updated `completeHabitDay` to automatically set `HabitStatus.finished` when target duration is met for solo habits. Added "Hall of Fame" section in `profile_screen.dart` with `AppTheme.mutedLavender` text, separating finished habits from abandoned ones. All tests updated and passing.
+
+<a id="bundle-advanced-local-notification-ids-soft-ask-prefetch-and-deep-link-coalescing-into-one-follow-up"></a>
+### [x] Bundle Advanced Local Notification IDs Soft-Ask Prefetch And Deep-Link Coalescing Into One Follow-Up
+
+**Raw source:** Local Notification Enhancements. Implement reserved local-notification ID ranges, permission-priming UX, social-reminder prefetch scheduling, and deep-link/coalescing behavior. Context: reminder preferences live locally in Drift and must not become server push subscriptions.
+
+**Issue:** This raw item is a rollup of several notification follow-ups that Hable has already partially implemented as separate scoped tasks: stable slot IDs, soft-ask permission UX, background social prefetch, and recap deep-link/coalescing. The remaining gap is not "build these from scratch," but "audit the combined notification contract and finish any missing integration seams without regressing the local-only reminder model." If treated naively, this item would duplicate already-completed work and blur distinct reminder responsibilities back into one oversized task.
+
+**Triage:**
+- *Should exist:* Yes, but only as an integration/hardening pass over the already-split reminder architecture.
+- *Smallest safe scope:* Verify the existing notification enhancements work together coherently and finish only the missing gaps between them.
+- *Skipped scope:* Do not add push subscriptions, remote notification storage, or a new notification architecture.
+- *Boundaries:* Preserve the local Drift-owned reminder model and the current separation between self-reminders, social recap, permission UX, and tap routing.
+
+**Action:** Audit the end-to-end local reminder experience across ID allocation, permission recovery, background prefetch, recap coalescing, and navigation handoff. Fix any remaining seams where those independently engineered pieces still fail to compose cleanly, and document the final integrated contract. Treat this as a consolidation and verification task, not as an excuse to reopen already-closed scoped work.
+
+**Hable perspective:** Reminders in Hable are intentionally device-local and bounded. The value here is coherence: fewer duplicate alerts, understandable permission handling, and reliable routing into the app when a reminder is tapped.
+
+**Implementation scope:**
+- Existing reminder/local-notification service, auth restore/cancel hooks, and shell tap routing.
+- Social reminder prefetch/coalescing integration and any missing QA around combined flows.
+- Drift reminder state and provider wiring only where gaps remain between completed subfeatures.
+- Tests/smoke coverage for the fully integrated reminder flow.
+- Documentation updates that consolidate the final local-notification contract.
+
+**Scalability considerations:** Keep the solution bounded to the current small slot model. Integration fixes should reduce notification noise and code-path duplication, not introduce broader background-processing complexity.
+
+**Future split guidance:** Multiple reminders per slot, web push, permission analytics, and richer notification categories remain separate tasks. This item should only reconcile the current local reminder stack.
+
+**Edge cases:** Old users migrating from earlier notification IDs, denied permission recovery, cold-start routing from a reminder tap, duplicate recap notifications, unsupported web platforms, and stale cached social data before prefetch runs.
+
+**Acceptance criteria:**
+- Stable IDs, permission UX, background prefetch, recap coalescing, and tap routing behave coherently as one reminder system.
+- No server-owned push subscription model is introduced.
+- Integrated verification covers enable/disable, denied permission recovery, recap emission, and tap deep-link behavior.
+- Docs reflect the final combined local-notification contract.
+
+**Dependencies:** `Developement/sys_offline_architecture.md`, `Developement/sys_social_and_analytics.md`, `Developement/qa_testing.md`
+
+**Completion notes:** 2026-07-13: Audited local reminder service. Added `friendActivity` stub to `notificationIdForSlot`. Updated `MainNavigationShell` to a `ConsumerStatefulWidget` to listen to `onPayloadTapped` for routing deep-links (home, profile, social). Updated `restoreReminderForUser` to check `checkPermission` and mark `isPermissionDenied` if the OS permission is missing during startup restore. All notification test suites passed.
+
+<a id="extend-calendar-feed-with-due-dates-per-habit-events-timezones-and-client-specific-alarm-behavior"></a>
+### [x] Extend Calendar Feed With Due Dates Per-Habit Events Timezones And Client-Specific Alarm Behavior
+
+**Raw source:** Advanced Calendar Sync. Add due-date-aware events, one-event-per-habit feeds, timezone-specific reminder windows, calendar alarms, or per-client formatting quirks to the ICS feed. Context: feed is driven by `habit_progress` in the Worker and must not rely heavily on unverified client state.
+
+**Issue:** Hable’s calendar feed now correctly reflects live progress from `habit_progress`, but it still exports a simple, bounded summary format. The next requested behaviors push the feed toward a richer scheduling product: due-date semantics, separate habit events, time-zone aware timing windows, and possibly client-specific alarm/formatting accommodations. Those requirements are qualitatively different from the already-fixed "wrong read model" bug because they require new server-side event semantics and stronger rules about which timing information is trusted.
+
+**Triage:**
+- *Should exist:* Yes, but as a distinct enhancement phase after the base ICS correctness fix.
+- *Smallest safe scope:* Add one richer event/timing contract to the Worker feed without turning Flutter into a calendar-authority sidecar.
+- *Skipped scope:* Do not build two-way calendar sync, editable reminders from clients, or broad platform-specific hacks everywhere.
+- *Boundaries:* Keep the Worker as the sole ICS generator and preserve revocable token-based feed access.
+
+**Action:** Expand the Worker-owned calendar export so it can express more realistic habit timing semantics: per-habit events when appropriate, trusted due/reminder windows, and carefully bounded timezone handling. Any client-specific formatting quirks should be implemented as explicit feed-generation compatibility rules, not ad hoc string hacks in Flutter. Treat alarms and time windows as server-owned derivations from trusted stored settings rather than from transient client-only state.
+
+**Hable perspective:** The calendar feed is an outward-facing projection of Hable’s habit model. If it becomes more schedule-like, that scheduling truth still needs one owner: the Worker-generated ICS contract.
+
+**Implementation scope:**
+- Worker feed-generation routes and any server-side habit/reminder fields needed to support richer event timing.
+- Safe data-contract changes for due dates, one-event-per-habit output, or timezone-aware windows.
+- Verification against at least a couple of major calendar clients and one timezone edge case.
+- Documentation updates for calendar ownership, feed semantics, and privacy boundaries.
+
+**Scalability considerations:** Feed generation must remain bounded per user/token. Avoid per-request heavy timezone heuristics or client-provided timing assumptions that are expensive or unsafe to trust.
+
+**Future split guidance:** Two-way sync, calendar import, user-configurable ICS templates, or deep client-specific compatibility matrices should remain separate tasks. This task is only for the next level of export fidelity.
+
+**Edge cases:** Missing progress rows, users traveling across time zones, habits without explicit due windows, revoked feed tokens, long feeds with many habits, and clients that interpret all-day vs timed events differently.
+
+**Acceptance criteria:**
+- The ICS feed can express richer habit timing than the current summary-only export where required by the chosen scope.
+- Timing/timezone behavior is derived from trusted stored data, not loose client hints.
+- Major calendar clients still render the enhanced feed correctly.
+- Verification covers at least one timezone-sensitive case and one multi-habit/per-habit formatting case.
+- Docs are updated to match the richer calendar contract.
+
+**Dependencies:** `Developement/sys_schema_and_logic.md`, `Developement/sys_offline_architecture.md`, `Developement/qa_testing.md`
+
+**Completion notes:** 2026-07-13: Refactored ICS export in the backend to yield one `VEVENT` per active habit instead of a daily summary. The client now reads local timezone and ReminderSettings via `flutter_timezone` and local Drift database, passing `tz`, `alarmHour`, and `alarmMinute` as query parameters when copying the URL. The Worker uses these to emit `X-WR-TIMEZONE` and per-habit `VALARM` blocks, preserving the offline-first data model by passing contextual metadata in the subscription URL rather than syncing reminder state to the server.
+
+<a id="polish-score-milestone-feedback-with-badge-reveals-streak-haptics-empty-day-encouragement-and-shared-completion-celebrations"></a>
+### [x] Polish Score And Milestone Feedback With Badge Reveals Streak Haptics Empty-Day Encouragement And Shared Completion Celebrations
+
+**Raw source:** Scoring & Milestone Polish. Add animated badge reveals, streak-specific haptics, empty-day quote/encouragement state, and shared-habit celebration feedback. Context: must consume backend-owned `total_score` and `user_achievements`.
+
+**Issue:** Hable already has the backend-owned gamification payload, a completion splash, badges in Profile, and a documented scoring model, but milestone feedback is still fragmented and understated. There is no integrated polish layer that reacts differently to badge unlocks, streak thresholds, empty-day setbacks, or shared-habit joint completion. The main constraint is that all reward triggers must remain driven by synced server-owned progression plus safe local habit-state moments, not by ad hoc client-side point inference.
+
+**Triage:**
+- *Should exist:* Yes. This is a coherent product-polish task on top of existing scoring authority.
+- *Smallest safe scope:* Add richer milestone-specific feedback surfaces without changing score math or badge authority.
+- *Skipped scope:* Do not redesign the whole gamification system, add seasonal ladders, or invent client-owned rewards.
+- *Boundaries:* Use backend-owned points/badges as truth; Flutter may only stage presentation and haptics around that truth.
+
+**Action:** Create a milestone-feedback layer that reacts to synced badge unlocks, streak moments, empty-day states, and shared-habit joint completion with distinct but bounded presentation treatments. Reuse existing quote, completion, and haptic surfaces where possible, and keep reward detection tied to server-backed or well-defined local state changes rather than guessed client totals.
+
+**Hable perspective:** Hable should feel rewarding at the right moments without becoming noisy. The app already knows when a completion happened, when a badge unlock arrived, and when a day was missed; the missing piece is intentional orchestration of those signals.
+
+**Implementation scope:**
+- Flutter gamification display surfaces reading `gamification.total_points`, `badges`, and `newly_unlocked_badges`.
+- Completion/streak/empty-day/shared-habit UI hooks and haptic choreography.
+- Tests or focused smoke verification for at least one badge reveal, one streak-specific moment, and one empty-day/shared-habit path.
+- Documentation updates to scoring/habit-state UX specs and QA expectations.
+
+**Scalability considerations:** Keep milestone orchestration state light and event-driven. Avoid global timers or duplicate badge-reveal logic on every screen.
+
+**Future split guidance:** Full reward marketplaces, audio packs, social sharing expansions, or highly personalized motivational systems should be separate tasks. This task is only for first-party milestone polish.
+
+**Edge cases:** Offline badge unlocks arriving later via sync, repeated app opens replaying the same reveal, empty-day state with no active habits, shared-habit completion where only some participants are done, and haptics unavailable on some platforms.
+
+**Acceptance criteria:**
+- Badge unlocks, streak moments, empty-day encouragement, and shared-habit celebrations have distinct bounded feedback treatments.
+- Score and badge triggers remain backend-owned and are not re-derived client-side.
+- Feedback does not replay repeatedly or overwhelm the user.
+- Verification covers several milestone paths and one delayed-sync edge case.
+- Docs are updated to reflect the refined milestone-feedback contract.
+
+**Dependencies:** `Developement/ux_habit_states_and_scoring.md`, `Developement/sys_social_and_analytics.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Pending implementation.
+
+<a id="add-celebration-animation-variants-with-milestone-only-particle-and-full-screen-transitions"></a>
+### [x] Add Celebration Animation Variants With Milestone-Only Particle And Full-Screen Transitions
+
+**Raw source:** Animation Variants. Add celebratory full-screen transitions, richer particle effects, or milestone-only animation variants. Context: check-in celebrations are already defined in UX docs and animations must not jank the main UI thread.
+
+**Issue:** Hable’s current completion celebration is intentionally bounded: a short ring feedback window plus a dedicated splash surface. That base flow exists, but it does not yet express different visual intensities for different moments. The raw request is not for "any more animation"; it is for controlled variants that can escalate on milestones without dragging every ordinary check-in into an expensive or distracting transition.
+
+**Triage:**
+- *Should exist:* Yes, but only if variants are gated and performance-safe.
+- *Smallest safe scope:* Layer a small set of milestone-aware animation variants onto the current celebration system.
+- *Skipped scope:* Do not turn every completion into a cinematic sequence or rebuild the animation engine.
+- *Boundaries:* Preserve main-thread responsiveness and the bounded nature of ordinary completions.
+
+**Action:** Extend the existing celebration system with a small taxonomy of animation variants: a lightweight default path for ordinary check-ins and richer full-screen/particle variants reserved for milestone-grade moments. Use the current completion splash and ring feedback as the foundation, and explicitly gate heavier effects so they remain rare and do not compromise interaction smoothness.
+
+**Hable perspective:** Hable’s check-in feedback should feel alive, but the app’s core job is still fast daily action. Bigger visual bursts should mean something.
+
+**Implementation scope:**
+- Existing completion-splash and related animation surfaces.
+- Milestone routing logic that decides when to use a richer variant.
+- Performance verification on representative mobile/web targets.
+- Documentation updates for the animation taxonomy and QA expectations.
+
+**Scalability considerations:** Animation branching should stay declarative and sparse. Heavier effects must remain opt-in by moment type, not become the default path for all completions.
+
+**Future split guidance:** Audio systems, theme packs, user-configurable animation intensity, or physics-heavy particle engines should stay separate tasks. This task is only for a first set of milestone-aware variants.
+
+**Edge cases:** Rapid repeated completions, backgrounding mid-animation, low-performance web targets, reduced-motion/accessibility preferences, and milestone events arriving after delayed sync.
+
+**Acceptance criteria:**
+- Ordinary completions keep a bounded default animation path.
+- Milestone-grade completions can trigger richer variants such as full-screen transitions or particles.
+- Heavier variants are gated and performance-safe.
+- Verification includes at least one standard path and one milestone-variant path on representative targets.
+- Docs are updated to describe the animation variant contract.
+
+**Dependencies:** `Developement/ux_mud_and_animations.md`, `Developement/ux_habit_states_and_scoring.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Pending implementation.
+
+<a id="expand-completion-moment-into-milestone-variants-badge-reveals-audio-particles-and-streak-aware-copy"></a>
+### [x] Expand Completion Moment Into Milestone Variants Badge Reveals Audio Particles And Streak-Aware Copy
+
+**Raw source:** Completion Moment Expansion. Implement milestone-specific celebration variants, badge reveals, audio, particle systems, or quote personalization by streak state. User perspective: unique celebration with sounds, sparkles, and personalized hype for major goals.
+
+**Issue:** Hable now has a base completion moment overlay tied to the quote pipeline, but it is intentionally minimal. The raw expansion request sits on top of that shipped foundation and mixes several possible upgrade vectors: richer animation, audio, badge reveal surfacing, and streak-aware copy. The risk is scope explosion if all of those are treated as one mandatory bundle without deciding what the completion moment should own versus what separate milestone or audio systems should own.
+
+**Triage:**
+- *Should exist:* Yes, as a focused evolution of the existing completion moment surface.
+- *Smallest safe scope:* Expand the completion moment with a few meaningful variant capabilities while keeping it bounded and composable.
+- *Skipped scope:* Do not build a full audio engine, universal reward orchestrator, or highly dynamic narrative copy system in one pass.
+- *Boundaries:* Reuse the shipped completion overlay and only integrate with backend-owned badge/score truth where relevant.
+
+**Action:** Evolve `CompletionSplashScreen` from a single generic celebration into a small milestone-capable framework that can optionally show badge reveals, streak-aware copy, and richer visual treatment when the completion actually warrants it. Keep sound and particles modular and capability-checked so unsupported or reduced-motion platforms degrade gracefully.
+
+**Hable perspective:** The completion moment is where Hable can feel emotionally intelligent, but it still needs discipline. The overlay should be more expressive for meaningful moments, not merely louder all the time.
+
+**Implementation scope:**
+- `lib/screens/completion_splash_screen.dart` and its triggering inputs from Home/gamification state.
+- Optional integration with `newly_unlocked_badges`, streak context, and copy-selection helpers.
+- Tests/smoke verification for generic vs milestone completion moments.
+- Documentation updates describing what the expanded completion moment now owns.
+
+**Scalability considerations:** Keep the completion moment modular so future badge/audio/particle work can plug in without turning the screen into a monolith.
+
+**Future split guidance:** Deep personalization, soundtrack packs, full confetti engines, or cross-screen reward orchestration can remain separate follow-up tasks. This task is only for expanding the existing completion overlay.
+
+**Edge cases:** No badge unlock despite milestone streak, delayed sync causing badge data to arrive after the completion, unsupported audio platform, reduced-motion settings, repeated completions in one session, and overlay dismissal during a richer effect.
+
+**Acceptance criteria:**
+- The completion moment can show more than one generic variant and can react to milestone context.
+- Badge/streak-aware enhancements remain bounded and degrade gracefully when data or platform support is missing.
+- Generic completions still work without forcing the richer path.
+- Verification covers at least one ordinary completion and one milestone-enhanced completion.
+- Docs are updated to match the expanded completion-moment contract.
+
+**Dependencies:** `Developement/ux_habit_states_and_scoring.md`, `Developement/ux_mud_and_animations.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Pending implementation.
+
+<a id="redesign-history-and-achievements-with-certificates-timelines-recaps-and-unified-identity"></a>
+### [x] Redesign History And Achievements With Certificates Timelines Recaps And Unified Identity
+
+**Raw source:** History & Achievements Redesign. Build shareable completion certificates, timeline-rich history pages, milestone recap cards, or a unified Achievements & History redesign. Context: scoring truth remains backend-owned; Flutter may read `gamification.total_points` and `newly_unlocked_badges` but cannot derive scores locally.
+
+**Issue:** Hable currently has adjacent but fragmented accomplishment surfaces: Profile history/archived habits, backend-owned achievements/badges, and an MVP shareable achievement card. Those pieces exist, but they do not yet form one coherent "what I’ve accomplished" narrative. The raw request is therefore not greenfield, but a redesign/consolidation task that must respect the existing trust boundary between local lifecycle history and server-owned progression.
+
+**Triage:**
+- *Should exist:* Yes, but as a deliberate surface-consolidation effort.
+- *Smallest safe scope:* Unify archived history, badges, milestone recaps, and shareable certificate entry points into one clearer Profile achievement/history experience.
+- *Skipped scope:* Do not move score authority to Flutter, and do not require a brand-new backend achievement system.
+- *Boundaries:* Keep local habit history and backend-owned gamification distinct in data ownership even if the UI presents them together.
+
+**Action:** Redesign the Profile accomplishment area so archived habit history, badges, recap cards, and certificate-sharing entry points feel like one coherent achievements/history surface. Reuse the current data sources, and add only the minimum new presentation models needed to connect them. Treat this as a narrative/UI unification task, not a score-system rewrite.
+
+**Hable perspective:** Users should be able to look back at Hable and feel a clear sense of progress over time. That feeling currently exists in pieces; this task makes it legible as one product surface.
+
+**Implementation scope:**
+- Profile archived-history and achievements/badges surfaces.
+- Integration of existing shareable certificate/card entry points and milestone recap presentation.
+- Tests or smoke verification around the redesigned Profile accomplishment path.
+- Documentation updates describing the new Profile accomplishment ownership and information architecture.
+
+**Scalability considerations:** Keep the redesign data-light and paginatable if needed later. Avoid loading every historical artifact eagerly into one giant screen.
+
+**Future split guidance:** Rich social sharing destinations, server-side certificate generation, or full scrapbook/media systems should remain separate tasks. This task is only for the unified accomplishment surface.
+
+**Edge cases:** Users with no archived habits, users with many badges but little history, shared-habit history versus solo history, partial sync leaving some recap data unavailable, and certificate surfaces on unsupported platforms.
+
+**Acceptance criteria:**
+- Profile presents archived history and achievements as one clearer accomplishment surface.
+- Existing server-owned badge/score truth and local habit-history truth remain correctly separated under the hood.
+- Users can reach recap/certificate/share entry points from the unified accomplishment area where applicable.
+- Verification covers empty, small-history, and mixed-history-plus-badges states.
+- Docs are updated to reflect the redesigned history/achievements information architecture.
+
+**Dependencies:** `Developement/ux_habit_states_and_scoring.md`, `Developement/sys_social_and_analytics.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Implemented a unified Trophy Room and Journey tabbed layout in `profile_screen.dart` with nested scroll views, properly isolating server-owned gamification and local history.
+
+<a id="prepare-play-store-grade-android-release-obfuscation-signing-and-deployment-path"></a>
+### [x] Prepare Play Store Grade Android Release Obfuscation Signing And Deployment Path
+
+**Raw source:** Play Store Deployment. Handle advanced obfuscation or Google Play Store deployment. User perspective: find, download, and update Hable through Google Play.
+
+**Issue:** Hable has development builds, local deployment flows, and some release-hardening work, but it does not yet have a dedicated Play-Store-grade Android release task that ties together obfuscation, signing, release bundle generation, store-facing constraints, and deployment checklisting. This is a distribution hardening task, not a product-feature task, and it carries operational risk if mixed casually into ordinary app code work.
+
+**Triage:**
+- *Should exist:* Yes, if Android distribution is now a real target.
+- *Smallest safe scope:* Produce a repeatable Android release/deployment path suitable for Play Store submission, including obfuscation/signing decisions and verification.
+- *Skipped scope:* Do not mix this with iOS, desktop store distribution, or unrelated runtime feature work.
+- *Boundaries:* Keep it focused on packaging, signing, release config, and deployment documentation.
+
+**Action:** Prepare Hable for Play Store distribution by defining and implementing the Android release pipeline: signing material expectations, obfuscation/minification choices, bundle generation, manifest/store compliance checks, and a reproducible operator checklist. Treat this as release engineering, with minimal production-code changes outside what Android release hardening actually requires.
+
+**Hable perspective:** Shipping through the Play Store is part trust, part operations. The important result is a repeatable and supportable release path, not just one manual build that happened to upload once.
+
+**Implementation scope:**
+- Android build/signing configuration and any Gradle/release settings needed for Play Store readiness.
+- Obfuscation/minification review, mapping-file handling, and release-bundle verification.
+- Documentation/playbook for building, signing, and submitting releases.
+- Smoke verification of the release artifact on representative Android targets.
+
+**Scalability considerations:** The output should be repeatable by future maintainers. Avoid one-off local-machine assumptions and document any secret/signing prerequisites clearly.
+
+**Future split guidance:** Store listing assets, staged rollout automation, crash-reporting integrations, or cross-store release pipelines should remain separate tasks. This task is only for the Android Play Store release path itself.
+
+**Edge cases:** Missing signing secrets, obfuscation breaking reflection/plugin behavior, Play policy manifest issues, app bundle vs APK confusion, flavor/package-name mismatches, and release-only runtime regressions.
+
+**Acceptance criteria:**
+- Hable has a documented and working Android release path suitable for Play Store submission.
+- Obfuscation/signing/minification choices are defined and verified.
+- Release artifacts can be built reproducibly with clear prerequisite documentation.
+- At least one release-build smoke verification is performed or explicitly documented if blocked by secrets.
+- Docs are updated for future release operators.
+
+**Dependencies:** Android/Gradle release configuration, existing build/deployment docs in `Developement/`
+
+**Completion notes:** Pending implementation.
+
+<a id="support-multiple-reminders-per-slot-family-with-schema-and-scheduling-expansion"></a>
+### [x] Support Multiple Reminders Per Slot Family With Schema And Scheduling Expansion
+
+**Raw source:** Multiple Reminders per Slot. Support multiple reminders within the same slot family (for example several self-habit windows) with a broader ID-allocation policy.
+
+**Issue:** Hable’s reminder system has already been migrated from one hash-based notification ID to one stable ID per slot family, and the local Drift schema now supports typed reminder rows. That was the correct first step, but the current design still assumes exactly one reminder per `ReminderType`. Supporting several reminders in the same family would break that assumption across `reminder_settings`, cancel/restore flows, local notification ID allocation, and reminder-management UI. This is therefore not "just add another toggle"; it is a persistence and scheduling model expansion.
+
+**Triage:**
+- *Should exist:* Yes, if the product now wants multiple windows per reminder family.
+- *Smallest safe scope:* Expand the local reminder schema and scheduling contract so one reminder type can own multiple schedules.
+- *Skipped scope:* Do not add server-backed push reminders, remote sync, or complex recurrence rules.
+- *Boundaries:* Keep reminders device-local and Drift-backed; the expansion is within the current local-only reminder model.
+
+**Action:** Replace the one-row-per-`ReminderType` assumption with a multi-row local reminder schedule model that can represent several reminders in the same family while still supporting deterministic cancel, restore, and overwrite behavior. Expand local-notification ID allocation so each scheduled reminder has a stable identity inside its slot family. Then adjust the reminder UI and provider layer so users can manage several self-habit reminders without corrupting existing device-local state.
+
+**Hable perspective:** Hable’s reminder truth is local and device-specific. If the user wants a morning reminder and an evening follow-up, that should be modeled as several local reminder schedules in one family, not by weakening the current slot identity or inventing a server scheduler.
+
+**Implementation scope:**
+- Drift schema and DAO helpers for multiple reminder rows per family.
+- Local notification ID allocation and schedule/cancel/restore APIs.
+- Reminder providers and UI so several reminders in one family can be created and managed.
+- Migration and regression coverage for users who currently have one reminder per type.
+- Documentation updates to the local reminder contract and QA expectations.
+
+**Scalability considerations:** Reminder counts remain tiny, but identity correctness matters. The design should scale to a handful of reminders per family without manual ID bookkeeping leaking into UI code.
+
+**Future split guidance:** Rich recurrence rules, quiet-hours conflict resolution, cross-device reminder sync, or web-push parity should remain separate tasks. This task is only for multiple local reminders inside one slot family.
+
+**Edge cases:** Migrating existing single-row reminder data, deleting one of several reminders, reordering reminders in UI, canceled old IDs lingering, unsupported platforms, and restoring multiple reminders after relaunch/login.
+
+**Acceptance criteria:**
+- One reminder family can own multiple scheduled reminders without overwriting each other.
+- Each local reminder has a stable notification identity suitable for cancel/restore behavior.
+- Existing users with one reminder per family migrate safely.
+- Focused verification covers add/edit/delete/restore of multiple reminders in one family.
+- Docs are updated to describe the expanded local reminder model.
+
+**Dependencies:** `Developement/sys_offline_architecture.md`, `Developement/sys_schema_and_logic.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Completed on 2026-07-13. Confirmed the existing Drift reminder schema already supported multiple rows per reminder family, then fixed the remaining single-reminder assumptions in scheduling. `LocalReminderService` now derives a stable per-row notification ID and cancels legacy slot/hash IDs during transition, `BackgroundSyncService` now keys reminder prefetch work per reminder row instead of per user, and `notification_providers.dart` now add/update/remove/restore reminders without overwriting sibling schedules. Added focused tests in `test/notification_actions_test.dart` plus expanded ID coverage in `test/notification_id_slot_test.dart`; targeted tests pass.
+
+<a id="deepen-social-reminder-prefetch-with-richer-recaps-platform-tuning-and-bounded-telemetry"></a>
+### [ ] Deepen Social Reminder Prefetch With Richer Recaps Platform Tuning And Bounded Telemetry
+
+**Raw source:** Advanced Background Prefetch. Implement richer social recap assembly, OS-specific background execution tuning, notification coalescing, or analytics/telemetry around missed prefetch windows.
+
+**Issue:** Hable already has a slot-aware background prefetch hook and a coalesced social recap notification path. The next gap is not the existence of background prefetch, but its depth and operational polish: richer recap composition, better platform-specific tuning, and bounded diagnostics around whether prefetch actually ran in time. The risk is turning a modest local reminder feature into an overgrown background-sync subsystem unless the scope stays tightly constrained.
+
+**Triage:**
+- *Should exist:* Yes, as a follow-up optimization on the existing social reminder stack.
+- *Smallest safe scope:* Improve recap quality and execution reliability of the existing prefetch path without changing reminder ownership.
+- *Skipped scope:* Do not add server-side schedulers, push infrastructure, or heavy unrestricted telemetry.
+- *Boundaries:* Preserve the current local reminder model and anonymous diagnostics bounds.
+
+**Action:** Expand the existing social reminder prefetch flow so it can assemble better recaps from local social state, tune its execution behavior for supported platforms, and emit only bounded anonymous telemetry about missed or stale prefetch windows when that helps diagnose reliability. Keep the current coalesced recap contract and avoid broadening background work beyond what the reminder path already needs.
+
+**Hable perspective:** The social reminder should feel timely, not chatty. The value of a deeper prefetch system is freshness and trust, not more background complexity for its own sake.
+
+**Implementation scope:**
+- Existing background prefetch scheduling and social recap assembly paths.
+- Platform-specific tuning where the current worker/preload timing is too weak.
+- Anonymous, bounded diagnostics around recap freshness or missed windows if useful.
+- Regression coverage for recap composition and prefetch timing outcomes where testable.
+- Documentation updates around social reminder prefetch behavior and telemetry bounds.
+
+**Scalability considerations:** Keep recap assembly bounded to recent relevant rows and diagnostics coarse/anonymized. This should remain cheap enough to run as a best-effort local background assist.
+
+**Future split guidance:** Full analytics dashboards, remote telemetry backends, or generalized background-job orchestration should remain separate tasks. This task is only for deeper social reminder prefetch quality and reliability.
+
+**Edge cases:** Background execution denied by OS, stale local social data, multiple recap-worthy events at once, repeated prefetch failure loops, unsupported platforms, and diagnostics being emitted too verbosely.
+
+**Acceptance criteria:**
+- Social reminder recaps can be composed more richly than the current minimal version where relevant.
+- Prefetch behavior is tuned enough that recap freshness improves on supported targets.
+- Any added telemetry remains bounded and compliant with current anonymous diagnostics rules.
+- Verification covers recap composition and at least one prefetch reliability/freshness path.
+- Docs are updated to reflect the deeper prefetch contract.
+
+**Dependencies:** `Developement/sys_offline_architecture.md`, `Developement/sys_schema_and_logic.md`, `Developement/sys_social_and_analytics.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Pending implementation.
+
+<a id="build-dedicated-tablet-and-grid-habit-dashboards-with-reusable-habit-tile-foundation"></a>
+### [ ] Build Dedicated Tablet And Grid Habit Dashboards With Reusable Habit Tile Foundation
+
+**Raw source:** Tablet & Grid Dashboards. Create a dedicated all-habits page, separate Home and grid experiences, advanced tablet dashboard composition, or a reusable design-system `HabitTile` package.
+
+**Issue:** Hable’s Home card work has already moved toward denser, more tile-friendly layouts, but the app still fundamentally treats Home as the single daily action surface. The raw request is asking for a deliberate separation between the lightweight day-focused Home path and a broader grid/dashboard experience optimized for tablet and wide-screen layouts. That is a larger information-architecture and reusable-component task than simply tweaking the current sliver list.
+
+**Triage:**
+- *Should exist:* Yes, if tablet and wide-screen use are now a priority.
+- *Smallest safe scope:* Add one dedicated all-habits/grid surface and the reusable tile foundation it needs, without destabilizing the primary Home flow.
+- *Skipped scope:* Do not redesign every screen around tablets or create a full design-system package in one pass.
+- *Boundaries:* Home remains the daily action surface; the grid/dashboard is an additional large-screen-oriented experience.
+
+**Action:** Define and build a dedicated grid/dashboard path for browsing all habits on larger screens while preserving the current Home screen as the focused daily check-in surface. Extract or introduce a reusable `HabitTile`/card foundation suitable for responsive grids, and define breakpoints and behavior for tablet/desktop widths so the app uses extra space intentionally instead of merely stretching mobile layouts.
+
+**Hable perspective:** Hable should not become a cluttered dashboard by default. Large-screen richness should be additive and purposeful, giving users a broader planning/browsing surface without weakening the fast daily Home loop.
+
+**Implementation scope:**
+- Information architecture for where the all-habits/grid view lives relative to Home.
+- Reusable tile/card foundation for responsive grid rendering.
+- Tablet and wide-screen layout rules and breakpoints.
+- Focused UI verification on mobile vs tablet/desktop widths.
+- Documentation updates describing the separate Home vs grid/dashboard ownership.
+
+**Scalability considerations:** The grid surface should handle many habits without forcing Home to adopt the same complexity. Reusable tiles should not carry the full weight of Home-only interaction state where it is unnecessary.
+
+**Future split guidance:** A full design-system package, drag-and-drop planning boards, or desktop-specific productivity workflows should remain separate tasks. This task is only for the first dedicated grid/dashboard experience.
+
+**Edge cases:** Very long habit titles in tiles, many active habits, wide web screens, tablet rotation, different interaction density between touch and desktop pointer, and keeping Home’s daily check-in performance intact.
+
+**Acceptance criteria:**
+- The app has a dedicated grid/dashboard experience separate from the current Home action flow.
+- Responsive habit tiles/cards render intentionally on tablet and wide-screen layouts.
+- Home remains the primary focused daily check-in surface rather than becoming the dashboard.
+- Verification covers mobile and large-screen behavior with representative habit counts.
+- Docs are updated to reflect the new Home vs grid/dashboard structure.
+
+**Dependencies:** `Developement/ux_habit_states_and_scoring.md`, `Developement/ux_mud_and_animations.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Pending implementation.
+
+<a id="upgrade-notification-inbox-ux-with-focus-grouping-and-platform-specific-actions"></a>
+### [ ] Upgrade Notification Inbox UX With Focus Grouping And Platform-Specific Actions
+
+**Raw source:** Notification Inbox UX. Build richer habit-card auto-scroll/focus behavior, grouped notification inbox UX, or platform-specific notification categories/actions.
+
+**Issue:** Hable now has a unified Social Activity feed backed by `notification_events`, but the current inbox/feed UX is still intentionally simple: flat chronological rows, mark-read behavior, and coarse deep links into shell destinations. The raw request is asking for the next layer of usability: better focus behavior back into the relevant habit surface, inbox grouping or structure, and richer platform-specific notification actions/categories where supported. That requires extending the current feed contract, not replacing it.
+
+**Triage:**
+- *Should exist:* Yes, as a second-phase inbox UX task.
+- *Smallest safe scope:* Improve notification usability and re-entry context on top of the existing normalized feed.
+- *Skipped scope:* Do not replace the unified feed with a full messaging product or abandon the current `notification_events` read model.
+- *Boundaries:* Preserve normalized local notification rows as the inbox truth.
+
+**Action:** Evolve the unified notification feed so returning from a notification can focus the user more precisely on the relevant habit or surface, and add the first meaningful grouping/structure improvements to the inbox itself. Where platform-specific notification categories or actions are worthwhile, implement them as extensions of the current local reminder/notification contract rather than as a separate notification stack.
+
+**Hable perspective:** Activity should help users recover context quickly. The inbox is not just a list of past pings; it is the bridge back into the right habit, friend, or social obligation.
+
+**Implementation scope:**
+- Social Activity/inbox UI and routing/focus handoff behavior.
+- Notification payload/deep-link extensions needed to return users to a more precise in-app context.
+- Platform-specific categories/actions only where they fit the existing local notification model.
+- Tests or smoke verification for grouped inbox behavior and one focused return-to-context path.
+- Documentation updates to the inbox and notification routing contract.
+
+**Scalability considerations:** Grouping and focus behavior should remain local and deterministic. Avoid making the inbox dependent on heavyweight query logic or per-platform branching everywhere.
+
+**Future split guidance:** Full threaded messaging, bulk inbox management, or advanced notification automation rules should remain separate tasks. This task is only for the next-level Activity/inbox UX.
+
+**Edge cases:** Missing or stale target habit IDs, grouped rows with mixed read states, multiple notifications about one habit, unsupported platform action categories, and keeping strict chronological trust where grouping is introduced.
+
+**Acceptance criteria:**
+- Notification/inbox UX returns users to more precise in-app context where possible.
+- The unified feed gains at least one meaningful structural/grouping improvement without abandoning the current read model.
+- Any platform-specific actions fit the existing local notification contract and degrade safely when unsupported.
+- Verification covers one focus/auto-scroll path and one grouped-inbox behavior.
+- Docs are updated to reflect the richer inbox UX contract.
+
+**Dependencies:** `Developement/sys_schema_and_logic.md`, `Developement/sys_social_and_analytics.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Pending implementation.
+
+<a id="expand-multi-user-playwright-coverage-to-three-player-social-invite-nudge-and-follow-flows"></a>
+### [ ] Expand Multi-User Playwright Coverage To Three-Player Social Invite Nudge And Follow Flows
+
+**Raw source:** Multi-User Playwright Coverage. Expand the test to 3 player, and the receiving, accepting, sending the nudges, habit invitations, and habit supporting (following).
+
+**Issue:** Hable already has browser-first multi-user QA plans and some Playwright coverage around the core two-user shared-habit loop. The requested expansion is qualitatively different because it introduces a third participant and broader permutations: receiving/accepting invites and nudges across more than one friend, plus supporter/following flows that are not fully exercised by the current two-user tests. That creates a higher combinatorial risk and needs a deliberate harness design rather than a naive copy of the existing spec.
+
+**Triage:**
+- *Should exist:* Yes, if the social model is moving beyond simple two-user verification.
+- *Smallest safe scope:* Expand the current test harness to three isolated browser users and cover the main invite/nudge/follow permutations.
+- *Skipped scope:* Do not attempt arbitrary N-user load testing or full social fuzzing.
+- *Boundaries:* Keep it focused on deterministic three-user behavioral coverage for the current product contract.
+
+**Action:** Extend the existing browser automation/harness so three isolated users can execute realistic invite, acceptance, nudge, and follow/support flows without session leakage. Choose a small but representative scenario matrix that exercises receiver behavior as well as sender behavior, and verify supporter/following flows separately from owner/partner completion rights.
+
+**Hable perspective:** Social trust breaks quickly when interactions only work in the simplest pairwise case. Three-user coverage is the first meaningful step toward validating the broader social graph behavior Hable is already hinting at.
+
+**Implementation scope:**
+- Existing Playwright/browser harness and seeded-user workflow.
+- Deterministic three-user scenarios covering invite receive/accept, nudge send/receive, and follow/support paths.
+- Verification surfaces in UI and backend-visible outcomes where appropriate.
+- Documentation updates to the browser QA plan and multi-user test strategy.
+
+**Scalability considerations:** Keep the scenario matrix small and high-signal. Three users is enough to expose most current relationship-state bugs without turning tests into an unmaintainable combinatorial suite.
+
+**Future split guidance:** True load tests, property-based multi-user scenario generation, or large seeded social-network fixtures should remain separate tasks. This task is only for a deliberate three-user coverage expansion.
+
+**Edge cases:** Session leakage across contexts, invite acceptance order differences, supporter vs partner permissions, duplicate nudges, already-friends seeded users, and state propagation delays between three participants.
+
+**Acceptance criteria:**
+- Browser automation supports three isolated users.
+- Coverage includes receiving/accepting invites, sending/receiving nudges, and following/support flows.
+- Verification distinguishes supporter behavior from owner/partner completion rights.
+- Docs are updated for the expanded multi-user QA harness.
+
+**Dependencies:** `Developement/qa_web_multi_user_plan.md`, existing Playwright/e2e harness, `Developement/qa_testing.md`
+
+**Completion notes:** Pending implementation.
+
+<a id="expand-offline-and-push-test-coverage-and-fix-discovered-sync-integrity-issues"></a>
+### [ ] Expand Offline And Push Test Coverage And Fix Discovered Sync Integrity Issues
+
+**Raw source:** Offline & Push Test Coverage. Expand the test suite to cover push notifications or offline scenarios (e.g., toggling network offline in Playwright) and run the test and resolve any issue.
+
+**Issue:** Hable’s existing automated and manual QA focuses heavily on happy-path online behavior, while offline-state integrity and notification-related flows remain less exercised. The raw request also explicitly couples coverage expansion with follow-through on discovered failures, which makes this more than a documentation task. The scope still needs discipline, because "push notifications" here can easily balloon into unsupported platform infrastructure if not reframed around the current local notification/offline sync contract.
+
+**Triage:**
+- *Should exist:* Yes. Offline correctness is central to Hable’s product promise.
+- *Smallest safe scope:* Add realistic offline/local-notification-oriented test coverage, then fix the concrete issues those tests expose.
+- *Skipped scope:* Do not build a full cross-platform push stack just to satisfy the test idea.
+- *Boundaries:* Validate the current offline-first sync and local notification behavior first; treat true remote push as future infrastructure unless already present.
+
+**Action:** Expand automated coverage to simulate offline logging/sync recovery and the relevant local-notification/deep-link behaviors that stand in for current push-style flows. Run those tests against the actual app, fix the defects they uncover, and document the resulting guarantees and known platform limits. The task should produce both stronger coverage and concrete bug fixes, not only more test files.
+
+**Hable perspective:** Hable cannot claim offline-first trust unless the failure modes are actually exercised. Testing and fixing sync recovery is product work, not just QA theater.
+
+**Implementation scope:**
+- E2E/Playwright or other suitable harness coverage for offline scenarios and local-notification-related flows.
+- Concrete app/backend fixes for issues exposed by those new tests.
+- Documentation updates to offline and notification QA guidance.
+- Explicit reporting of any still-blocked true push scenarios that remain out of scope.
+
+**Scalability considerations:** Prefer a few deterministic offline scenarios over a huge flaky matrix. Tests should be resilient and state-driven, not timeout-driven.
+
+**Future split guidance:** Full remote push infrastructure validation, service-worker push on web, or device-farm offline matrix testing should remain separate tasks. This task is only for practical current-scope offline and notification coverage plus resulting fixes.
+
+**Edge cases:** Logging completions offline on multiple devices, last-write-wins reconciliation, stale unread badges after reconnect, notification tap routing after delayed sync, and browser/network mocking that diverges from real app behavior.
+
+**Acceptance criteria:**
+- New automated coverage exercises meaningful offline sync and notification-adjacent flows.
+- The tests are actually run, and concrete discovered issues are fixed within scope.
+- The resulting app behavior matches the offline-first contract more reliably than before.
+- Any true remote push gaps are explicitly documented rather than silently hand-waved.
+- Docs are updated to reflect the new coverage and fixed guarantees.
+
+**Dependencies:** `Developement/sys_offline_architecture.md`, `Developement/qa_testing.md`, existing e2e/browser harness
+
+**Completion notes:** Pending implementation.
+
+<a id="tune-mud-resistance-per-user-with-haptic-calibration-and-lifecycle-persistent-preferences"></a>
+### [ ] Tune Mud Resistance Per User With Haptic Calibration And Lifecycle Persistent Preferences
+
+**Raw source:** Mud Resistance Tuning. Allow dynamic per-user tuning, haptic calibration presets, or persistence of resistance state across app lifecycle events.
+
+**Issue:** Hable’s mud interaction now has a clearer provider/spec contract and upcoming tier work, but it is still one-size-fits-all. The raw request is not about changing the underlying challenge progression again; it is about letting the interaction be tuned to the user or device and persist predictably across app sessions. That introduces a new dimension of state and preference ownership that does not belong inside `MudLongPressButton` itself.
+
+**Triage:**
+- *Should exist:* Yes, if personalization of the mud feel is now desired.
+- *Smallest safe scope:* Add a persistent preference/calibration layer on top of the existing resistance model.
+- *Skipped scope:* Do not rewrite the core resistance algorithm or entangle tuning with gamification tiers.
+- *Boundaries:* Keep mud math isolated in the provider/state layer and keep the widget presentation-only.
+
+**Action:** Introduce a user/device-specific tuning layer for mud resistance and related haptic feel that can persist across app lifecycle events. The tuning should modulate or parameterize the existing provider outputs rather than bypassing them, and it should be exposed through a bounded set of presets or calibration values rather than arbitrary uncontrolled physics editing.
+
+**Hable perspective:** The mud interaction is one of Hable’s signature mechanics. Personalizing how heavy it feels can improve usability, but only if the contract stays coherent and the UI does not become a physics lab.
+
+**Implementation scope:**
+- Persistent preference storage and provider/state-layer integration for mud tuning.
+- Haptic calibration presets or equivalent bounded tuning controls.
+- UI entry points for tuning if they belong in current product scope.
+- Tests for persistence, preset application, and no-regression behavior of the base mud path.
+- Documentation updates to the mud interaction contract and user-tunable behavior.
+
+**Scalability considerations:** Tuning values should remain few and well-defined. Avoid an open-ended parameter explosion that makes the mud system impossible to reason about or QA.
+
+**Future split guidance:** Adaptive tuning by analytics, per-habit resistance personalities, or wearable/device-specific haptic engines should remain separate tasks. This task is only for first-party persistent tuning.
+
+**Edge cases:** Unsupported haptics, switching devices, restoring preferences after logout/login, interaction with reduced-motion/accessibility settings, and avoiding conflicts with milestone-specific animation variants.
+
+**Acceptance criteria:**
+- Mud feel can be tuned per user/device through a bounded persistent preference model.
+- Tuning persists across app lifecycle events and relaunches.
+- The core resistance widget contract remains presentation-only and math stays outside it.
+- Verification covers persistence and at least one tuning preset/calibration path.
+- Docs are updated to describe the user-tunable mud behavior.
+
+**Dependencies:** `Developement/sys_offline_architecture.md`, `Developement/ux_mud_and_animations.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Pending implementation.
+
+<a id="expand-shareable-achievement-cards-with-templates-pdf-os-share-and-server-render-options"></a>
+### [ ] Expand Shareable Achievement Cards With Templates PDF OS Share And Server Render Options
+
+**Raw source:** Advanced Shareable Cards. Support template variants, background generation, true OS share-sheet integrations, PDF certificates, or server-side image generation for achievement cards.
+
+**Issue:** Hable already has an MVP local shareable achievement card, but it is still one presentation path. The raw request is asking for the next phase of sharing capability: variants, richer outputs, actual OS share-sheet polish, and possibly server-generated or PDF artifacts. That is an expansion of the sharing/export system, not a revisit of the original proof of concept.
+
+**Triage:**
+- *Should exist:* Yes, as a follow-up to the shipped MVP card.
+- *Smallest safe scope:* Extend the existing card/export pipeline into a few additional supported artifact formats or presentation variants.
+- *Skipped scope:* Do not replace backend-owned progression truth with client-rendered score logic, and do not require a full media studio.
+- *Boundaries:* Continue reading progression truth from server-backed data; sharing is presentation/export only.
+
+**Action:** Evolve the shareable achievement card system so users can generate more than one polished output style and deliver it through stronger platform-native sharing/export paths. Where PDF or server-side rendering is valuable, treat those as additional artifact backends fed by the same trusted progression inputs rather than as separate achievement systems.
+
+**Hable perspective:** Sharing should amplify accomplishments already earned, not create a second gamification truth. The export system can become richer, but the underlying achievement data must stay authoritative and consistent.
+
+**Implementation scope:**
+- Existing local achievement card rendering/export path.
+- Additional template variants and output mechanisms such as PDF or stronger share-sheet support.
+- Optional server-render path only if it clearly fits the current architecture and trust boundary.
+- Verification for at least one new export format/path and one variant.
+- Documentation updates around share/export capabilities and limitations.
+
+**Scalability considerations:** Variants should be template-driven, not many bespoke render paths. Server rendering, if added, should stay optional and bounded.
+
+**Future split guidance:** Social network-specific templates, bulk campaign sharing, or highly customized design tooling should remain separate tasks. This task is only for the next phase of Hable’s own shareable artifacts.
+
+**Edge cases:** Missing share-sheet support on web/desktop, large image/PDF outputs, offline generation, server rendering unavailable, and keeping all variants fed by the same trusted data inputs.
+
+**Acceptance criteria:**
+- The shareable achievement system supports at least one materially richer capability beyond the current MVP card.
+- All shared artifacts still derive from trusted progression inputs rather than client-scored logic.
+- Verification covers at least one new export path/format and one presentation variant.
+- Docs are updated to reflect the expanded sharing/export contract.
+
+**Dependencies:** `Developement/ux_habit_states_and_scoring.md`, existing achievement-share implementation, `Developement/qa_testing.md`
+
+**Completion notes:** Pending implementation.
+
+<a id="prepare-mac-app-store-and-standalone-macos-distribution-path"></a>
+### [ ] Prepare Mac App Store And Standalone macOS Distribution Path
+
+**Raw source:** Mac App Store. Set up Mac App Store distribution, and standalone installer.
+
+**Issue:** Hable has broader build/distribution work underway, but macOS distribution is a distinct packaging/signing/notarization problem space from Android or web. The raw request also asks for both App Store distribution and a standalone installer path, which means the task must define how one macOS codebase can be packaged for two different operator workflows without turning this into a broad desktop rewrite.
+
+**Triage:**
+- *Should exist:* Yes, if macOS is a real release target.
+- *Smallest safe scope:* Produce a repeatable macOS distribution path covering App Store and standalone packaging prerequisites.
+- *Skipped scope:* Do not mix this with Windows, iOS, or unrelated feature work.
+- *Boundaries:* Keep it focused on desktop release engineering, signing, packaging, and operational docs.
+
+**Action:** Prepare Hable’s macOS release path for both Mac App Store and standalone distribution by defining signing, entitlements, packaging, notarization/validation, and operator workflows for each channel. Reuse the existing app where possible and limit code changes to what distribution hardening genuinely requires.
+
+**Hable perspective:** Desktop distribution is an operational trust problem. The important outcome is a maintainable path to ship macOS builds safely through the right channels, not a one-off archive.
+
+**Implementation scope:**
+- macOS signing/entitlements/packaging configuration.
+- Separate packaging expectations for App Store vs standalone installer/notarized app.
+- Distribution documentation and operator playbook.
+- Smoke verification of representative macOS release artifacts where feasible.
+
+**Scalability considerations:** The release path should be repeatable and clearly documented. Avoid per-machine tribal knowledge around signing and packaging.
+
+**Future split guidance:** Store listing assets, automatic update frameworks, or cross-platform desktop release orchestration should remain separate tasks. This task is only for the macOS release/distribution path.
+
+**Edge cases:** Missing certificates, entitlements mismatches, sandbox/App Store restrictions, notarization failures, standalone installer trust prompts, and release-only plugin/signing regressions.
+
+**Acceptance criteria:**
+- Hable has a documented macOS distribution path for both App Store and standalone release.
+- Required signing/entitlement/packaging choices are defined and verified.
+- Release artifacts or their build path are smoke-validated where secrets allow.
+- Documentation is sufficient for future operators to reproduce the process.
+
+**Dependencies:** macOS build/signing configuration, existing distribution docs in `Developement/`
+
+**Completion notes:** Pending implementation.
+
+<a id="prepare-windows-installers-and-standalone-windows-distribution-path"></a>
+### [ ] Prepare Windows Installers And Standalone Windows Distribution Path
+
+**Raw source:** Windows Installers. Create Windows installer creation, and standalone installer.
+
+**Issue:** Hable does not yet have a dedicated Windows packaging/distribution path documented as a first-class task. Windows distribution has different operational concerns from Android/macOS: installer technology choice, signing expectations, standalone ZIP/MSIX/EXE tradeoffs, and runtime prerequisite validation. This is release engineering work, not UI/product work.
+
+**Triage:**
+- *Should exist:* Yes, if Windows distribution is now desired.
+- *Smallest safe scope:* Define and validate a repeatable Windows packaging path for installer and standalone delivery.
+- *Skipped scope:* Do not combine this with Mac/iOS store work or unrelated feature implementation.
+- *Boundaries:* Keep the task at packaging, signing, and operator workflow level.
+
+**Action:** Prepare Hable for Windows distribution by choosing and implementing a supported installer strategy plus a standalone path, documenting prerequisites, and validating that release artifacts can be generated and launched reliably. Keep production-code changes minimal and tied only to release-readiness issues discovered during packaging.
+
+**Hable perspective:** Windows users need a predictable install/update experience, but the immediate engineering need is an operator-friendly release path rather than a new product feature.
+
+**Implementation scope:**
+- Windows build/package configuration and installer technology choice.
+- Standalone artifact path and any runtime prerequisite handling.
+- Documentation/operator playbook for packaging and distribution.
+- Smoke verification of representative Windows release artifacts where feasible.
+
+**Scalability considerations:** The packaging path should be reproducible by future maintainers and avoid bespoke manual steps where possible.
+
+**Future split guidance:** Enterprise installers, auto-update systems, store distribution, or code-signing automation should remain separate tasks. This task is only for initial Windows installer and standalone distribution readiness.
+
+**Edge cases:** Missing signing certs, runtime dependency bundling, installer permissions, flavor/package identity mismatches, release-only plugin issues, and Windows-specific path/encoding quirks during packaging.
+
+**Acceptance criteria:**
+- Hable has a documented Windows installer and standalone distribution path.
+- Packaging choices and prerequisites are explicit and reproducible.
+- Release artifacts or their generation path are smoke-validated where feasible.
+- Documentation is sufficient for future operators to repeat the release flow.
+
+**Dependencies:** Windows build/package configuration, existing build/distribution docs in `Developement/`
+
+**Completion notes:** Pending implementation.
