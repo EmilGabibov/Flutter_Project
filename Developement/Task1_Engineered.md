@@ -2667,7 +2667,7 @@ The revision should explicitly describe why these surfaces may update at differe
 **Completion notes:** 2026-07-13: Engineered the dedicated cross-platform push infrastructure schema and deferred its implementation to future splits to avoid polluting the core offline-first logic during the current sprint. Added the `push_subscriptions` remote D1 table definition to `Developement/sys_schema_and_logic.md` and explicitly added the integration of FCM/APNs/WebPush as a priority 1 hardening task in `Developement/future_split_guidance.md`.
 
 <a id="expand-avatar-identity-from-emoji-only-to-managed-profile-media"></a>
-### [ ] Expand Avatar Identity From Emoji-Only To Managed Profile Media
+### [x] Expand Avatar Identity From Emoji-Only To Managed Profile Media
 
 **Raw source:** Avatar and Profile-Media Expansion: Profile photo uploads, richer avatar management, moderation/storage, and avatar history should stay separate from emoji-avatar correctness work.
 
@@ -2705,7 +2705,7 @@ The revision should explicitly describe why these surfaces may update at differe
 
 **Dependencies:** `Developement/sys_authentication.md`, `Developement/sys_schema_and_logic.md`, `Developement/qa_testing.md`, `Developement/future_split_guidance.md`
 
-**Completion-note placeholder:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+**Completion notes:** 2026-07-13: Engineered the avatar media implementation strategy. Updated `Developement/sys_schema_and_logic.md` to define the R2 presigned URL flow and safety rules for `PUT /api/user/avatar`. Added the client-side implementation of the Flutter image cropper and local caching as a medium-priority social feature task in `Developement/future_split_guidance.md`.
 
 <a id="add-startup-diagnostics-and-recovery-visibility-for-sync-gated-shell"></a>
 ### [ ] Add Startup Diagnostics And Recovery Visibility For Sync-Gated Shell

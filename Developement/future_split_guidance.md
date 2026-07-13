@@ -62,6 +62,10 @@ This document aggregates the still-relevant "Future split guidance" from recentl
   - *Source tasks:* habit creation/Home add tasks, accepted-friend primitive tasks.
   - *User perspective:* Shared-habit setup becomes flexible without making the current create flow confusing.
 
+- **Profile Media and R2 Storage Implementation:** Following the engineered API contract, implement the Flutter image cropper, R2 presigned URL upload flow, local caching, and fallback logic for richer profile media.
+  - *Source tasks:* `Expand Avatar Identity From Emoji-Only To Managed Profile Media`.
+  - *User perspective:* Users can upload real photos for their profile that load instantly and fall back to emojis cleanly if offline.
+
 - **Three-Player Social QA Harness:** Expand browser automation from the current two-user loop into deterministic three-user invite/nudge/follow scenarios.
   - *Source tasks:* web multi-user plan, Playwright regression harness.
   - *User perspective:* Multi-user features keep working when the social graph is larger than one pair.
