@@ -232,7 +232,21 @@ class _AppGateState extends ConsumerState<_AppGate>
     }
 
     if (!authState.isInitialized) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text(
+                'Restoring session...',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
     if (!authState.isAuthenticated || authState.userId == null) {
@@ -271,7 +285,19 @@ class _AppGateState extends ConsumerState<_AppGate>
             _resolveFirstRunQuoteSplash(userId);
           });
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            body: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text(
+                    'Preparing your habits...',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
           );
         }
         if (_showFirstRunQuoteSplash) {
@@ -281,8 +307,21 @@ class _AppGateState extends ConsumerState<_AppGate>
         }
         return MainNavigationShell(key: _shellKey, userId: userId);
       },
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      loading: () => const Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text(
+                'Loading profile state...',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
+      ),
       error: (err, stack) => Scaffold(
         body: Center(
           child: Padding(

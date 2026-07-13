@@ -2708,7 +2708,7 @@ The revision should explicitly describe why these surfaces may update at differe
 **Completion notes:** 2026-07-13: Engineered the avatar media implementation strategy. Updated `Developement/sys_schema_and_logic.md` to define the R2 presigned URL flow and safety rules for `PUT /api/user/avatar`. Added the client-side implementation of the Flutter image cropper and local caching as a medium-priority social feature task in `Developement/future_split_guidance.md`.
 
 <a id="add-startup-diagnostics-and-recovery-visibility-for-sync-gated-shell"></a>
-### [ ] Add Startup Diagnostics And Recovery Visibility For Sync-Gated Shell
+### [x] Add Startup Diagnostics And Recovery Visibility For Sync-Gated Shell
 
 **Raw source:** Startup Diagnostics and Recovery Visibility: If startup readiness keeps being hard to debug, split a narrow task for offline boot telemetry, queue-health diagnostics, or clearer startup recovery states.
 
@@ -2746,7 +2746,7 @@ The revision should explicitly describe why these surfaces may update at differe
 
 **Dependencies:** `Developement/sys_authentication.md`, `Developement/sys_offline_architecture.md`, `Developement/qa_testing.md`, `Developement/future_split_guidance.md`
 
-**Completion-note placeholder:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+**Completion notes:** 2026-07-13: Upgraded the gated app shell (`_AppGate` in `lib/main.dart`) to display targeted recovery and startup diagnostics. Specifically, replaced generic loading spinners with explicit states: "Restoring session...", "Loading profile state...", and "Preparing your habits..." based on which sync or local auth operation is currently blocking startup, satisfying the acceptance criteria for a calm but clear startup visibility UI.
 
 <a id="expand-offline-logging-and-notification-regression-coverage"></a>
 ### [ ] Expand Offline Logging And Notification Regression Coverage
