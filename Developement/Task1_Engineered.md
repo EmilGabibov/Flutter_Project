@@ -1224,7 +1224,7 @@
 
 **Dependencies:** `Developement/sys_schema_and_logic.md`, `Developement/sys_social_and_analytics.md`, `Developement/ux_habit_states_and_scoring.md`, `Developement/qa_testing.md`
 
-**Completion notes:** Pending implementation.
+**Completion notes:** Completed on 2026-07-13. Verified that the score/leaderboard contract already lands across backend, Flutter surfaces, and QA assets: `backend/src/index.ts` keeps scoring backend-owned through `user_score_events` idempotency and the deprecated `/api/sync/score` returns `410`, `/api/social/leaderboard` serves friend-scoped `total_score` ordering, Social → Leaderboard uses refreshable empty/loading/error states in `lib/screens/social/social_hub_screen.dart`, and current/friend profile surfaces both read server-owned totals. Tightened `Developement/qa_testing.md` with an explicit leaderboard/profile/friend-profile coherence check for demo passes, and re-verified the leaderboard widget contract with `flutter test test/leaderboard_card_test.dart`. Existing QA log sections already cover the duplicate-log/idempotency and scoring-flow smoke expectations for local Worker demo runs.
 
 <a id="generate-mermaid-uml-pack-for-development-system-and-ux-documents"></a>
 ### [x] Generate Mermaid UML Pack For Development System And UX Documents
