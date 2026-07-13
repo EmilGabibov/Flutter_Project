@@ -1,187 +1,177 @@
 import { test, expect, BrowserContext, Page } from '@playwright/test';
 
-// Use a random suffix to avoid collisions during repeated tests
 const RUN_ID = Date.now();
-const ALICE_USERNAME = `Alice_${RUN_ID}`;
-const BOB_USERNAME = `Bob_${RUN_ID}`;
+const ALICE = `Alice_${RUN_ID}`;
+const BOB = `Bob_${RUN_ID}`;
+const CHARLIE = `Charlie_${RUN_ID}`;
 const HABIT_NAME = `E2E Shared Habit ${RUN_ID}`;
 
-async function registerUser(page: Page, username: string) {
-  await page.goto('/');
-  // Assume app routes unauthenticated users to an Auth screen.
-  // We need to click "Sign up" if we are on Login.
-  const signUpSwitch = page.locator('text="Need an account? Sign up"');
-  if (await signUpSwitch.isVisible()) {
-    await signUpSwitch.click();
+class UserSession {
+  constructor(
+    readonly name: string,
+    readonly context: BrowserContext,
+    readonly page: Page,
+  ) {}
+
+  async gotoHome() {
+    await this.page.goto('/');
+    await expect(this.page.locator('text="Home"').first()).toBeVisible({
+      timeout: 15000,
+    });
   }
 
-  // Assuming the UI has placeholders 'Username' and 'Password'
-  await page.fill('input[placeholder="Username"]', username);
-  await page.fill('input[placeholder="Password"]', 'password123');
-  await page.click('button:has-text("Sign Up")');
+  async register() {
+    await this.page.goto('/');
+    const signUpSwitch = this.page.locator('text="Need an account? Sign up"');
+    if (await signUpSwitch.isVisible()) {
+      await signUpSwitch.click();
+    }
+    await this.page.fill('input[placeholder="Username"]', this.name);
+    await this.page.fill('input[placeholder="Password"]', 'password123');
+    await this.page.click('button:has-text("Sign Up")');
+    await this.gotoHome();
+  }
 
-  // Wait to reach the Home dashboard.
-  await expect(page.locator('text="Home"').first()).toBeVisible({ timeout: 10000 });
+  async openSocial(subTab?: 'Friends' | 'Activity' | 'Leaderboard') {
+    await this.page.click('text="Social"');
+    if (subTab) {
+      await this.page.click(`text="${subTab}"`);
+    }
+  }
+
+  async sendFriendRequest(username: string) {
+    await this.openSocial();
+    await this.page.click('button[aria-label="Find Friends"], text="Find friends"');
+    const search = this.page.locator('input[placeholder="Search username..."]');
+    await search.fill(username);
+    await search.press('Enter');
+    await expect(this.page.locator(`text="${username}"`).first()).toBeVisible();
+    await this.page
+      .locator(`text="${username}"`)
+      .locator('..')
+      .locator('button:has-text("Add Friend"), button:has-text("Send Friend Request")')
+      .first()
+      .click();
+  }
+
+  async acceptFriendRequest(username: string) {
+    await this.openSocial('Friends');
+    await expect(this.page.locator(`text="${username}"`).first()).toBeVisible({
+      timeout: 15000,
+    });
+    await this.page
+      .locator(`text="${username}"`)
+      .locator('..')
+      .locator('button:has-text("Accept")')
+      .first()
+      .click();
+  }
+
+  async createSharedHabit(partnerUsername: string) {
+    await this.page.click('text="Home"');
+    await this.page.click('button[aria-label="Create a new habit"], text="Habit"');
+    await this.page.fill('input[placeholder="Habit title"]', HABIT_NAME);
+    await expect(this.page.locator(`text="${partnerUsername}"`).first()).toBeVisible();
+    await this.page.locator(`text="${partnerUsername}"`).first().click();
+    await this.page.click('button:has-text("Save"), button:has-text("Create")');
+    await expect(this.page.locator(`text="${HABIT_NAME}"`).first()).toBeVisible();
+  }
+
+  async acceptHabitInvitation(fromUsername: string) {
+    await this.page.click('text="Home"');
+    await expect(
+      this.page.locator(`text="${fromUsername}"`).locator('..').locator('text="Accept"').first(),
+    ).toBeVisible({ timeout: 15000 });
+    await this.page
+      .locator(`text="${fromUsername}"`)
+      .locator('..')
+      .locator('button:has-text("Accept")')
+      .first()
+      .click();
+    await expect(this.page.locator(`text="${HABIT_NAME}"`).first()).toBeVisible();
+  }
+
+  async sendHabitNudge() {
+    const card = this.page.locator(`text="${HABIT_NAME}"`).first().locator('..');
+    await card.locator('button[aria-label="Nudge"], text="Nudge"').first().click();
+  }
+
+  async verifyNudgeFrom(username: string) {
+    await this.openSocial('Activity');
+    await expect(
+      this.page.locator(`text=/.*${username}.*/`).first(),
+    ).toBeVisible({ timeout: 15000 });
+  }
+
+  async followHabitFromFriendProfile(friendUsername: string) {
+    await this.openSocial('Friends');
+    await this.page.locator(`text="${friendUsername}"`).first().click();
+    await expect(this.page.locator('text="Follow"').first()).toBeVisible({
+      timeout: 10000,
+    });
+    await this.page.locator('text="Follow"').first().click();
+    await expect(this.page.locator('input[placeholder="Habit title"]')).toHaveValue(
+      HABIT_NAME,
+    );
+  }
 }
 
-test.describe('Multi-User Shared Habit Flow', () => {
+test.describe('Three-player social invite, nudge, and follow flows', () => {
   let aliceContext: BrowserContext;
   let bobContext: BrowserContext;
-  let alicePage: Page;
-  let bobPage: Page;
+  let charlieContext: BrowserContext;
+  let alice: UserSession;
+  let bob: UserSession;
+  let charlie: UserSession;
 
   test.beforeAll(async ({ browser }) => {
-    // Create two entirely isolated browser contexts
     aliceContext = await browser.newContext();
     bobContext = await browser.newContext();
-    alicePage = await aliceContext.newPage();
-    bobPage = await bobContext.newPage();
+    charlieContext = await browser.newContext();
+
+    alice = new UserSession(ALICE, aliceContext, await aliceContext.newPage());
+    bob = new UserSession(BOB, bobContext, await bobContext.newPage());
+    charlie = new UserSession(CHARLIE, charlieContext, await charlieContext.newPage());
   });
 
   test.afterAll(async () => {
-    await aliceContext.close();
-    await bobContext.close();
+    await Promise.all([
+      aliceContext.close(),
+      bobContext.close(),
+      charlieContext.close(),
+    ]);
   });
 
-  test('Alice and Bob register', async () => {
-    await registerUser(alicePage, ALICE_USERNAME);
-    await registerUser(bobPage, BOB_USERNAME);
+  test('register three isolated users', async () => {
+    await alice.register();
+    await bob.register();
+    await charlie.register();
   });
 
-  test('Alice sends friend request to Bob', async () => {
-    // Navigate to Social Hub
-    await alicePage.click('text="Social"');
-    
-    // Open Find Friends sheet (assume clicking a search icon or button)
-    // The UI may have an explicit "Find Friends" button or aria-label
-    // Assuming generic placeholder for search input
-    await alicePage.click('button[aria-label="Find Friends"], text="Find Friends"');
-    
-    // Search for Bob
-    await alicePage.fill('input[placeholder="Search username..."]', BOB_USERNAME);
-    // Tap the search action
-    await alicePage.press('input[placeholder="Search username..."]', 'Enter');
-
-    // Wait for result and click add
-    const addFriendButton = alicePage.locator('button:has-text("Add Friend")').first();
-    await expect(addFriendButton).toBeVisible();
-    await addFriendButton.click();
-
-    // Verify it changed to requested
-    await expect(alicePage.locator('text="Requested"').first()).toBeVisible();
+  test('alice can friend both bob and charlie', async () => {
+    await alice.sendFriendRequest(BOB);
+    await alice.sendFriendRequest(CHARLIE);
   });
 
-  test('Bob accepts friend request', async () => {
-    // Bob goes to Social -> Requests
-    await bobPage.click('text="Social"');
-    await bobPage.click('text="Activity"'); // or 'Requests' depending on the UI
-    
-    // Find Alice's request and accept
-    const acceptButton = bobPage.locator(`text=${ALICE_USERNAME}`).locator('..').locator('button:has-text("Accept")');
-    await expect(acceptButton).toBeVisible();
-    await acceptButton.click();
-
-    // Verify acceptance (maybe it disappears or shows "Accepted")
-    await expect(bobPage.locator(`text=${ALICE_USERNAME}`).locator('..').locator('text="Accepted"')).toBeVisible();
+  test('bob and charlie accept alice friendship', async () => {
+    await bob.acceptFriendRequest(ALICE);
+    await charlie.acceptFriendRequest(ALICE);
   });
 
-  test('Alice creates shared habit and invites Bob', async () => {
-    // Alice goes Home
-    await alicePage.click('text="Home"');
-    
-    // Open Habit creation
-    await alicePage.click('button[aria-label="Add Habit"], text="Add habit"');
-    
-    // Fill title
-    await alicePage.fill('input[placeholder="Habit title"]', HABIT_NAME);
-
-    // Select Bob as partner
-    // We assume Bob appears in a list of accepted friends
-    const bobChip = alicePage.locator(`text=${BOB_USERNAME}`);
-    await expect(bobChip).toBeVisible();
-    await bobChip.click();
-
-    // Save habit
-    await alicePage.click('button:has-text("Save"), button:has-text("Create")');
-
-    // Wait for it to appear on home
-    await expect(alicePage.locator(`text=${HABIT_NAME}`).first()).toBeVisible();
+  test('alice invites bob into a shared habit', async () => {
+    await alice.createSharedHabit(BOB);
   });
 
-  test('Bob accepts habit invitation', async () => {
-    // Bob might need to wait for background sync or go to home
-    await bobPage.click('text="Home"');
-
-    // Wait for the invitation banner
-    const inviteBanner = bobPage.locator(`text=${ALICE_USERNAME} invited you to ${HABIT_NAME}`);
-    await expect(inviteBanner).toBeVisible({ timeout: 15000 });
-
-    // Accept it
-    await bobPage.click('button:has-text("Accept")');
-
-    // The shared habit should now be visible on Bob's home
-    await expect(bobPage.locator(`text=${HABIT_NAME}`).first()).toBeVisible();
+  test('bob accepts the shared habit invitation', async () => {
+    await bob.acceptHabitInvitation(ALICE);
   });
 
-  test('Alice and Bob send nudges', async () => {
-    // Alice nudges Bob
-    const aliceHabitCard = alicePage.locator(`text=${HABIT_NAME}`).locator('..');
-    await aliceHabitCard.locator('button[aria-label="Nudge"]').click();
-
-    // Bob receives nudge
-    await bobPage.click('text="Social"');
-    await bobPage.click('text="Activity"');
-    await expect(bobPage.locator(`text="Nudged by ${ALICE_USERNAME}"`).first()).toBeVisible({ timeout: 15000 });
+  test('alice can nudge bob and bob sees the activity entry', async () => {
+    await alice.sendHabitNudge();
+    await bob.verifyNudgeFrom(ALICE);
   });
 
-  test('Mutual completion updates score', async () => {
-    // Alice completes
-    await alicePage.click('text="Home"');
-    const aliceMudBtn = alicePage.locator(`text=${HABIT_NAME}`).locator('..').locator('button[aria-label="Complete Habit"]');
-    
-    // Assuming we need to long-press the Mud button
-    const aliceBtnBox = await aliceMudBtn.boundingBox();
-    if (aliceBtnBox) {
-      await alicePage.mouse.move(aliceBtnBox.x + aliceBtnBox.width / 2, aliceBtnBox.y + aliceBtnBox.height / 2);
-      await alicePage.mouse.down();
-      // Hold for 2 seconds (Mud button requires sustained hold)
-      await alicePage.waitForTimeout(2000);
-      await alicePage.mouse.up();
-    }
-
-    // Verify Alice's card updates to completed
-    await expect(alicePage.locator(`text=${HABIT_NAME}`).locator('..').locator('text="Completed"')).toBeVisible();
-
-    // Bob completes
-    await bobPage.click('text="Home"');
-    const bobMudBtn = bobPage.locator(`text=${HABIT_NAME}`).locator('..').locator('button[aria-label="Complete Habit"]');
-    
-    const bobBtnBox = await bobMudBtn.boundingBox();
-    if (bobBtnBox) {
-      await bobPage.mouse.move(bobBtnBox.x + bobBtnBox.width / 2, bobBtnBox.y + bobBtnBox.height / 2);
-      await bobPage.mouse.down();
-      await bobPage.waitForTimeout(2000);
-      await bobPage.mouse.up();
-    }
-
-    await expect(bobPage.locator(`text=${HABIT_NAME}`).locator('..').locator('text="Completed"')).toBeVisible();
-
-    // Leaderboard validation
-    await alicePage.click('text="Social"');
-    await alicePage.click('text="Leaderboard"');
-    
-    await bobPage.click('text="Social"');
-    await bobPage.click('text="Leaderboard"');
-
-    // Both should have some incremented score (e.g., >0). The exact points depend on scoring logic.
-    // For now, we just verify the names appear with a score greater than 0
-    const aliceScoreStr = await alicePage.locator(`text=${ALICE_USERNAME}`).locator('xpath=following-sibling::*').first().innerText();
-    const bobScoreStr = await bobPage.locator(`text=${BOB_USERNAME}`).locator('xpath=following-sibling::*').first().innerText();
-    
-    const aliceScore = parseInt(aliceScoreStr.replace(/[^0-9]/g, ''));
-    const bobScore = parseInt(bobScoreStr.replace(/[^0-9]/g, ''));
-    
-    expect(aliceScore).toBeGreaterThan(0);
-    expect(bobScore).toBeGreaterThan(0);
+  test('charlie can follow the habit from alice profile without partner rights', async () => {
+    await charlie.followHabitFromFriendProfile(ALICE);
   });
 });

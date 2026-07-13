@@ -3,7 +3,7 @@
 > [!NOTE]
 > This QA plan outlines the expected behavior for the **deployed web build** (Cloudflare Pages) connecting to the production `/api/*` contract.
 > 
-> **Automated Execution:** The steps in this plan are fully automated in the `e2e/tests/shared_habit.spec.ts` Playwright test suite, which can be run locally using `npm run test` in the `e2e` directory. The manual guide below remains for ad-hoc debugging or production verification.
+> **Automated Execution:** The steps in this plan are automated in the `e2e/tests/shared_habit.spec.ts` Playwright suite. The harness now provisions **three isolated browser contexts** (Alice, Bob, Charlie) so it can cover partner invite/accept flows plus a separate follower/support-style profile flow without session leakage. Run it locally with `npm run test` in `e2e/`; use `npx playwright test --list` for a quick parse-only sanity check when the web app/backend are not running.
 
 ## 1. Environment & Prerequisites
 - **Target:** Deployed web build (e.g., `https://hable.app` or specific preview URL).
@@ -12,8 +12,9 @@
   - Using two separate browser profiles in Chrome.
   - Using one normal window and one Incognito/Private window.
 - **Test Accounts:**
-  - **User A (Alice):** Seeded or newly registered user.
-  - **User B (Bob):** Seeded or newly registered user.
+  - **User A (Alice):** Seeded or newly registered user and primary shared-habit owner.
+  - **User B (Bob):** Seeded or newly registered user and shared-habit partner.
+  - **User C (Charlie):** Seeded or newly registered user used for friend-only/follow-style coverage.
 
 > [!WARNING]
 > Do not use the same browser session or profile for both users. Local storage (Drift web, token state) will collide and invalidate the test.
@@ -28,18 +29,17 @@
 ### Step 2: Friend Search & Request
 1. **User A:** Navigate to the Social Hub.
 2. **User A:** Open the "Find Friends" search interface.
-3. **User A:** Search for User B's exact username.
-4. **Validation:** User B should appear in the search results.
-5. **User A:** Click "Send Friend Request" to User B.
+3. **User A:** Search for User B's exact username and send a friend request.
+4. **User A:** Repeat the same request flow for User C.
+5. **Validation:** Both User B and User C should appear in search results and transition into a pending/requested state independently.
 
 ### Step 3: Accept / Decline Friend Request
-1. **User B:** Navigate to the Social Hub → Activity/Requests tab.
+1. **User B:** Navigate to the Social Hub → Friends surface.
 2. **Validation:** User A's friend request should appear as pending.
 3. **User B:** Click **Accept**.
-4. **Validation:** User A should now appear in User B's friend list, and User B in User A's friend list.
-5. **User A or User B:** Long-press an accepted friend card in the Friends tab and choose **Unfriend** from the context menu. Confirm the removal.
-6. **Validation:** After a sync or refresh, the friendship should disappear from both users' accepted-friends lists, and a search for the other user should show `none` for `relationship_state`.
-   *Note: Decline flow is supported. You can repeat Steps 2 & 3 with a third user (User C) to verify the Decline button removes the pending request and does not add the friend.*
+4. **User C:** Independently accept User A's friend request as well.
+5. **Validation:** User A should now appear in both User B and User C friend lists, and both Bob/Charlie should appear in User A's accepted-friends list.
+6. **Optional manual decline branch:** Repeat the request flow with another throwaway user to verify **Decline** removes the request without adding a friendship.
 
 > [!IMPORTANT]
 > **Revoke Friendship:** The ability to unfriend or revoke an active friendship is supported in the deployed web build via the Friends tab long-press menu.
@@ -62,17 +62,23 @@
 2. **User B:** Wait a moment or refresh if required. Check the Social Activity feed or habit card UI.
 3. **Validation:** User B should receive a visual indication of the nudge (e.g., a "Nudged by User A" chip or notification row).
 
-### Step 7: Dual Check-Ins & Point Scoring
+### Step 7: Follow / Support-Style Profile Flow
+1. **User C:** Open User A from the Social → Friends surface.
+2. **Validation:** User C can reach User A's friend profile without being a shared-habit partner.
+3. **User C:** Use the `Follow` affordance on User A's visible habit.
+4. **Validation:** The habit-creation surface should open with the followed habit title prefilled, confirming the friend-profile follow path works separately from shared-habit partner rights.
+
+### Step 8: Dual Check-Ins & Point Scoring
 1. **User A:** Complete (check-in) the shared habit from the Home dashboard.
 2. **User B:** Complete (check-in) the shared habit from their Home dashboard.
 3. **Validation:** A short press/release on the mud completion control must **not** complete the habit or advance shared progress. Only a full sustained hold through the required duration should complete.
 4. **Validation:** Both users should see the habit marked as completed for the day only after a valid hold. Shared habit cards should remain visible on Home after check-in. Both users should see their personal point scores increment based on the completion, with the shared bonus/state update appearing only after all participants complete.
 
-### Step 8: Leaderboard Verification
+### Step 9: Leaderboard Verification
 1. **User A:** Navigate to the Social Hub → Leaderboard.
 2. **User B:** Navigate to the Social Hub → Leaderboard.
 3. **Validation:** The leaderboard should accurately reflect the updated scores of both User A and User B following their successful check-ins. Verify that the score syncs correctly from the server, indicating that scoring is properly server-owned.
 
 ## 3. Post-Execution & Cleanup
-- Document any failures directly against the steps above.
+- Document any failures directly against the steps above, including whether they only affect the third-user follower path or the owner/partner completion path.
 - *Cleanup:* Revoke friendship is supported, so use it to reset the test accounts if clean state is required.

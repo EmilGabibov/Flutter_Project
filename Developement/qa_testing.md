@@ -58,6 +58,7 @@ To combat regressions without manual Android ADB passes, there is an automated P
    npm run test
    ```
 This test covers friend requests, shared habit invites, mutual completion holds, nudges, and score validation.
+The current harness also includes a third isolated browser user so invite acceptance, nudge visibility, and friend-profile `Follow` flows can be exercised without reusing one of the partner sessions.
 
 
 ## 2. ADB Smoke Test Execution Log

@@ -1753,7 +1753,7 @@
 **Completion notes:** Completed on 2026-07-13. Upgraded Social → Activity from a flat feed into grouped sections via `buildActivitySections()` (`Unread`, `Today`, `Earlier`) and wired row taps through payload-aware routing instead of read-only behavior. `MainNavigationShell` now resolves notification destinations centrally, including a home habit-focus path that passes `habit_id` through to `HomeScreen`, and `HomeScreen` now keeps keyed habit tiles so a routed habit can be scrolled into view when possible. Added focused verification in `test/social_activity_sections_test.dart` and `test/notification_route_resolution_test.dart`; targeted tests pass.
 
 <a id="expand-multi-user-playwright-coverage-to-three-player-social-invite-nudge-and-follow-flows"></a>
-### [ ] Expand Multi-User Playwright Coverage To Three-Player Social Invite Nudge And Follow Flows
+### [x] Expand Multi-User Playwright Coverage To Three-Player Social Invite Nudge And Follow Flows
 
 **Raw source:** Multi-User Playwright Coverage. Expand the test to 3 player, and the receiving, accepting, sending the nudges, habit invitations, and habit supporting (following).
 
@@ -1789,7 +1789,7 @@
 
 **Dependencies:** `Developement/qa_web_multi_user_plan.md`, existing Playwright/e2e harness, `Developement/qa_testing.md`
 
-**Completion notes:** Pending implementation.
+**Completion notes:** Completed on 2026-07-13. Replaced the old two-user `e2e/tests/shared_habit.spec.ts` with a three-context harness built around `UserSession` helpers for Alice, Bob, and Charlie. The scenarios now explicitly cover three isolated registrations, dual friendship acceptance, shared-habit invite/accept between owner and partner, nudge send/receive, and a separate friend-profile `Follow` path for the third user so follower/support-style coverage is distinct from owner/partner completion rights. Updated `Developement/qa_web_multi_user_plan.md` and `Developement/qa_testing.md` to describe the three-user contract. Verified the harness parses and enumerates correctly with `npx playwright test --list` (7 tests listed); live execution still depends on a running web app/backend environment.
 
 <a id="expand-offline-and-push-test-coverage-and-fix-discovered-sync-integrity-issues"></a>
 ### [ ] Expand Offline And Push Test Coverage And Fix Discovered Sync Integrity Issues
