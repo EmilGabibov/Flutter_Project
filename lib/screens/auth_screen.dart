@@ -298,6 +298,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           style: TextStyle(color: AppTheme.sageGreen),
                         ),
                       ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Hable complies with European data protection requirements, including GDPR.',
+                      key: const Key('auth-data-protection-footer'),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppTheme.warmGray,
+                        height: 1.4,
+                      ),
+                    ),
                     const Spacer(flex: 3),
                   ],
                 ),
