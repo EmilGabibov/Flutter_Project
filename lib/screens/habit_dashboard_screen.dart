@@ -12,6 +12,7 @@ import '../database/tables.dart' show LogStatus, PartnershipRole, SyncAction;
 import '../providers/celebration_provider.dart';
 import '../providers/database_provider.dart';
 import '../providers/habit_providers.dart';
+import '../providers/mud_tuning_provider.dart';
 import '../providers/quote_provider.dart';
 import '../providers/resistance_provider.dart';
 import '../providers/social_providers.dart';
@@ -265,6 +266,7 @@ class _DashboardHabitTileState extends ConsumerState<_DashboardHabitTile> {
     final targetDays = habit.targetDuration > 0 ? habit.targetDuration : 1;
     final progressFraction = (challengeDay / targetDays).clamp(0.0, 1.0);
     final isContinuous = habit.targetDuration <= 0;
+    final mudTuning = ref.watch(mudTuningProvider);
     final resistance = ref.watch(
       resistanceProvider((
         currentDay: challengeDay.clamp(0, targetDays),
@@ -306,6 +308,8 @@ class _DashboardHabitTileState extends ConsumerState<_DashboardHabitTile> {
       resistanceCoefficient: resistance.resistanceCoefficient,
       calculatedDurationMs: resistance.calculatedDurationMs,
       partners: partners,
+      hapticsEnabled: mudTuning.hapticsEnabled,
+      hapticProfile: mudTuning.hapticProfile,
       onCompletion: () =>
           _handleCompletion(context, habit, challengeDay, viewerRole, partners),
       onSkip: () => _handleSkip(context, habit),
@@ -391,14 +395,38 @@ class _DashboardHabitTileState extends ConsumerState<_DashboardHabitTile> {
     List<PartnerSnapshot> partners,
   ) async {
     final db = ref.read(databaseProvider);
+    final mudTuning = ref.read(mudTuningProvider);
     final currentStreak = await db.getStreak(habit.habitId);
     final newStreak = currentStreak + 1;
     final isMilestone = newStreak > 0 && (newStreak == 3 || newStreak % 7 == 0);
 
     if (mounted) {
-      HapticFeedback.mediumImpact();
-      if (isMilestone) {
-        HapticFeedback.heavyImpact();
+      if (mudTuning.hapticsEnabled) {
+        if (isMilestone) {
+          switch (mudTuning.hapticProfile) {
+            case MudHapticProfile.soft:
+              HapticFeedback.lightImpact();
+              break;
+            case MudHapticProfile.standard:
+              HapticFeedback.heavyImpact();
+              break;
+            case MudHapticProfile.strong:
+              HapticFeedback.vibrate();
+              break;
+          }
+        } else {
+          switch (mudTuning.hapticProfile) {
+            case MudHapticProfile.soft:
+              HapticFeedback.selectionClick();
+              break;
+            case MudHapticProfile.standard:
+              HapticFeedback.mediumImpact();
+              break;
+            case MudHapticProfile.strong:
+              HapticFeedback.heavyImpact();
+              break;
+          }
+        }
       }
       setState(() {
         _isShowingCompletionFeedback = true;

@@ -1832,7 +1832,7 @@
 **Completion notes:** Pending implementation.
 
 <a id="tune-mud-resistance-per-user-with-haptic-calibration-and-lifecycle-persistent-preferences"></a>
-### [ ] Tune Mud Resistance Per User With Haptic Calibration And Lifecycle Persistent Preferences
+### [x] Tune Mud Resistance Per User With Haptic Calibration And Lifecycle Persistent Preferences
 
 **Raw source:** Mud Resistance Tuning. Allow dynamic per-user tuning, haptic calibration presets, or persistence of resistance state across app lifecycle events.
 
@@ -1870,47 +1870,7 @@
 
 **Dependencies:** `Developement/sys_offline_architecture.md`, `Developement/ux_mud_and_animations.md`, `Developement/qa_testing.md`
 
-**Completion notes:** Pending implementation.
-
-<a id="expand-shareable-achievement-cards-with-templates-pdf-os-share-and-server-render-options"></a>
-### [ ] Expand Shareable Achievement Cards With Templates PDF OS Share And Server Render Options
-
-**Raw source:** Advanced Shareable Cards. Support template variants, background generation, true OS share-sheet integrations, PDF certificates, or server-side image generation for achievement cards.
-
-**Issue:** Hable already has an MVP local shareable achievement card, but it is still one presentation path. The raw request is asking for the next phase of sharing capability: variants, richer outputs, actual OS share-sheet polish, and possibly server-generated or PDF artifacts. That is an expansion of the sharing/export system, not a revisit of the original proof of concept.
-
-**Triage:**
-- *Should exist:* Yes, as a follow-up to the shipped MVP card.
-- *Smallest safe scope:* Extend the existing card/export pipeline into a few additional supported artifact formats or presentation variants.
-- *Skipped scope:* Do not replace backend-owned progression truth with client-rendered score logic, and do not require a full media studio.
-- *Boundaries:* Continue reading progression truth from server-backed data; sharing is presentation/export only.
-
-**Action:** Evolve the shareable achievement card system so users can generate more than one polished output style and deliver it through stronger platform-native sharing/export paths. Where PDF or server-side rendering is valuable, treat those as additional artifact backends fed by the same trusted progression inputs rather than as separate achievement systems.
-
-**Hable perspective:** Sharing should amplify accomplishments already earned, not create a second gamification truth. The export system can become richer, but the underlying achievement data must stay authoritative and consistent.
-
-**Implementation scope:**
-- Existing local achievement card rendering/export path.
-- Additional template variants and output mechanisms such as PDF or stronger share-sheet support.
-- Optional server-render path only if it clearly fits the current architecture and trust boundary.
-- Verification for at least one new export format/path and one variant.
-- Documentation updates around share/export capabilities and limitations.
-
-**Scalability considerations:** Variants should be template-driven, not many bespoke render paths. Server rendering, if added, should stay optional and bounded.
-
-**Future split guidance:** Social network-specific templates, bulk campaign sharing, or highly customized design tooling should remain separate tasks. This task is only for the next phase of Hable’s own shareable artifacts.
-
-**Edge cases:** Missing share-sheet support on web/desktop, large image/PDF outputs, offline generation, server rendering unavailable, and keeping all variants fed by the same trusted data inputs.
-
-**Acceptance criteria:**
-- The shareable achievement system supports at least one materially richer capability beyond the current MVP card.
-- All shared artifacts still derive from trusted progression inputs rather than client-scored logic.
-- Verification covers at least one new export path/format and one presentation variant.
-- Docs are updated to reflect the expanded sharing/export contract.
-
-**Dependencies:** `Developement/ux_habit_states_and_scoring.md`, existing achievement-share implementation, `Developement/qa_testing.md`
-
-**Completion notes:** Pending implementation.
+**Completion notes:** Added a persistent `mudTuningProvider` backed by `SharedPreferences` so each signed-in user/device can keep a bounded `Gentle` / `Standard` / `Intense` mud preset plus a haptics toggle across relaunches. The resistance math still lives in `resistanceProvider`; tuning now modulates only the final coefficient/duration outputs, while `MudLongPressButton` remains presentation-only and consumes the derived scalar values plus a haptic profile flag. Exposed the controls in Profile → Settings via a dedicated **Mud feel** card, threaded the preset into Home and dashboard habit cards, and added focused persistence/regression coverage in `test/mud_tuning_provider_test.dart` and `test/resistance_provider_test.dart`. Verified with `flutter test test/mud_tuning_provider_test.dart test/resistance_provider_test.dart` and `flutter test test/habit_dashboard_screen_test.dart`.
 
 <a id="prepare-mac-app-store-and-standalone-macos-distribution-path"></a>
 ### [ ] Prepare Mac App Store And Standalone macOS Distribution Path

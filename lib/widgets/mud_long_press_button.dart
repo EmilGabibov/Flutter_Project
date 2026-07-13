@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 import '../models/habit_visual_state.dart';
+import '../providers/mud_tuning_provider.dart';
 
 /// Physics-based "Mud" long-press completion button.
 /// Consumes pre-computed [resistanceCoefficient] and [calculatedDurationMs]
@@ -24,6 +25,8 @@ class MudLongPressButton extends StatefulWidget {
 
   /// Reusable visual parameters for icon scale, opacity, ring thickness, etc.
   final HabitVisualParameters visualParameters;
+  final bool hapticsEnabled;
+  final MudHapticProfile hapticProfile;
 
   const MudLongPressButton({
     super.key,
@@ -34,6 +37,8 @@ class MudLongPressButton extends StatefulWidget {
     this.habitColor = AppTheme.sageGreen,
     this.habitIcon,
     this.visualParameters = HabitVisualParameters.standard,
+    this.hapticsEnabled = true,
+    this.hapticProfile = MudHapticProfile.standard,
   });
 
   @override
@@ -96,7 +101,19 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
                 _isHolding &&
                 !_completedDuringCurrentHold) {
               _completedDuringCurrentHold = true;
-              HapticFeedback.lightImpact();
+              if (widget.hapticsEnabled) {
+                switch (widget.hapticProfile) {
+                  case MudHapticProfile.soft:
+                    HapticFeedback.selectionClick();
+                    break;
+                  case MudHapticProfile.standard:
+                    HapticFeedback.lightImpact();
+                    break;
+                  case MudHapticProfile.strong:
+                    HapticFeedback.mediumImpact();
+                    break;
+                }
+              }
               widget.onCompletion();
             }
           });
@@ -114,8 +131,14 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
   }
 
   void _handleHapticFeedback() {
+    if (!widget.hapticsEnabled) return;
     if (widget.resistanceCoefficient > 0.5 && _controller.value < 0.4) {
-      if ((_controller.value * 100).toInt() % 8 == 0) {
+      final modulus = switch (widget.hapticProfile) {
+        MudHapticProfile.soft => 12,
+        MudHapticProfile.standard => 8,
+        MudHapticProfile.strong => 6,
+      };
+      if ((_controller.value * 100).toInt() % modulus == 0) {
         HapticFeedback.selectionClick();
       }
     }
@@ -137,12 +160,14 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
       return _buildEstablishedState();
     }
 
-    final isDisabled = widget.visualState == HabitVisualState.established ||
+    final isDisabled =
+        widget.visualState == HabitVisualState.established ||
         widget.visualState == HabitVisualState.missed ||
         widget.visualState == HabitVisualState.skipped ||
         widget.visualState == HabitVisualState.checkInComplete;
 
-    final isDimmed = widget.visualState == HabitVisualState.missed ||
+    final isDimmed =
+        widget.visualState == HabitVisualState.missed ||
         widget.visualState == HabitVisualState.skipped;
 
     return Listener(
@@ -262,11 +287,7 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
                     ),
                   ),
                 )
-              : Icon(
-                  Icons.spa_rounded,
-                  size: 40,
-                  color: widget.habitColor,
-                ),
+              : Icon(Icons.spa_rounded, size: 40, color: widget.habitColor),
         ),
       ),
     );
@@ -348,8 +369,10 @@ class _MudButtonPainter extends CustomPainter {
     final radius = size.width / 2;
 
     // ── Background track (thin, muted) ──────────────────────────────────────
-    final baseColor = isDimmed ? AppTheme.deepCharcoal.withValues(alpha: 0.2) : habitColor;
-    
+    final baseColor = isDimmed
+        ? AppTheme.deepCharcoal.withValues(alpha: 0.2)
+        : habitColor;
+
     final bgPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = ringThickness * 0.6
@@ -364,12 +387,10 @@ class _MudButtonPainter extends CustomPainter {
     final arcThickness = ringThickness + (resistance * 6.0 * (1.0 - progress));
 
     // Color: lerps from habit pastel → vivid completion green at 100%
-    final targetColor = isDimmed ? AppTheme.deepCharcoal.withValues(alpha: 0.4) : AppTheme.completionGreen;
-    final progressColor = Color.lerp(
-      baseColor,
-      targetColor,
-      progress,
-    )!;
+    final targetColor = isDimmed
+        ? AppTheme.deepCharcoal.withValues(alpha: 0.4)
+        : AppTheme.completionGreen;
+    final progressColor = Color.lerp(baseColor, targetColor, progress)!;
 
     // Soft glow shadow beneath the arc
     final glowPaint = Paint()

@@ -47,6 +47,8 @@ This coefficient linearly maps to the animation controller configuration:
 
 **Important:** This math must be executed within a Riverpod `StateNotifier`, NOT within the UI widget's `build` method. The widget only receives the final `resistanceCoefficient` and `calculatedDurationMs`.
 
+**User tuning layer:** A separate persistent preference layer may modulate the final provider outputs through a bounded preset model (`Gentle`, `Standard`, `Intense`) and an on/off haptic toggle. That tuning must remain outside `MudLongPressButton`, persist per signed-in user/device, and only adjust the computed scalar outputs and haptic density rather than replacing the baseline progression formula above.
+
 **Cancellation rule:** The hold duration starts when the user presses the mud control itself, and completion is valid only while that press remains active through the full required duration. Releasing early must cancel the attempt, reverse the ring back to idle, and must not grant completion, shared progress, or score.
 
 > [!NOTE]

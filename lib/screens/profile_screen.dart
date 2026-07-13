@@ -23,6 +23,7 @@ import '../providers/notification_providers.dart';
 import '../providers/social_providers.dart';
 import '../providers/calendar_provider.dart';
 import '../providers/database_provider.dart';
+import '../providers/mud_tuning_provider.dart';
 import '../widgets/usage_tracked_screen.dart';
 import '../widgets/narrow_layout.dart';
 
@@ -758,6 +759,8 @@ class SettingsScreen extends ConsumerWidget {
               const SizedBox(height: 12),
               _DailyReminderCard(userId: userId),
               const SizedBox(height: 12),
+              const _MudTuningCard(),
+              const SizedBox(height: 12),
               const _SettingsPlaceholderCard(
                 icon: Icons.accessibility_new_rounded,
                 title: 'Accessibility',
@@ -934,6 +937,69 @@ class _SettingsPlaceholderCard extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MudTuningCard extends ConsumerWidget {
+  const _MudTuningCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tuning = ref.watch(mudTuningProvider);
+    final actions = ref.read(mudTuningProvider.notifier);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Mud feel', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Text(
+              'Tune hold resistance and haptic feedback on this device with bounded presets.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            SegmentedButton<MudTuningPreset>(
+              segments: const [
+                ButtonSegment(
+                  value: MudTuningPreset.gentle,
+                  label: Text('Gentle'),
+                ),
+                ButtonSegment(
+                  value: MudTuningPreset.standard,
+                  label: Text('Standard'),
+                ),
+                ButtonSegment(
+                  value: MudTuningPreset.intense,
+                  label: Text('Intense'),
+                ),
+              ],
+              selected: {tuning.preset},
+              onSelectionChanged: (selection) {
+                actions.updatePreset(selection.first);
+              },
+            ),
+            const SizedBox(height: 12),
+            SwitchListTile.adaptive(
+              value: tuning.hapticsEnabled,
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Mud haptics'),
+              subtitle: Text(switch (tuning.hapticProfile) {
+                MudHapticProfile.soft =>
+                  'Soft taps during hold and a light completion pulse.',
+                MudHapticProfile.standard =>
+                  'Balanced hold taps and standard completion feedback.',
+                MudHapticProfile.strong =>
+                  'Heavier completion feedback with denser hold taps.',
+              }),
+              onChanged: actions.setHapticsEnabled,
+            ),
+          ],
         ),
       ),
     );

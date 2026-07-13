@@ -5,6 +5,7 @@ import '../database/database.dart';
 import '../database/tables.dart' show PartnershipRole;
 import '../data/standard_habits.dart';
 import '../models/habit_visual_state.dart';
+import '../providers/mud_tuning_provider.dart';
 import '../widgets/mud_long_press_button.dart';
 import '../widgets/habit_partner_row.dart';
 import '../screens/profile_screen.dart';
@@ -30,11 +31,13 @@ class HabitCard extends StatefulWidget {
   final double resistanceCoefficient;
   final int calculatedDurationMs;
   final List<PartnerSnapshot> partners;
-  
+  final bool hapticsEnabled;
+  final MudHapticProfile hapticProfile;
+
   final VoidCallback onCompletion;
   final VoidCallback onSkip;
   final Future<void> Function(PartnerSnapshot partner) onNudgeTap;
-  
+
   final bool isShowingCompletionFeedback;
   final QueuedNudgeFeedback? sentNudgeFeedback;
 
@@ -54,6 +57,8 @@ class HabitCard extends StatefulWidget {
     required this.resistanceCoefficient,
     required this.calculatedDurationMs,
     required this.partners,
+    required this.hapticsEnabled,
+    required this.hapticProfile,
     required this.onCompletion,
     required this.onSkip,
     required this.onNudgeTap,
@@ -115,9 +120,9 @@ class _HabitCardState extends State<HabitCard> {
                 habit.title,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
               ),
             ),
 
@@ -152,9 +157,14 @@ class _HabitCardState extends State<HabitCard> {
                   child: IgnorePointer(
                     ignoring: !canLogProgress,
                     child: _NudgedRingPulse(
-                      isActive: widget.recentNudge != null && !widget.isCompletedToday,
+                      isActive:
+                          widget.recentNudge != null &&
+                          !widget.isCompletedToday,
                       color: habitColor,
-                      pulseKey: widget.recentNudge?.lastNudgeAt?.millisecondsSinceEpoch,
+                      pulseKey: widget
+                          .recentNudge
+                          ?.lastNudgeAt
+                          ?.millisecondsSinceEpoch,
                       child: MudLongPressButton(
                         resistanceCoefficient: widget.resistanceCoefficient,
                         calculatedDurationMs: widget.calculatedDurationMs,
@@ -162,6 +172,8 @@ class _HabitCardState extends State<HabitCard> {
                         habitColor: habitColor,
                         habitIcon: habitMeta?.emoji,
                         visualParameters: HabitVisualParameters.standard,
+                        hapticsEnabled: widget.hapticsEnabled,
+                        hapticProfile: widget.hapticProfile,
                         onCompletion: widget.onCompletion,
                       ),
                     ),
@@ -188,7 +200,8 @@ class _HabitCardState extends State<HabitCard> {
                   ],
                   if (visibleSentNudgeFeedback != null) ...[
                     _HabitNudgeChip(
-                      label: 'Nudge queued for ${visibleSentNudgeFeedback.partnerName}',
+                      label:
+                          'Nudge queued for ${visibleSentNudgeFeedback.partnerName}',
                       color: habitColor,
                       icon: Icons.back_hand_rounded,
                     ),
@@ -211,7 +224,9 @@ class _HabitCardState extends State<HabitCard> {
                       child: InkWell(
                         onTap: widget.onSkip,
                         child: Text(
-                          widget.isSkippedToday ? 'Skipped today' : 'Skip today',
+                          widget.isSkippedToday
+                              ? 'Skipped today'
+                              : 'Skip today',
                           style: TextStyle(
                             color: AppTheme.warmGray,
                             fontSize: 11,
@@ -233,7 +248,10 @@ class _HabitCardState extends State<HabitCard> {
                 children: [
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: habitColor.withValues(alpha: 0.08),
                     ),
@@ -241,28 +259,33 @@ class _HabitCardState extends State<HabitCard> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          widget.isContinuous 
-                              ? 'Continuous' 
+                          widget.isContinuous
+                              ? 'Continuous'
                               : 'Day ${widget.challengeDay} of ${widget.targetDays}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppTheme.deepCharcoal.withValues(alpha: 0.7),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: AppTheme.deepCharcoal.withValues(
+                                  alpha: 0.7,
+                                ),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
                         ),
                         Text(
                           '🔥 ${widget.streak}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: habitColor,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 11,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: habitColor,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 11,
+                              ),
                         ),
                       ],
                     ),
                   ),
                   Semantics(
-                    label: 'Progress ${((widget.progressFraction * 100).round())} percent.',
+                    label:
+                        'Progress ${((widget.progressFraction * 100).round())} percent.',
                     child: Container(
                       height: 4,
                       decoration: BoxDecoration(

@@ -1,5 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import 'mud_tuning_provider.dart';
+
 part 'resistance_provider.g.dart';
 
 /// Immutable output of the resistance calculation.
@@ -28,6 +30,7 @@ typedef ResistanceParams = ({int currentDay, int totalDuration});
 class Resistance extends _$Resistance {
   @override
   ResistanceState build(ResistanceParams params) {
+    final tuning = ref.watch(mudTuningProvider);
     const maxDurationMs = 1500;
     const minDurationMs = 400;
 
@@ -47,7 +50,10 @@ class Resistance extends _$Resistance {
     } else {
       // Tiered progression for earlier days
       final int nonMasteryDays = params.totalDuration - 3;
-      final double progress = (params.currentDay / nonMasteryDays).clamp(0.0, 1.0);
+      final double progress = (params.currentDay / nonMasteryDays).clamp(
+        0.0,
+        1.0,
+      );
 
       if (progress < 0.33) {
         // Tier 1: Initial resistance (hard, but not mastery)
@@ -61,10 +67,16 @@ class Resistance extends _$Resistance {
       }
     }
 
-    final durationMs = (minDurationMs + ((maxDurationMs - minDurationMs) * r)).toInt();
+    final tunedResistance = (r + tuning.coefficientDelta).clamp(0.0, 1.0);
+    final baseDurationMs =
+        (minDurationMs + ((maxDurationMs - minDurationMs) * tunedResistance))
+            .toInt();
+    final durationMs = (baseDurationMs * tuning.durationMultiplier)
+        .round()
+        .clamp(minDurationMs, 1800);
 
     return ResistanceState(
-      resistanceCoefficient: r,
+      resistanceCoefficient: tunedResistance,
       calculatedDurationMs: durationMs,
     );
   }

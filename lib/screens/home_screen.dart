@@ -14,6 +14,7 @@ import '../providers/quote_provider.dart';
 import '../providers/social_providers.dart';
 import '../providers/sync_provider.dart';
 import '../providers/notification_providers.dart';
+import '../providers/mud_tuning_provider.dart';
 import '../providers/celebration_provider.dart';
 import '../theme/app_theme.dart';
 import '../data/standard_habits.dart';
@@ -620,6 +621,7 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
       loading: () => PartnershipRole.owner,
       error: (_, _) => PartnershipRole.owner,
     );
+    final mudTuning = ref.watch(mudTuningProvider);
     final canLogProgress = viewerRole != PartnershipRole.supporter;
     final recentNudge = partnersAsync.when(
       data: _latestRecentNudge,
@@ -761,6 +763,8 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
                         habitColor: habitColor,
                         habitIcon: habitMeta?.emoji,
                         visualParameters: HabitVisualParameters.standard,
+                        hapticsEnabled: mudTuning.hapticsEnabled,
+                        hapticProfile: mudTuning.hapticProfile,
                         onCompletion: () => _handleCompletion(
                           context,
                           ref,
@@ -949,16 +953,39 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
     List<PartnerSnapshot> partners,
   ) async {
     final db = ref.read(databaseProvider);
+    final mudTuning = ref.read(mudTuningProvider);
     final currentStreak = await db.getStreak(habit.habitId);
     final newStreak = currentStreak + 1;
     final isMilestone = newStreak > 0 && (newStreak == 3 || newStreak % 7 == 0);
 
     // Show transient completion feedback on the ring
     if (mounted) {
-      if (isMilestone) {
-        HapticFeedback.heavyImpact();
-      } else {
-        HapticFeedback.mediumImpact();
+      if (mudTuning.hapticsEnabled) {
+        if (isMilestone) {
+          switch (mudTuning.hapticProfile) {
+            case MudHapticProfile.soft:
+              HapticFeedback.lightImpact();
+              break;
+            case MudHapticProfile.standard:
+              HapticFeedback.heavyImpact();
+              break;
+            case MudHapticProfile.strong:
+              HapticFeedback.vibrate();
+              break;
+          }
+        } else {
+          switch (mudTuning.hapticProfile) {
+            case MudHapticProfile.soft:
+              HapticFeedback.selectionClick();
+              break;
+            case MudHapticProfile.standard:
+              HapticFeedback.mediumImpact();
+              break;
+            case MudHapticProfile.strong:
+              HapticFeedback.heavyImpact();
+              break;
+          }
+        }
       }
 
       setState(() {
