@@ -1,27 +1,114 @@
 {
   "@@locale": "en",
   "homeTabTitle": "Home",
-  "@homeTabTitle": {
-    "description": "Title for the Home tab"
-  },
   "socialTabTitle": "Social",
-  "@socialTabTitle": {
-    "description": "Title for the Social tab"
-  },
   "profileTabTitle": "Profile",
-  "@profileTabTitle": {
-    "description": "Title for the Profile tab"
-  },
   "activityTabTitle": "Activity",
-  "@activityTabTitle": {
-    "description": "Title for the Activity tab inside Social"
-  },
   "friendsTabTitle": "Friends",
-  "@friendsTabTitle": {
-    "description": "Title for the Friends tab inside Social"
-  },
   "leaderboardTabTitle": "Leaderboard",
-  "@leaderboardTabTitle": {
-    "description": "Title for the Leaderboard tab inside Social"
-  }
+  "authWelcomeTitle": "Welcome to\nHable.",
+  "authLoginSubtitle": "Log in to continue your journey.",
+  "authLoginButton": "Log In",
+  "authJoinTitle": "Join Hable.",
+  "authJoinSubtitle": "Choose a username and password. You can activate cloud recovery from Profile later.",
+  "authSignUpButton": "Sign Up",
+  "authResetTitle": "Reset Password",
+  "authResetSubtitle": "Enter your email to receive a verification PIN.",
+  "authSendPinButton": "Send PIN",
+  "authVerifyTitle": "Verify PIN",
+  "authVerifySubtitle": "Enter the PIN sent to your email and your new password.",
+  "authResetSuccessMessage": "Password reset successful. Please log in.",
+  "authUsernameLabel": "Username",
+  "authEmailLabel": "Email",
+  "authPinLabel": "6-digit PIN",
+  "authPasswordLabel": "Password",
+  "authNewPasswordLabel": "New Password",
+  "authForgotPassword": "Forgot Password?",
+  "authWorking": "Working...",
+  "authNeedAccount": "Need an account? Sign up",
+  "authAlreadyHaveAccount": "Already have an account? Log in",
+  "authBackToLogin": "Back to Login",
+  "authGdprFooter": "Hable complies with European data protection requirements, including GDPR.",
+  "onboardingDayOneEyebrow": "Day one",
+  "onboardingDayOneTitle": "Every day is day one.",
+  "onboardingDayOneBody": "Start with a calm read, then one deliberate action. Hable keeps the first step small enough to repeat.",
+  "onboardingMudEyebrow": "Mud",
+  "onboardingMudTitle": "Start through the mud.",
+  "onboardingMudBody": "New habits ask for a steady 1500ms press. That resistance is the point: effort first, stability later.",
+  "onboardingCommitEyebrow": "Commit",
+  "onboardingCommitTitle": "Pick a first commit.",
+  "onboardingCommitBody": "Choose a standard habit or set your own day count. The science-backed 21, 33, and 40 day targets stay close by.",
+  "onboardingPartnersEyebrow": "Partners",
+  "onboardingPartnersTitle": "Bring a partner.",
+  "onboardingPartnersBody": "Shared habits show partner progress through habit-colored rings, so support lives directly on the habit card.",
+  "onboardingRemindersEyebrow": "Reminders",
+  "onboardingRemindersTitle": "Let reminders stay gentle.",
+  "onboardingRemindersBody": "Hable asks before scheduling. Turn reminders on only when you want quiet nudges, not demands.",
+  "onboardingPrivacyEyebrow": "Privacy",
+  "onboardingPrivacyTitle": "Keep reflection private.",
+  "onboardingPrivacyBody": "Email verification waits in Settings, and journal reflections stay private. Partners see progress, not your notes.",
+  "onboardingTrackerEyebrow": "Tracker",
+  "onboardingTrackerTitle": "No skip button on the ring.",
+  "onboardingTrackerBody": "The main tracker is built for action. Missed days expire naturally, while private reflection stays available when needed.",
+  "onboardingStartSetup": "Start setup",
+  "onboardingNext": "Next",
+  "onboardingLogIn": "Log in",
+  "habitSkipToday": "Skip today",
+  "habitSkippedToday": "Skipped today",
+  "habitCompletedToday": "Completed today",
+  "habitNotCompletedToday": "Not completed today",
+  "habitFollowing": "Following",
+  "habitContinuous": "Continuous",
+  "habitDayProgress": "Day {day} of {total}",
+  "@habitDayProgress": {
+    "placeholders": {
+      "day": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "habitNudgedBy": "Nudged by {name}",
+  "@habitNudgedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "habitNudgeQueued": "Nudge queued for {name}",
+  "@habitNudgeQueued": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsTitle": "Settings",
+  "settingsAccountTitle": "Account",
+  "settingsUserId": "User ID",
+  "settingsNoEmail": "No email linked",
+  "settingsLogOut": "Log Out",
+  "settingsCloudSync": "Cloud Sync",
+  "settingsEnableCloudSync": "Enable Cloud Sync",
+  "settingsCloudSyncActive": "Cloud sync is active.",
+  "settingsDailyReminder": "Daily Reminder",
+  "settingsEnableDailyReminder": "Enable Daily Reminder",
+  "settingsRemindMeAt": "Remind me at",
+  "settingsMudTuning": "Mud Tuning",
+  "settingsMudTuningDesc": "Adjust the resistance and feel of the habit completion ring.",
+  "settingsDuration": "Duration",
+  "settingsFast": "Fast",
+  "settingsSlow": "Slow",
+  "settingsResistance": "Resistance",
+  "settingsLight": "Light",
+  "settingsHeavy": "Heavy",
+  "settingsHaptics": "Haptics",
+  "settingsLanguage": "Language",
+  "settingsAccessibility": "Accessibility",
+  "dashboardMyHabits": "My Habits",
+  "dashboardAddHabit": "Add Habit",
+  "dashboardNoHabits": "No habits yet. Tap the + to start your first challenge."
 }

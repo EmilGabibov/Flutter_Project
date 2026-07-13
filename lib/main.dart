@@ -8,6 +8,7 @@ import 'providers/database_provider.dart';
 import 'providers/habit_providers.dart';
 import 'providers/usage_diagnostics_provider.dart';
 import 'providers/sync_provider.dart';
+import 'providers/locale_provider.dart';
 import 'screens/auth_screen.dart';
 import 'screens/first_run_quote_screen.dart';
 import 'screens/main_navigation_shell.dart';
@@ -35,17 +36,26 @@ class HableApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(usageDiagnosticsProvider);
+    final locale = ref.watch(localeProvider);
     return MaterialApp(
       title: 'Hable',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
+      locale: locale,
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [Locale('en', '')],
+      supportedLocales: const [
+        Locale('en', ''), // English
+        Locale('de', ''), // German
+        Locale('ur', ''), // Urdu
+        Locale('ru', ''), // Russian
+        Locale('ta', ''), // Tamil
+        Locale('fa', ''), // Persian
+      ],
       navigatorObservers: [usageRouteObserver],
       home: const _AppGate(),
     );

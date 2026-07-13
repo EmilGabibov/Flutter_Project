@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hable/l10n/app_localizations.dart';
+import 'package:hable/l10n/app_localizations.dart';
 
 import '../theme/app_theme.dart';
 import '../widgets/usage_tracked_screen.dart';
@@ -275,8 +276,7 @@ class MainNavigationShellState extends ConsumerState<MainNavigationShell> {
                       color: AppTheme.sageGreen,
                     ),
                     label: loc?.socialTabTitle ?? 'Social',
-                    tooltip:
-                        loc?.socialTabTitle ?? 'Social — friends & partners',
+                    tooltip: loc?.socialTabTooltip ?? 'Social — friends & partners',
                   ),
                   NavigationDestination(
                     icon: const Icon(Icons.person_outline_rounded),
@@ -285,8 +285,7 @@ class MainNavigationShellState extends ConsumerState<MainNavigationShell> {
                       color: AppTheme.sageGreen,
                     ),
                     label: loc?.profileTabTitle ?? 'Profile',
-                    tooltip:
-                        loc?.profileTabTitle ?? 'Profile — history & settings',
+                    tooltip: loc?.profileTabTooltip ?? 'Profile — history & settings',
                   ),
                 ],
               ),
