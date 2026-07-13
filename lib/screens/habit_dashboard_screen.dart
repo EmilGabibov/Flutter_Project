@@ -136,7 +136,8 @@ class _HabitDashboardScreenState extends ConsumerState<HabitDashboardScreen> {
       body: habitsAsync.when(
         data: (habits) => LayoutBuilder(
           builder: (context, constraints) {
-            final columns = columnsForWidth(constraints.maxWidth);
+            final columns =
+                HabitDashboardScreen.columnsForWidth(constraints.maxWidth);
             final showSummaryRail = constraints.maxWidth >= 1100;
 
             final content = _DashboardGrid(

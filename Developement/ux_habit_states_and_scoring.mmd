@@ -1,7 +1,0 @@
-stateDiagram-v2
-    [*] --> Active
-    Active --> Completed : Check In
-    Active --> Skipped : Skip Day
-    Completed --> Active : Next Day
-    Skipped --> Active : Next Day
-    Active --> Abandoned : Too many misses

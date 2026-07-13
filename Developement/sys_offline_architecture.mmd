@@ -1,7 +1,0 @@
-flowchart TD
-    UI[Flutter UI] --> Riverpod[Riverpod Providers]
-    Riverpod --> LocalDB[(Drift SQLite)]
-    LocalDB --> SyncQueue[Sync Queue]
-    SyncService[Sync Service] --> SyncQueue
-    SyncService <--> Internet((Cloudflare Backend))
-    UI -.->|Invalidates & Calls| SyncService

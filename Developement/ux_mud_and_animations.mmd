@@ -1,6 +1,0 @@
-stateDiagram-v2
-    [*] --> Idle
-    Idle --> Pressing : Pointer Down
-    Pressing --> Idle : Pointer Up (Too early)
-    Pressing --> Completed : Hold reaches 100%
-    Completed --> Idle : Animation Reset
