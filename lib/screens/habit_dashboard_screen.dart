@@ -18,6 +18,7 @@ import '../providers/resistance_provider.dart';
 import '../providers/social_providers.dart';
 import '../providers/sync_provider.dart';
 import '../models/celebration_feedback.dart';
+import '../services/app_error.dart';
 import '../services/celebration_sequence_controller.dart';
 import '../utils/habit_timeline.dart';
 import '../widgets/badge_reveal_dialog.dart';
@@ -136,8 +137,9 @@ class _HabitDashboardScreenState extends ConsumerState<HabitDashboardScreen> {
       body: habitsAsync.when(
         data: (habits) => LayoutBuilder(
           builder: (context, constraints) {
-            final columns =
-                HabitDashboardScreen.columnsForWidth(constraints.maxWidth);
+            final columns = HabitDashboardScreen.columnsForWidth(
+              constraints.maxWidth,
+            );
             final showSummaryRail = constraints.maxWidth >= 1100;
 
             final content = _DashboardGrid(
@@ -184,7 +186,21 @@ class _HabitDashboardScreenState extends ConsumerState<HabitDashboardScreen> {
           },
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('Error: $error')),
+        error: (error, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              AppError.fromAny(
+                error,
+                fallbackCode: 'habit_dashboard_load_failed',
+                fallbackMessage:
+                    'Hable could not load this habit dashboard right now.',
+                fallbackKind: AppErrorKind.inline,
+              ).message,
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
       ),
     );
   }

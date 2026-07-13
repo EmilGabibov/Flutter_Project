@@ -25,7 +25,9 @@ void callbackDispatcher() {
 
       final db = AppDatabase();
       final connectivity = ConnectivityService();
-      const storage = FlutterSecureStorage();
+      const storage = FlutterSecureStorage(
+        mOptions: MacOsOptions(usesDataProtectionKeychain: false),
+      );
       final localReminderService = LocalReminderService();
       await localReminderService.initialize();
 

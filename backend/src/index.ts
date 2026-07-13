@@ -162,6 +162,23 @@ async function getDailyQuote(env: Bindings): Promise<DailyQuotePayload | null> {
   return quote
 }
 
+function jsonError(
+  c: any,
+  status: number,
+  code: string,
+  message: string,
+) {
+  return c.json(
+    {
+      error: {
+        code,
+        message,
+      },
+    },
+    status,
+  )
+}
+
 function parseServiceWorkerVersion(scriptContents: string): string | null {
   const match = scriptContents.match(/serviceWorkerVersion:\s*["']([^"']+)["']/)
   return match?.[1] ?? null
@@ -1067,13 +1084,13 @@ app.post('/api/auth/register', async (c) => {
   const email = normalizeEmail(body.email)
 
   if (!username || !password) {
-    return c.json({ error: 'Missing username or password' }, 400);
+    return jsonError(c, 400, 'auth_missing_credentials', 'Enter a username and password.')
   }
   if (email && !isValidEmail(email)) {
-    return c.json({ error: 'Enter a valid email address' }, 400)
+    return jsonError(c, 400, 'auth_invalid_email', 'Enter a valid email address.')
   }
   if (password.length < 6) {
-    return c.json({ error: 'Password must be at least 6 characters' }, 400)
+    return jsonError(c, 400, 'auth_password_too_short', 'Password must be at least 6 characters.')
   }
 
   // Check if username or email exists
@@ -1081,7 +1098,12 @@ app.post('/api/auth/register', async (c) => {
     ? await c.env.DB.prepare('SELECT id FROM users WHERE lower(username) = lower(?) OR lower(email) = lower(?)').bind(username, email).first()
     : await c.env.DB.prepare('SELECT id FROM users WHERE lower(username) = lower(?)').bind(username).first()
   if (existingUser) {
-    return c.json({ error: email ? 'Username or email already exists' : 'Username already exists' }, 409);
+    return jsonError(
+      c,
+      409,
+      email ? 'auth_duplicate_username_or_email' : 'auth_duplicate_username',
+      email ? 'That username or email is already in use.' : 'That username is already in use.',
+    )
   }
 
   const id = crypto.randomUUID();
@@ -1106,11 +1128,11 @@ app.post('/api/auth/request-pin', async (c) => {
   await ensureAuthSchema(c.env)
   const body = await c.req.json().catch(() => ({})) as { email?: unknown }
   const email = normalizeEmail(body.email)
-  if (!email) return c.json({ error: 'Missing email' }, 400);
-  if (!isValidEmail(email)) return c.json({ error: 'Enter a valid email address' }, 400)
+  if (!email) return jsonError(c, 400, 'auth_missing_email', 'Enter your email address.')
+  if (!isValidEmail(email)) return jsonError(c, 400, 'auth_invalid_email', 'Enter a valid email address.')
   
   const user = await c.env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(email).first();
-  if (!user) return c.json({ error: 'Email not found' }, 404);
+  if (!user) return jsonError(c, 404, 'auth_email_not_found', 'No account was found for that email.')
 
   const pin = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digits
   const pinHash = await hashPassword(pin);
@@ -1131,7 +1153,7 @@ app.post('/api/auth/request-pin', async (c) => {
     await c.env.DB.prepare('DELETE FROM auth_pins WHERE email = ?').bind(email).run()
     const detail = error instanceof Error ? error.message : String(error)
     console.error(`[auth] Failed to deliver password reset PIN for ${email}: ${detail}`)
-    return c.json({ error: 'Verification email delivery failed. Please try again.' }, 502)
+    return jsonError(c, 502, 'auth_email_delivery_failed', 'We could not send the verification email right now. Please try again.')
   }
   
   return c.json({ success: true, message: 'Verification PIN sent' });
@@ -1143,22 +1165,22 @@ app.post('/api/auth/reset-password', async (c) => {
   const email = normalizeEmail(body.email)
   const pin = String(body.pin ?? '').trim()
   const new_password = String(body.new_password ?? '')
-  if (!email || !pin || !new_password) return c.json({ error: 'Missing fields' }, 400);
-  if (!isValidEmail(email)) return c.json({ error: 'Enter a valid email address' }, 400)
-  if (!/^\d{6}$/.test(pin)) return c.json({ error: 'PIN must be 6 digits' }, 400)
-  if (new_password.length < 6) return c.json({ error: 'Password must be at least 6 characters' }, 400)
+  if (!email || !pin || !new_password) return jsonError(c, 400, 'auth_reset_missing_fields', 'Enter your email, PIN, and new password.')
+  if (!isValidEmail(email)) return jsonError(c, 400, 'auth_invalid_email', 'Enter a valid email address.')
+  if (!/^\d{6}$/.test(pin)) return jsonError(c, 400, 'auth_invalid_pin_format', 'PIN must be 6 digits.')
+  if (new_password.length < 6) return jsonError(c, 400, 'auth_password_too_short', 'Password must be at least 6 characters.')
 
   const pinRecord = await c.env.DB.prepare('SELECT pin_hash, expires_at FROM auth_pins WHERE email = ?').bind(email).first() as any;
-  if (!pinRecord) return c.json({ error: 'No PIN requested or it expired' }, 400);
+  if (!pinRecord) return jsonError(c, 400, 'auth_pin_missing_or_expired', 'Request a new PIN and try again.')
 
   const now = Math.floor(Date.now() / 1000);
   if (pinRecord.expires_at < now) {
-    return c.json({ error: 'PIN expired' }, 400);
+    return jsonError(c, 400, 'auth_pin_expired', 'That PIN expired. Request a new one and try again.')
   }
 
   const expectedHash = await hashPassword(pin);
   if (expectedHash !== pinRecord.pin_hash) {
-    return c.json({ error: 'Invalid PIN' }, 400);
+    return jsonError(c, 400, 'auth_invalid_pin', 'That PIN does not look right.')
   }
 
   const newPasswordHash = await hashPassword(new_password);
@@ -1178,7 +1200,7 @@ app.post('/api/auth/login', async (c) => {
   if (user_id) {
     // Backwards compatibility for twin-app testing (auto-login via SEED_USER_ID)
     const user = await c.env.DB.prepare('SELECT id, username, avatar_url, email, email_verified_at FROM users WHERE id = ?').bind(user_id).first()
-    if (!user) return c.json({ error: 'User not found' }, 404)
+    if (!user) return jsonError(c, 404, 'auth_user_not_found', 'That test user was not found.')
 
     const payload = { id: user_id, exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30 }
     const secret = c.env.JWT_SECRET || 'fallback_local_secret'
@@ -1187,17 +1209,17 @@ app.post('/api/auth/login', async (c) => {
   }
 
   if (!username || !password) {
-    return c.json({ error: 'Missing username or password' }, 400)
+    return jsonError(c, 400, 'auth_missing_credentials', 'Enter a username and password.')
   }
 
   const user = await c.env.DB.prepare('SELECT id, password_hash, username, avatar_url, email, email_verified_at FROM users WHERE lower(username) = lower(?)').bind(username).first()
   if (!user) {
-    return c.json({ error: 'Invalid username or password' }, 401)
+    return jsonError(c, 401, 'auth_invalid_credentials', 'That username or password does not match.')
   }
 
   const password_hash = await hashPassword(password);
   if (user.password_hash !== password_hash) {
-    return c.json({ error: 'Invalid username or password' }, 401)
+    return jsonError(c, 401, 'auth_invalid_credentials', 'That username or password does not match.')
   }
 
   const payload = {
@@ -1222,14 +1244,14 @@ app.post('/api/user/email/request-pin', async (c) => {
   const body = await c.req.json().catch(() => ({})) as { email?: unknown }
   const email = normalizeEmail(body.email)
 
-  if (!email) return c.json({ error: 'Missing email' }, 400)
-  if (!isValidEmail(email)) return c.json({ error: 'Enter a valid email address' }, 400)
+  if (!email) return jsonError(c, 400, 'auth_missing_email', 'Enter your email address.')
+  if (!isValidEmail(email)) return jsonError(c, 400, 'auth_invalid_email', 'Enter a valid email address.')
 
   const existing = await c.env.DB.prepare(
     'SELECT id FROM users WHERE lower(email) = lower(?) AND id != ?'
   ).bind(email, payload.id).first()
   if (existing) {
-    return c.json({ error: 'This email is already attached to another account' }, 409)
+    return jsonError(c, 409, 'auth_email_already_attached', 'That email is already attached to another account.')
   }
 
   const pin = Math.floor(100000 + Math.random() * 900000).toString()
@@ -1251,7 +1273,7 @@ app.post('/api/user/email/request-pin', async (c) => {
     await c.env.DB.prepare('DELETE FROM auth_pins WHERE email = ?').bind(email).run()
     const detail = error instanceof Error ? error.message : String(error)
     console.error(`[auth] Failed to deliver profile activation PIN for ${email}: ${detail}`)
-    return c.json({ error: 'Verification email delivery failed. Please try again.' }, 502)
+    return jsonError(c, 502, 'auth_email_delivery_failed', 'We could not send the verification email right now. Please try again.')
   }
 
   return c.json({ success: true, message: 'Verification PIN sent' })
@@ -1264,30 +1286,30 @@ app.post('/api/user/email/verify-pin', async (c) => {
   const email = normalizeEmail(body.email)
   const pin = String(body.pin ?? '').trim()
 
-  if (!email || !pin) return c.json({ error: 'Missing email or PIN' }, 400)
-  if (!isValidEmail(email)) return c.json({ error: 'Enter a valid email address' }, 400)
-  if (!/^\d{6}$/.test(pin)) return c.json({ error: 'PIN must be 6 digits' }, 400)
+  if (!email || !pin) return jsonError(c, 400, 'auth_verify_missing_fields', 'Enter your email and PIN.')
+  if (!isValidEmail(email)) return jsonError(c, 400, 'auth_invalid_email', 'Enter a valid email address.')
+  if (!/^\d{6}$/.test(pin)) return jsonError(c, 400, 'auth_invalid_pin_format', 'PIN must be 6 digits.')
 
   const existing = await c.env.DB.prepare(
     'SELECT id FROM users WHERE lower(email) = lower(?) AND id != ?'
   ).bind(email, payload.id).first()
   if (existing) {
-    return c.json({ error: 'This email is already attached to another account' }, 409)
+    return jsonError(c, 409, 'auth_email_already_attached', 'That email is already attached to another account.')
   }
 
   const pinRecord = await c.env.DB.prepare(
     'SELECT pin_hash, expires_at FROM auth_pins WHERE email = ?'
   ).bind(email).first<{ pin_hash: string; expires_at: number }>()
-  if (!pinRecord) return c.json({ error: 'No PIN requested or it expired' }, 400)
+  if (!pinRecord) return jsonError(c, 400, 'auth_pin_missing_or_expired', 'Request a new PIN and try again.')
 
   const now = Math.floor(Date.now() / 1000)
   if (pinRecord.expires_at < now) {
-    return c.json({ error: 'PIN expired' }, 400)
+    return jsonError(c, 400, 'auth_pin_expired', 'That PIN expired. Request a new one and try again.')
   }
 
   const expectedHash = await hashPassword(pin)
   if (expectedHash !== pinRecord.pin_hash) {
-    return c.json({ error: 'Invalid PIN' }, 400)
+    return jsonError(c, 400, 'auth_invalid_pin', 'That PIN does not look right.')
   }
 
   const verifiedAt = new Date().toISOString()
@@ -1314,9 +1336,9 @@ app.put('/api/user/avatar', async (c) => {
   const payload = c.get('jwtPayload')
   const { avatar_url } = await c.req.json()
   const avatar = normalizeAvatar(avatar_url)
-  if (!avatar) return c.json({ error: 'Missing avatar_url' }, 400)
+  if (!avatar) return jsonError(c, 400, 'auth_avatar_missing', 'Choose an avatar first.')
   if (!isAllowedEmojiAvatar(avatar)) {
-    return c.json({ error: 'Avatar must be an emoji from the picker' }, 400)
+    return jsonError(c, 400, 'auth_avatar_invalid', 'Pick an emoji from the Hable avatar set.')
   }
   
   await c.env.DB.prepare('UPDATE users SET avatar_url = ? WHERE id = ?').bind(avatar, payload.id).run()
@@ -1393,6 +1415,10 @@ app.get('/api/social/user/:id/profile', async (c) => {
 
   const user = await c.env.DB.prepare('SELECT id, username, avatar_url, total_score FROM users WHERE id = ?').bind(targetUserId).first()
   if (!user) return c.json({ error: 'User not found' }, 404)
+  const userWithLevel = {
+    ...user,
+    level_name: deriveLevel(Number((user as { total_score?: unknown }).total_score ?? 0)).name,
+  }
 
   let activeHabits: unknown[] = []
   if (viewerUserId === targetUserId) {
@@ -1432,7 +1458,7 @@ app.get('/api/social/user/:id/profile', async (c) => {
   }
 
   return c.json({
-    user,
+    user: userWithLevel,
     habits: activeHabits
   })
 })
@@ -1460,9 +1486,9 @@ app.post('/api/social/friend-request', async (c) => {
   const { target_user_id } = await c.req.json()
   const targetUserId = String(target_user_id ?? '').trim()
 
-  if (!targetUserId) return c.json({ error: 'Missing target_user_id' }, 400)
+  if (!targetUserId) return jsonError(c, 400, 'friend_request_missing_target', 'Choose a friend first.')
   if (targetUserId === senderId) {
-    return c.json({ error: 'Cannot send a friend request to yourself' }, 400)
+    return jsonError(c, 400, 'friend_request_self', "You can't send a friend request to yourself.")
   }
 
   const target = await c.env.DB.prepare(
@@ -1470,7 +1496,7 @@ app.post('/api/social/friend-request', async (c) => {
   ).bind(targetUserId).first<{ id: string }>()
 
   if (!target?.id) {
-    return c.json({ error: 'Target user not found' }, 404)
+    return jsonError(c, 404, 'friend_request_target_not_found', 'That user could not be found.')
   }
 
   const existing = await c.env.DB.prepare(`
@@ -1518,7 +1544,7 @@ app.post('/api/social/friend-request/accept', async (c) => {
   const recipient_id = payload.id
   const { request_id } = await c.req.json()
 
-  if (!request_id) return c.json({ error: 'Missing request_id' }, 400)
+  if (!request_id) return jsonError(c, 400, 'friend_request_missing_request_id', 'Pick a valid friend request first.')
 
   const request = await c.env.DB.prepare(`
     SELECT id, requester_id, recipient_id, status
@@ -1532,13 +1558,13 @@ app.post('/api/social/friend-request/accept', async (c) => {
   }>()
 
   if (!request) {
-    return c.json({ error: 'Request not found or unauthorized' }, 404)
+    return jsonError(c, 404, 'friend_request_not_found', 'That friend request is no longer available.')
   }
   if (request.status === 'accepted') {
     return c.json({ success: true, relationship_state: 'accepted' })
   }
   if (request.status !== 'pending') {
-    return c.json({ error: 'Request is no longer pending' }, 409)
+    return jsonError(c, 409, 'friend_request_not_pending', 'That request is no longer pending.')
   }
 
   const result = await c.env.DB.prepare(
@@ -1546,7 +1572,7 @@ app.post('/api/social/friend-request/accept', async (c) => {
   ).bind(request_id, recipient_id).run()
 
   if (result.meta.changes === 0) {
-    return c.json({ error: 'Request not found or unauthorized' }, 404)
+    return jsonError(c, 404, 'friend_request_not_found', 'That friend request is no longer available.')
   }
 
   return c.json({ success: true, relationship_state: 'accepted' })
@@ -1558,7 +1584,7 @@ app.post('/api/social/friend-request/decline', async (c) => {
   const recipient_id = payload.id
   const { request_id } = await c.req.json()
 
-  if (!request_id) return c.json({ error: 'Missing request_id' }, 400)
+  if (!request_id) return jsonError(c, 400, 'friend_request_missing_request_id', 'Pick a valid friend request first.')
 
   const request = await c.env.DB.prepare(`
     SELECT id, status
@@ -1567,10 +1593,10 @@ app.post('/api/social/friend-request/decline', async (c) => {
   `).bind(request_id, recipient_id).first<{ id: string; status: string }>()
 
   if (!request) {
-    return c.json({ error: 'Request not found or unauthorized' }, 404)
+    return jsonError(c, 404, 'friend_request_not_found', 'That friend request is no longer available.')
   }
   if (request.status === 'accepted') {
-    return c.json({ error: 'Accepted friendships cannot be declined' }, 409)
+    return jsonError(c, 409, 'friend_request_already_accepted', "That friendship is already active.")
   }
   if (request.status === 'declined' || request.status === 'rejected') {
     return c.json({ success: true, relationship_state: 'none' })
@@ -1590,9 +1616,9 @@ app.post('/api/social/friend-request/revoke', async (c) => {
   const { target_user_id } = await c.req.json()
   const targetUserId = String(target_user_id ?? '').trim()
 
-  if (!targetUserId) return c.json({ error: 'Missing target_user_id' }, 400)
+  if (!targetUserId) return jsonError(c, 400, 'friend_revoke_missing_target', 'Choose a friend first.')
   if (targetUserId === userId) {
-    return c.json({ error: 'Cannot revoke friendship with yourself' }, 400)
+    return jsonError(c, 400, 'friend_revoke_self', "You can't remove yourself from your own friends list.")
   }
 
   const result = await c.env.DB.prepare(`
@@ -1606,7 +1632,7 @@ app.post('/api/social/friend-request/revoke', async (c) => {
   `).bind(userId, targetUserId, targetUserId, userId).run()
 
   if (result.meta.changes === 0) {
-    return c.json({ error: 'Friendship not found or already revoked' }, 404)
+    return jsonError(c, 404, 'friend_revoke_not_found', 'That friendship was already gone.')
   }
 
   return c.json({ success: true, relationship_state: 'none' })
@@ -2085,7 +2111,22 @@ app.get('/api/social/leaderboard', async (c) => {
     LIMIT 100
   `).bind(userId, userId, userId, userId).all()
 
-  return c.json({ leaderboard: results })
+  const leaderboard = (results ?? []).map((row) => {
+    const typedRow = row as {
+      id?: unknown
+      username?: unknown
+      avatar_url?: unknown
+      total_score?: unknown
+    }
+    const totalScore = Number(typedRow.total_score ?? 0)
+    return {
+      ...typedRow,
+      total_score: totalScore,
+      level_name: deriveLevel(totalScore).name,
+    }
+  })
+
+  return c.json({ leaderboard })
 })
 
 app.get('/api/social/search', async (c) => {

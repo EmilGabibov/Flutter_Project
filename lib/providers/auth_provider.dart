@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -8,10 +9,12 @@ import '../config/api_config.dart';
 import '../database/database.dart';
 import 'notification_providers.dart';
 import 'database_provider.dart';
-import 'package:flutter/foundation.dart';
+import '../services/app_error.dart';
 
 final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
-  return const FlutterSecureStorage();
+  return const FlutterSecureStorage(
+    mOptions: MacOsOptions(usesDataProtectionKeychain: false),
+  );
 });
 
 class AuthState {
@@ -61,47 +64,30 @@ class AuthNotifier extends Notifier<AuthState> {
   static const String _userIdKey = 'user_id';
   static const String _usernameKey = 'username';
 
-  String _networkErrorMessage(Object error) {
-    final message = error.toString();
-    if (message.contains('SocketException')) {
-      return 'Cannot reach the backend at $apiBaseUrl. Start the backend or check the API base URL.';
-    }
-    if (message.contains('XMLHttpRequest') ||
-        message.contains('ClientException') ||
-        message.contains('Failed to fetch')) {
-      return 'Cannot reach the backend at $apiBaseUrl. Start the backend, check CORS, or set HABLE_API_BASE_URL.';
-    }
-    if (message.contains('HandshakeException')) {
-      return 'Unable to establish a secure connection to the backend.';
-    }
-    if (message.contains('FormatException')) {
-      return 'Unexpected response from the backend.';
-    }
-    return message;
+  String _networkErrorMessage(
+    Object error, {
+    String fallbackMessage =
+        'Hable could not finish that right now. Please try again.',
+  }) {
+    return AppError.fromException(
+      error,
+      fallbackCode: 'auth_network_error',
+      fallbackMessage: fallbackMessage,
+      fallbackKind: AppErrorKind.inline,
+    ).message;
   }
 
-  String _errorFromResponse(http.Response response, String fallback) {
-    final body = response.body.trim();
-    if (body.isNotEmpty) {
-      try {
-        final decoded = jsonDecode(body);
-        if (decoded is Map<String, dynamic>) {
-          final error = decoded['error'] ?? decoded['message'];
-          if (error is String && error.trim().isNotEmpty) {
-            return error.trim();
-          }
-        }
-      } catch (_) {
-        if (kDebugMode) {
-          debugPrint(
-            'Auth endpoint returned non-JSON ${response.statusCode}: '
-            '${body.length > 240 ? '${body.substring(0, 240)}...' : body}',
-          );
-        }
-      }
-    }
-
-    return '$fallback (${response.statusCode})';
+  String _errorFromResponse(
+    http.Response response,
+    String fallbackMessage, {
+    String fallbackCode = 'auth_request_failed',
+  }) {
+    return AppError.fromResponse(
+      response,
+      fallbackCode: fallbackCode,
+      fallbackMessage: fallbackMessage,
+      fallbackKind: AppErrorKind.inline,
+    ).message;
   }
 
   DateTime? _parseOptionalDate(Object? value) {
@@ -161,15 +147,32 @@ class AuthNotifier extends Notifier<AuthState> {
       } else {
         state = state.copyWith(
           isLoading: false,
-          error: _errorFromResponse(response, 'Login failed'),
+          error: _errorFromResponse(
+            response,
+            'Hable could not log you in just yet.',
+            fallbackCode: 'auth_login_failed',
+          ),
         );
         return false;
       }
-    } on TimeoutException {
-      state = state.copyWith(isLoading: false, error: 'Request timed out');
+    } on TimeoutException catch (error) {
+      state = state.copyWith(
+        isLoading: false,
+        error: _networkErrorMessage(
+          error,
+          fallbackMessage: 'Logging in took too long. Please try again.',
+        ),
+      );
       return false;
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: _networkErrorMessage(e));
+      state = state.copyWith(
+        isLoading: false,
+        error: _networkErrorMessage(
+          e,
+          fallbackMessage:
+              'Hable could not log you in just now. Please try again.',
+        ),
+      );
       return false;
     }
   }
@@ -201,14 +204,31 @@ class AuthNotifier extends Notifier<AuthState> {
       }
       state = state.copyWith(
         isLoading: false,
-        error: _errorFromResponse(response, 'Test login failed'),
+        error: _errorFromResponse(
+          response,
+          'Hable could not start the test session.',
+          fallbackCode: 'auth_test_login_failed',
+        ),
       );
       return false;
-    } on TimeoutException {
-      state = state.copyWith(isLoading: false, error: 'Request timed out');
+    } on TimeoutException catch (error) {
+      state = state.copyWith(
+        isLoading: false,
+        error: _networkErrorMessage(
+          error,
+          fallbackMessage:
+              'Starting the test session took too long. Please try again.',
+        ),
+      );
       return false;
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: _networkErrorMessage(e));
+      state = state.copyWith(
+        isLoading: false,
+        error: _networkErrorMessage(
+          e,
+          fallbackMessage: 'Hable could not start the test session right now.',
+        ),
+      );
       return false;
     }
   }
@@ -240,15 +260,31 @@ class AuthNotifier extends Notifier<AuthState> {
       } else {
         state = state.copyWith(
           isLoading: false,
-          error: _errorFromResponse(response, 'Registration failed'),
+          error: _errorFromResponse(
+            response,
+            'Hable could not create that account yet.',
+            fallbackCode: 'auth_registration_failed',
+          ),
         );
         return false;
       }
-    } on TimeoutException {
-      state = state.copyWith(isLoading: false, error: 'Request timed out');
+    } on TimeoutException catch (error) {
+      state = state.copyWith(
+        isLoading: false,
+        error: _networkErrorMessage(
+          error,
+          fallbackMessage: 'Sign up took too long. Please try again.',
+        ),
+      );
       return false;
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: _networkErrorMessage(e));
+      state = state.copyWith(
+        isLoading: false,
+        error: _networkErrorMessage(
+          e,
+          fallbackMessage: 'Hable could not finish sign up right now.',
+        ),
+      );
       return false;
     }
   }
@@ -269,14 +305,30 @@ class AuthNotifier extends Notifier<AuthState> {
       }
       state = state.copyWith(
         isLoading: false,
-        error: _errorFromResponse(response, 'Failed to request PIN'),
+        error: _errorFromResponse(
+          response,
+          'Hable could not send that PIN yet.',
+          fallbackCode: 'auth_request_pin_failed',
+        ),
       );
       return false;
-    } on TimeoutException {
-      state = state.copyWith(isLoading: false, error: 'Request timed out');
+    } on TimeoutException catch (error) {
+      state = state.copyWith(
+        isLoading: false,
+        error: _networkErrorMessage(
+          error,
+          fallbackMessage: 'Sending the PIN took too long. Please try again.',
+        ),
+      );
       return false;
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: _networkErrorMessage(e));
+      state = state.copyWith(
+        isLoading: false,
+        error: _networkErrorMessage(
+          e,
+          fallbackMessage: 'Hable could not send that PIN right now.',
+        ),
+      );
       return false;
     }
   }
@@ -305,14 +357,31 @@ class AuthNotifier extends Notifier<AuthState> {
       }
       state = state.copyWith(
         isLoading: false,
-        error: _errorFromResponse(response, 'Reset failed'),
+        error: _errorFromResponse(
+          response,
+          'Hable could not reset that password yet.',
+          fallbackCode: 'auth_reset_failed',
+        ),
       );
       return false;
-    } on TimeoutException {
-      state = state.copyWith(isLoading: false, error: 'Request timed out');
+    } on TimeoutException catch (error) {
+      state = state.copyWith(
+        isLoading: false,
+        error: _networkErrorMessage(
+          error,
+          fallbackMessage:
+              'Resetting the password took too long. Please try again.',
+        ),
+      );
       return false;
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: _networkErrorMessage(e));
+      state = state.copyWith(
+        isLoading: false,
+        error: _networkErrorMessage(
+          e,
+          fallbackMessage: 'Hable could not reset that password right now.',
+        ),
+      );
       return false;
     }
   }
@@ -344,14 +413,31 @@ class AuthNotifier extends Notifier<AuthState> {
 
       state = state.copyWith(
         isLoading: false,
-        error: _errorFromResponse(response, 'Failed to request activation PIN'),
+        error: _errorFromResponse(
+          response,
+          'Hable could not send the activation PIN yet.',
+          fallbackCode: 'auth_activation_pin_request_failed',
+        ),
       );
       return false;
-    } on TimeoutException {
-      state = state.copyWith(isLoading: false, error: 'Request timed out');
+    } on TimeoutException catch (error) {
+      state = state.copyWith(
+        isLoading: false,
+        error: _networkErrorMessage(
+          error,
+          fallbackMessage:
+              'Sending the activation PIN took too long. Please try again.',
+        ),
+      );
       return false;
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: _networkErrorMessage(e));
+      state = state.copyWith(
+        isLoading: false,
+        error: _networkErrorMessage(
+          e,
+          fallbackMessage: 'Hable could not send the activation PIN right now.',
+        ),
+      );
       return false;
     }
   }
@@ -392,14 +478,31 @@ class AuthNotifier extends Notifier<AuthState> {
 
       state = state.copyWith(
         isLoading: false,
-        error: _errorFromResponse(response, 'Failed to verify activation PIN'),
+        error: _errorFromResponse(
+          response,
+          'Hable could not verify that PIN yet.',
+          fallbackCode: 'auth_activation_pin_verify_failed',
+        ),
       );
       return false;
-    } on TimeoutException {
-      state = state.copyWith(isLoading: false, error: 'Request timed out');
+    } on TimeoutException catch (error) {
+      state = state.copyWith(
+        isLoading: false,
+        error: _networkErrorMessage(
+          error,
+          fallbackMessage:
+              'Verifying that PIN took too long. Please try again.',
+        ),
+      );
       return false;
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: _networkErrorMessage(e));
+      state = state.copyWith(
+        isLoading: false,
+        error: _networkErrorMessage(
+          e,
+          fallbackMessage: 'Hable could not verify that PIN right now.',
+        ),
+      );
       return false;
     }
   }
@@ -466,10 +569,14 @@ class AuthNotifier extends Notifier<AuthState> {
         );
       }
       state = state.copyWith(
-        error: _errorFromResponse(response, 'Failed to update avatar'),
+        error: _errorFromResponse(
+          response,
+          'Hable could not save that avatar yet.',
+          fallbackCode: 'auth_avatar_update_failed',
+        ),
       );
       return false;
-    } on TimeoutException {
+    } on TimeoutException catch (error) {
       if (currentUserRow != null) {
         await (_db.update(
           _db.users,
@@ -480,7 +587,13 @@ class AuthNotifier extends Notifier<AuthState> {
           ),
         );
       }
-      state = state.copyWith(error: 'Request timed out');
+      state = state.copyWith(
+        error: _networkErrorMessage(
+          error,
+          fallbackMessage:
+              'Saving that avatar took too long. Please try again.',
+        ),
+      );
       return false;
     } catch (e) {
       if (currentUserRow != null) {
@@ -493,7 +606,12 @@ class AuthNotifier extends Notifier<AuthState> {
           ),
         );
       }
-      state = state.copyWith(error: _networkErrorMessage(e));
+      state = state.copyWith(
+        error: _networkErrorMessage(
+          e,
+          fallbackMessage: 'Hable could not save that avatar right now.',
+        ),
+      );
       return false;
     }
   }

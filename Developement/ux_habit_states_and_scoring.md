@@ -30,6 +30,14 @@ The leaderboard (Social Hub → Leaderboard tab) queries `/api/social/leaderboar
 - **Current User Profile:** The user's total score, level, and earned badges are fetched via the daily sync and displayed.
 - **Friend Profile:** When viewing a friend's profile, their score is visible as part of their public card.
 
+### Surface Differences
+The app intentionally shows score-related numbers at different levels of granularity:
+- **Leaderboard total:** The Social leaderboard ranks accepted friends by backend-owned lifetime `total_score`. This is an all-time standing, not a per-day or per-habit value.
+- **Profile lifetime score:** The current user profile reads backend `gamification.total_points` plus the backend-derived level and badges from `/api/sync/daily`. This should match the user’s lifetime score semantics, but it may refresh on a different cadence from the independently fetched leaderboard endpoint.
+- **Per-check-in awards:** Completion splashes, Profile history rows, and the 30-day Journey chart show per-log awards such as `5 points earned`, `10 points earned`, or `+5 pts`. These are event-level rewards, not replacements for the lifetime total.
+
+When these numbers differ, the expected explanation is usually **scope or timing**, not conflicting business logic: a single check-in award is one event, while profile and leaderboard totals are cumulative backend aggregates that refresh through separate network paths.
+
 ---
 
 ## 3. Rewards & Badges

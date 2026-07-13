@@ -13,7 +13,7 @@ This file combines the Mermaid diagrams from `Developement` into one documented 
 
 ## 1. Authentication Flow
 
-Source: [`sys_authentication.mmd`](sys_authentication.mmd)
+Source: [`sys_authentication.md`](sys_authentication.md)
 
 Sequence diagram for PIN-based login and password reset.
 
@@ -36,7 +36,7 @@ sequenceDiagram
 
 ## 2. Offline Architecture
 
-Source: [`sys_offline_architecture.mmd`](sys_offline_architecture.mmd)
+Source: [`sys_offline_architecture.md`](sys_offline_architecture.md)
 
 Flowchart for the local-first data path using Riverpod, Drift, sync services, and Cloudflare backend sync.
 
@@ -52,30 +52,129 @@ flowchart TD
 
 ## 3. Schema & Core Logic
 
-Source: [`sys_schema_and_logic.mmd`](sys_schema_and_logic.mmd)
+Source: [`sys_schema_and_logic.md`](sys_schema_and_logic.md)
 
-Relational table summary for the core user, habit, log, and friendship model.
-
-| Table | Primary Key | Foreign Keys | Relationship Notes |
-| --- | --- | --- | --- |
-| `USERS` | `user_id` | - | One user can create many habits and logs. |
-| `HABITS` | `id` | `user_id` → `USERS.user_id` | Each habit belongs to one user. |
-| `LOGS` | `id` | `user_id` → `USERS.user_id`, `habit_id` → `HABITS.id` | Each log belongs to one user and one habit. |
-| `PARTNERSHIPS` | composite or generated ID | `user_id` → `USERS.user_id`, `partner_id` → `USERS.user_id` | Connects users to shared habit participation. |
-| `friend_requests` | request ID | `requester_id` → `USERS.user_id`, `recipient_id` → `USERS.user_id` | Tracks pending or completed friend request relationships. |
+Advanced relational schema for the core user, habit, log, and friendship model.
 
 ```mermaid
 erDiagram
-    USERS ||--o{ HABITS : creates
-    USERS ||--o{ LOGS : creates
-    HABITS ||--o{ LOGS : has
-    USERS ||--o{ PARTNERSHIPS : engages
-    USERS }|--|{ USERS : friend_requests
+    USERS {
+        uuid user_id PK
+        string username UK
+        string email UK
+        datetime email_verified_at
+        string password_hash
+        string avatar_url
+        int total_score
+        datetime updated_at
+        boolean is_synced
+    }
+
+    HABITS {
+        uuid id PK
+        uuid user_id FK
+        string title
+        string description
+        int target_duration
+        string color_hex
+        string status
+        datetime created_at
+        datetime updated_at
+        boolean is_synced
+    }
+
+    LOGS {
+        uuid id PK
+        uuid user_id FK
+        uuid habit_id FK
+        string status
+        datetime logged_at
+        string journal_entry
+        datetime updated_at
+        boolean is_synced
+    }
+
+    HABIT_PROGRESS {
+        uuid id PK
+        uuid user_id FK
+        uuid habit_id FK
+        int current_duration
+        datetime updated_at
+        boolean is_synced
+    }
+
+    PARTNERSHIPS {
+        uuid id PK
+        uuid user_id FK
+        uuid partner_id FK
+        uuid habit_id FK
+        string role
+        datetime updated_at
+        boolean is_synced
+    }
+
+    FRIEND_REQUESTS {
+        uuid id PK
+        uuid requester_id FK
+        uuid recipient_id FK
+        string status
+        datetime created_at
+        datetime updated_at
+        boolean is_synced
+    }
+
+    USER_SCORE_EVENTS {
+        uuid id PK
+        uuid user_id FK
+        uuid source_event_id PK
+        int points
+        string reason
+        datetime created_at
+        datetime updated_at
+        boolean is_synced
+    }
+
+    USER_ACHIEVEMENTS {
+        uuid id PK
+        uuid user_id FK
+        string achievement_id PK
+        datetime unlocked_at
+        uuid source_event_id
+        datetime updated_at
+        boolean is_synced
+    }
+
+    HABIT_INVITATIONS {
+        uuid id PK
+        uuid requester_id FK
+        uuid recipient_id FK
+        uuid habit_id FK
+        string status
+        datetime created_at
+        datetime updated_at
+        boolean is_synced
+    }
+
+    USERS ||--o{ HABITS : owns
+    USERS ||--o{ LOGS : writes
+    HABITS ||--o{ LOGS : records
+    USERS ||--o{ HABIT_PROGRESS : tracks
+    HABITS ||--o{ HABIT_PROGRESS : tracks
+    USERS ||--o{ PARTNERSHIPS : source_user
+    USERS ||--o{ PARTNERSHIPS : partner_user
+    HABITS ||--o{ PARTNERSHIPS : scopes
+    USERS ||--o{ FRIEND_REQUESTS : requester
+    USERS ||--o{ FRIEND_REQUESTS : recipient
+    USERS ||--o{ USER_SCORE_EVENTS : earns
+    USERS ||--o{ USER_ACHIEVEMENTS : unlocks
+    USERS ||--o{ HABIT_INVITATIONS : requests
+    USERS ||--o{ HABIT_INVITATIONS : receives
+    HABITS ||--o{ HABIT_INVITATIONS : targets
 ```
 
 ## 4. Social & Analytics
 
-Source: [`sys_social_and_analytics.mmd`](sys_social_and_analytics.mmd)
+Source: [`sys_social_and_analytics.md`](sys_social_and_analytics.md)
 
 Component flowchart for the social hub, leaderboard, friends tab, and sync service.
 
@@ -96,7 +195,7 @@ flowchart LR
 
 ## 5. Habit States & Scoring
 
-Source: [`ux_habit_states_and_scoring.mmd`](ux_habit_states_and_scoring.mmd)
+Source: [`ux_habit_states_and_scoring.md`](ux_habit_states_and_scoring.md)
 
 State diagram for the habit lifecycle, including check-ins, skips, and abandonment.
 
@@ -112,7 +211,7 @@ stateDiagram-v2
 
 ## 6. Mud Button & Animations
 
-Source: [`ux_mud_and_animations.mmd`](ux_mud_and_animations.mmd)
+Source: [`ux_mud_and_animations.md`](ux_mud_and_animations.md)
 
 State diagram for the long-press mud interaction and its completion/reset flow.
 

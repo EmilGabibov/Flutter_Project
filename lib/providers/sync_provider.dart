@@ -15,7 +15,9 @@ import 'social_providers.dart';
 final syncServiceProvider = Provider<SyncService>((ref) {
   final db = ref.watch(databaseProvider);
   final connectivity = ConnectivityService();
-  const storage = FlutterSecureStorage();
+  const storage = FlutterSecureStorage(
+    mOptions: MacOsOptions(usesDataProtectionKeychain: false),
+  );
   final localReminderService = ref.watch(localReminderServiceProvider);
 
   final service = SyncService(

@@ -83,8 +83,160 @@ flutter run --release --flavor friend -t lib/main.dart
 
 *(Note: For iOS, `flutter run --release` is the most reliable way to compile and transfer the app to your device over USB in one step. If you only want to install an already-built iOS app without running it, you can simply use `flutter install`.)*
 
-## Clean Build Cache
-Empty/clean Flutter build outputs and caches (deletes the `build/` directory):
+## macOS
+### Clean
+Clean Flutter artifacts and remove the native macOS build folder:
 ```bash
 flutter clean
+rm -rf build/macos
+```
+
+### Build
+Build a local debug macOS app:
+```bash
+flutter build macos --debug
+```
+
+Build a release macOS app:
+```bash
+flutter build macos --release
+```
+
+### Run
+Run the macOS app from source during local development:
+```bash
+flutter run -d macos \
+  --dart-define=HABLE_APP_ENV=local
+```
+
+### Verify
+Verify the built release bundle on macOS:
+```bash
+codesign -dvvv --entitlements :- "build/macos/Build/Products/Release/Hable.app"
+spctl -a -vv "build/macos/Build/Products/Release/Hable.app"
+```
+
+---
+
+## Windows
+### Clean
+Clean Flutter artifacts. Removing the Windows build folder must be done from a Windows shell:
+```bash
+flutter clean
+```
+```powershell
+Remove-Item -Recurse -Force build\windows
+```
+```cmd
+rmdir /s /q build\windows
+```
+
+### Build
+Build a local debug Windows app:
+```bash
+flutter build windows --debug
+```
+
+Build a release Windows app:
+```bash
+flutter build windows --release
+```
+
+### Run
+Run the Windows app from source during local development:
+```bash
+flutter run -d windows \
+  --dart-define=HABLE_APP_ENV=local
+```
+
+### Output
+The release bundle is written to:
+```text
+build/windows/x64/runner/Release/
+```
+
+---
+
+## Linux
+### Clean
+Clean Flutter artifacts and remove the native Linux build folder:
+```bash
+flutter clean
+rm -rf build/linux
+```
+
+### Build
+Build a local debug Linux app:
+```bash
+flutter build linux --debug
+```
+
+Build a release Linux app:
+```bash
+flutter build linux --release
+```
+
+### Run
+Run the Linux app from source during local development:
+```bash
+flutter run -d linux \
+  --dart-define=HABLE_APP_ENV=local
+```
+
+### Output
+The release bundle is written to:
+```text
+build/linux/x64/release/bundle/
+```
+
+## Host Constraints
+- `flutter build macos` and `flutter run -d macos` require a macOS host.
+- `flutter build windows` and `flutter run -d windows` require a Windows host.
+- `flutter build linux` and `flutter run -d linux` require a Linux host.
+- Windows installer packaging is a separate Windows-only step after `flutter build windows --release`; see `Developement/windows_distribution.md`.
+- macOS signing, notarization, and App Store export are separate operator steps after `flutter build macos --release`; see `Developement/macos_distribution.md`.
+
+## Clean Build Cache
+Use these commands when you want a fuller reset before rebuilding.
+
+### Cross-platform Flutter cleanup
+```bash
+flutter clean
+```
+
+### Android
+```bash
+rm -rf build/app
+```
+
+### iOS
+```bash
+rm -rf build/ios
+rm -rf ios/Pods
+rm -rf ios/.symlinks
+rm -rf ios/Flutter/Flutter.framework
+rm -rf ios/Flutter/Flutter.podspec
+```
+
+### Web
+```bash
+rm -rf build/web
+```
+
+### macOS
+```bash
+rm -rf build/macos
+```
+
+### Windows
+```powershell
+Remove-Item -Recurse -Force build\windows
+```
+```cmd
+rmdir /s /q build\windows
+```
+
+### Linux
+```bash
+rm -rf build/linux
 ```

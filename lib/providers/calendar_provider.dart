@@ -7,6 +7,7 @@ import '../config/api_config.dart' show apiBaseUrl;
 import 'auth_provider.dart';
 import 'database_provider.dart';
 import '../database/tables.dart';
+import '../services/app_error.dart';
 
 class CalendarFeedState {
   final bool isLoading;
@@ -96,13 +97,24 @@ class CalendarFeedNotifier extends Notifier<CalendarFeedState> {
 
         state = state.copyWith(isLoading: false, feedUrl: feedUrl);
       } else {
-        state = state.copyWith(
-          isLoading: false,
-          error: 'Failed to fetch calendar feed URL',
+        final appError = AppError.fromResponse(
+          response,
+          fallbackCode: 'calendar_feed_fetch_failed',
+          fallbackMessage: 'Hable could not load the calendar link right now.',
+          fallbackKind: AppErrorKind.inline,
         );
+        state = state.copyWith(isLoading: false, error: appError.message);
       }
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        error: AppError.fromAny(
+          e,
+          fallbackCode: 'calendar_feed_fetch_failed',
+          fallbackMessage: 'Hable could not load the calendar link right now.',
+          fallbackKind: AppErrorKind.inline,
+        ).message,
+      );
     }
   }
 
@@ -139,13 +151,26 @@ class CalendarFeedNotifier extends Notifier<CalendarFeedState> {
 
         state = state.copyWith(isLoading: false, feedUrl: feedUrl);
       } else {
-        state = state.copyWith(
-          isLoading: false,
-          error: 'Failed to rotate calendar token',
+        final appError = AppError.fromResponse(
+          response,
+          fallbackCode: 'calendar_feed_rotate_failed',
+          fallbackMessage:
+              'Hable could not refresh that calendar link right now.',
+          fallbackKind: AppErrorKind.inline,
         );
+        state = state.copyWith(isLoading: false, error: appError.message);
       }
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        error: AppError.fromAny(
+          e,
+          fallbackCode: 'calendar_feed_rotate_failed',
+          fallbackMessage:
+              'Hable could not refresh that calendar link right now.',
+          fallbackKind: AppErrorKind.inline,
+        ).message,
+      );
     }
   }
 }

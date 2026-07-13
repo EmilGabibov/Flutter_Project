@@ -15,6 +15,7 @@ import 'theme/app_theme.dart';
 import 'widgets/usage_tracked_screen.dart';
 import 'dart:async';
 import 'services/background_sync_service.dart';
+import 'services/app_error.dart';
 import 'services/client_reset_service.dart';
 import 'services/first_run_quote_gate.dart';
 import 'services/local_reminder_service.dart';
@@ -272,7 +273,23 @@ class _AppGateState extends ConsumerState<_AppGate>
       },
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (err, stack) => Scaffold(body: Center(child: Text('Error: $err'))),
+      error: (err, stack) => Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              AppError.fromAny(
+                err,
+                fallbackCode: 'app_gate_load_failed',
+                fallbackMessage:
+                    'Hable could not finish opening this session just yet.',
+                fallbackKind: AppErrorKind.fullscreen,
+              ).message,
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

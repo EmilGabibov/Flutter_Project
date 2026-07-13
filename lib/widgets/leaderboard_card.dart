@@ -7,6 +7,7 @@ class LeaderboardEntry {
   final String userId;
   final String userName;
   final String? avatarUrl;
+  final String? levelName;
   final int rank;
   final int score;
 
@@ -16,6 +17,7 @@ class LeaderboardEntry {
     required this.rank,
     required this.score,
     this.avatarUrl,
+    this.levelName,
   });
 
   factory LeaderboardEntry.fromJson(Map<String, dynamic> json, int rank) {
@@ -23,6 +25,7 @@ class LeaderboardEntry {
       userId: _readString(json, 'id') ?? _readString(json, 'user_id') ?? '',
       userName: _readString(json, 'username') ?? 'Unknown',
       avatarUrl: _readString(json, 'avatar_url'),
+      levelName: _readString(json, 'level_name') ?? _readString(json, 'level'),
       rank: rank,
       score: _readInt(json, 'total_score'),
     );
@@ -31,8 +34,8 @@ class LeaderboardEntry {
   String get scoreLabel => _formatNumber(score);
 
   String get byline {
-    final level = (score ~/ 5000) + 1;
-    return 'Level $level - ${_tierForScore(score)}';
+    if (levelName != null) return '$levelName level';
+    return 'Lifetime score';
   }
 
   static String? _readString(Map<String, dynamic> json, String key) {
@@ -61,7 +64,7 @@ class LeaderboardCard extends StatefulWidget {
   const LeaderboardCard({
     super.key,
     this.title = 'Leaderboard',
-    this.subtitle = 'All-time total points',
+    this.subtitle = 'Ranked by lifetime score',
     this.scopeLabel = 'Global',
     required this.rankings,
     this.currentUserId,
@@ -501,7 +504,7 @@ class _RankingRow extends StatelessWidget {
                 ),
               ),
               Text(
-                'points',
+                'lifetime',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppTheme.warmGray,
                   fontWeight: FontWeight.w700,
@@ -561,14 +564,6 @@ Color _rankAccent(int rank) {
   if (rank == 2) return const Color(0xFFB7B7B7);
   if (rank == 3) return const Color(0xFFB7794A);
   return AppTheme.sageGreen;
-}
-
-String _tierForScore(int score) {
-  if (score >= 250000) return 'Diamond';
-  if (score >= 100000) return 'Platinum';
-  if (score >= 50000) return 'Gold';
-  if (score >= 15000) return 'Silver';
-  return 'Bronze';
 }
 
 String _formatNumber(int value) {

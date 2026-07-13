@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../database/database.dart';
 import '../database/tables.dart';
 import '../providers/notification_providers.dart';
+import '../services/app_error.dart';
 import '../theme/app_theme.dart';
 import '../widgets/skeletons.dart';
 import '../widgets/usage_tracked_screen.dart';
@@ -40,100 +41,110 @@ class NotificationCenterScreen extends ConsumerWidget {
         ),
         body: NarrowLayout(
           child: notificationsAsync.when(
-          data: (notifications) {
-            if (notifications.isEmpty) {
-              return const HableEmptyStateCard(
-                icon: Icons.notifications_none_rounded,
-                title: 'No notifications yet',
-                description:
-                    'Friend requests, invites, nudges, and reminder updates will appear here.',
-              );
-            }
+            data: (notifications) {
+              if (notifications.isEmpty) {
+                return const HableEmptyStateCard(
+                  icon: Icons.notifications_none_rounded,
+                  title: 'No notifications yet',
+                  description:
+                      'Friend requests, invites, nudges, and reminder updates will appear here.',
+                );
+              }
 
-            return ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-              itemCount: notifications.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final notification = notifications[index];
-                final isUnread = notification.readAt == null;
-                return Card(
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(
-                      color: isUnread
-                          ? AppTheme.sageGreen.withValues(alpha: 0.28)
-                          : AppTheme.warmGray.withValues(alpha: 0.12),
-                    ),
-                  ),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.all(16),
-                    leading: CircleAvatar(
-                      backgroundColor: _iconTint(
-                        notification.type,
-                      ).withValues(alpha: 0.14),
-                      child: Icon(
-                        _iconForType(notification.type),
-                        color: _iconTint(notification.type),
+              return ListView.separated(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                itemCount: notifications.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 8),
+                itemBuilder: (context, index) {
+                  final notification = notifications[index];
+                  final isUnread = notification.readAt == null;
+                  return Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      side: BorderSide(
+                        color: isUnread
+                            ? AppTheme.sageGreen.withValues(alpha: 0.28)
+                            : AppTheme.warmGray.withValues(alpha: 0.12),
                       ),
                     ),
-                    title: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            notification.title,
-                            style: Theme.of(context).textTheme.titleSmall
-                                ?.copyWith(
-                                  fontWeight: isUnread
-                                      ? FontWeight.w800
-                                      : FontWeight.w700,
-                                ),
-                          ),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.all(16),
+                      leading: CircleAvatar(
+                        backgroundColor: _iconTint(
+                          notification.type,
+                        ).withValues(alpha: 0.14),
+                        child: Icon(
+                          _iconForType(notification.type),
+                          color: _iconTint(notification.type),
                         ),
-                        if (isUnread)
-                          Container(
-                            width: 10,
-                            height: 10,
-                            decoration: const BoxDecoration(
-                              color: AppTheme.sageGreen,
-                              shape: BoxShape.circle,
+                      ),
+                      title: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              notification.title,
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(
+                                    fontWeight: isUnread
+                                        ? FontWeight.w800
+                                        : FontWeight.w700,
+                                  ),
                             ),
                           ),
-                      ],
-                    ),
-                    subtitle: Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(
-                        '${notification.body}\n${_formatTimestamp(notification.createdAt)}',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppTheme.warmGray.withValues(alpha: 0.9),
-                          height: 1.35,
+                          if (isUnread)
+                            Container(
+                              width: 10,
+                              height: 10,
+                              decoration: const BoxDecoration(
+                                color: AppTheme.sageGreen,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                        ],
+                      ),
+                      subtitle: Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          '${notification.body}\n${_formatTimestamp(notification.createdAt)}',
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: AppTheme.warmGray.withValues(alpha: 0.9),
+                                height: 1.35,
+                              ),
                         ),
                       ),
+                      onTap: () async {
+                        if (isUnread) {
+                          await actions.markRead(notification.notificationId);
+                        }
+                        if (!context.mounted) return;
+                        await _openNotificationAction(
+                          context,
+                          notification,
+                          userId,
+                        );
+                      },
                     ),
-                    onTap: () async {
-                      if (isUnread) {
-                        await actions.markRead(notification.notificationId);
-                      }
-                      if (!context.mounted) return;
-                      await _openNotificationAction(
-                        context,
-                        notification,
-                        userId,
-                      );
-                    },
-                  ),
-                );
-              },
-            );
-          },
-          loading: () => const HableSkeletonList(itemCount: 5),
-          error: (error, _) => Padding(
-            padding: const EdgeInsets.only(top: 32.0),
-            child: Text('Error: $error', textAlign: TextAlign.center),
+                  );
+                },
+              );
+            },
+            loading: () => const HableSkeletonList(itemCount: 5),
+            error: (error, _) => Padding(
+              padding: const EdgeInsets.only(top: 32.0),
+              child: Text(
+                AppError.fromAny(
+                  error,
+                  fallbackCode: 'notification_center_load_failed',
+                  fallbackMessage:
+                      'Hable could not load your notifications right now.',
+                  fallbackKind: AppErrorKind.inline,
+                ).message,
+                textAlign: TextAlign.center,
+              ),
+            ),
           ),
-        ),
         ),
       ),
     );

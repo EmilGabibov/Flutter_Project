@@ -614,7 +614,9 @@ class AppDatabase extends _$AppDatabase {
               ..orderBy([(l) => OrderingTerm.asc(l.actionDate)]))
             .get();
 
-    // Group by day, count completions * 10 points as a baseline
+    // Use persisted per-log awards so Profile analytics match completion and
+    // history surfaces. Legacy rows without awards fall back to the base
+    // completed-check-in value.
     final Map<DateTime, int> dayPoints = {};
     for (final log in recentLogs) {
       final day = DateTime(
@@ -622,7 +624,8 @@ class AppDatabase extends _$AppDatabase {
         log.actionDate.month,
         log.actionDate.day,
       );
-      dayPoints[day] = (dayPoints[day] ?? 0) + 10;
+      final awardedPoints = log.pointsAwarded > 0 ? log.pointsAwarded : 5;
+      dayPoints[day] = (dayPoints[day] ?? 0) + awardedPoints;
     }
 
     return dayPoints.entries.toList()..sort((a, b) => a.key.compareTo(b.key));

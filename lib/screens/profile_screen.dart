@@ -9,6 +9,7 @@ import '../database/tables.dart' show HabitStatus, LogStatus, PartnershipRole;
 import '../data/standard_habits.dart';
 import '../providers/habit_providers.dart';
 import '../providers/sync_provider.dart';
+import '../services/app_error.dart';
 import '../services/local_reminder_service.dart';
 import '../services/client_reset_service.dart';
 import '../theme/app_theme.dart';
@@ -178,11 +179,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                           ),
                                           _InfoPill(
                                             label:
-                                                '${user?.totalScore ?? 0} points',
+                                                '${user?.totalScore ?? 0} lifetime pts',
                                             color: AppTheme.deepCharcoal,
                                             fillColor: AppTheme.surfaceVariant,
                                           ),
                                         ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Lifetime score comes from backend sync. Journey and history show per-check-in awards.',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: AppTheme.warmGray,
+                                            ),
                                       ),
                                     ],
                                   ),
@@ -438,8 +449,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '30-Day Progress',
+                      '30-Day Points Earned',
                       style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Per-check-in awards from local history. Lifetime score updates separately from daily sync.',
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: AppTheme.warmGray),
                     ),
                     const SizedBox(height: 20),
                     historyAsync.when(
@@ -689,8 +707,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                           context,
                                         ).textTheme.titleLarge,
                                       ),
+                                      if ((user['level_name'] as String?) !=
+                                          null)
+                                        Text(
+                                          '${user['level_name']} level',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(
+                                                color: AppTheme.warmGray,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                        ),
                                       Text(
-                                        '${user['total_score'] ?? 0} points',
+                                        '${user['total_score'] ?? 0} lifetime pts',
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodyMedium
@@ -1415,7 +1445,14 @@ class _DailyReminderCard extends ConsumerWidget {
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, st) => Text('Error loading reminders: $e'),
+      error: (e, st) => Text(
+        AppError.fromAny(
+          e,
+          fallbackCode: 'profile_reminders_load_failed',
+          fallbackMessage: 'Hable could not load your reminders right now.',
+          fallbackKind: AppErrorKind.inline,
+        ).message,
+      ),
     );
   }
 
@@ -2047,7 +2084,7 @@ class _HabitHistorySheet extends ConsumerWidget {
             Text(habit.title, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 4),
             Text(
-              'Archived challenge history',
+              'Archived challenge history and per-check-in awards',
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),

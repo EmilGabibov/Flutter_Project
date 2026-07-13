@@ -75,20 +75,28 @@ void main() {
       expect(allNotifications, hasLength(2));
       expect(allNotifications.first.notificationId, 'invite:1');
       expect(
-        allNotifications.singleWhere((row) => row.notificationId == 'nudge:1').body,
+        allNotifications
+            .singleWhere((row) => row.notificationId == 'nudge:1')
+            .body,
         'Updated body',
       );
 
-      final unreadBefore = await db.watchUnreadNotificationsForUser(userId).first;
+      final unreadBefore = await db
+          .watchUnreadNotificationsForUser(userId)
+          .first;
       expect(unreadBefore, hasLength(2));
 
       await db.markNotificationRead('nudge:1');
-      final unreadAfterSingle = await db.watchUnreadNotificationsForUser(userId).first;
+      final unreadAfterSingle = await db
+          .watchUnreadNotificationsForUser(userId)
+          .first;
       expect(unreadAfterSingle, hasLength(1));
       expect(unreadAfterSingle.single.notificationId, 'invite:1');
 
       await db.markAllNotificationsRead(userId);
-      final unreadAfterAll = await db.watchUnreadNotificationsForUser(userId).first;
+      final unreadAfterAll = await db
+          .watchUnreadNotificationsForUser(userId)
+          .first;
       expect(unreadAfterAll, isEmpty);
     });
   });

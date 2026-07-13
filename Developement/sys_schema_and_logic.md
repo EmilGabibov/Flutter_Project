@@ -64,3 +64,18 @@ Both the local Drift (SQLite) database and the remote Cloudflare D1 (SQL) databa
 * `POST /api/social/nudge` - Habit-scoped or legacy shared-habit nudge. Authorization requires a directed shared-habit participation row and optional `habit_id` narrows the permission check to that habit.
 * `POST /api/dev/usage-aggregate` - Development-only anonymous aggregate upsert endpoint. Accepts only allowlisted screen labels plus rounded counts/duration totals and must reject any user-linked dimensions.
 * `GET /api/dev/usage-report` - Development-only HTML/JSON report for aggregate buckets. It must show only coarse totals and hide low-volume buckets rather than exposing a user-level event stream.
+
+### Error Envelope Reference
+
+Worker routes should converge on this safe structured error shape:
+
+```json
+{
+  "error": {
+    "code": "machine_readable_code",
+    "message": "Safe user-facing message."
+  }
+}
+```
+
+Legacy `{ "error": "..." }` responses may remain temporarily while routes migrate, but new or touched routes should prefer the structured envelope so Flutter can normalize failures consistently.

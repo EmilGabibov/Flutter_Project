@@ -51,5 +51,7 @@ To participate in social/cloud sync features, users must verify their email. Thi
 ## 5. Error Handling and Normalization
 
 The `AuthNotifier` intercepts exceptions and normalizes them into user-friendly UI strings in `state.error`:
-- **Network Failures:** Intercepts `SocketException`, `ClientException`, and `TimeoutException` to provide clear "Cannot reach the backend" instructions.
-- **Backend Errors:** Extracts the `error` or `message` JSON key from non-200 HTTP responses.
+- **Network Failures:** Intercepts browser fetch/CORS failures, native socket failures, and timeouts, then maps them to one calm retry-oriented message family rather than exposing platform-specific exception text.
+- **Backend Errors:** Extracts the structured `error.code` / `error.message` envelope where available, while still remaining compatible with legacy `{ error: '...' }` responses during migration.
+
+Auth must not display raw exception text, backend URLs, stack traces, or raw response bodies in visible UI. Shared standards for error envelope shape, tone, and safe display are defined in [`sys_error_handling.md`](sys_error_handling.md).

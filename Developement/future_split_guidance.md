@@ -1,7 +1,7 @@
 # Future Split Guidance
 
-*Updated from completed tasks through 2026-07-13.*
-*Last future-guidance prompt extracted from archive: 2026-07-13 11:46 CEST (`Auto-Archive Completed Habits Into Profile History And Expand Lifecycle Actions`).*
+*Updated from completed tasks through 2026-07-13 21:09 CEST.*
+*Last future-guidance prompt extracted from active/completed queue: 2026-07-13 21:09 CEST (`Clarify The Difference Between Leaderboard Totals, Profile Gamification, And Per-Log Points Surfaces`).*
 *Resume future extraction from the first later completed task in `Task2_Archived.md` or newly archived items added after this timestamp.*
 
 This document aggregates the still-relevant "Future split guidance" from recently completed Hable tasks. It is organized by delivery priority and implementation hardness so future raw tasks can be added with less duplication and less scope creep.
@@ -111,6 +111,18 @@ This document aggregates the still-relevant "Future split guidance" from recentl
   - *Source tasks:* mud-resistance alignment work.
   - *User perspective:* The signature hold interaction can match different users and devices better.
 
+- **Onboarding Variant Expansion:** Animated illustrations, personalized onboarding variants, reminder permission priming, social invite capture during onboarding, or A/B experimentation should stay as separate onboarding tasks rather than expanding the current slide/setup flow.
+  - *Source tasks:* research-backed onboarding slides task, first-run quote splash work.
+  - *User perspective:* First-run education can grow richer without destabilizing the low-friction auth/setup path.
+
+- **Quote Engine Expansion:** Locale-aware quotes, copy moderation/review, multiple tags/categories, remote experiments, or quote-engagement analytics should remain separate from the current bounded daily quote integration.
+  - *Source tasks:* external quote API integration, contextual fallback quote work.
+  - *User perspective:* The app can get smarter or broader quote content later without weakening the current offline-safe daily quote path.
+
+- **Score-Surface Copy And Sync Follow-Ups:** If the clarified scoring contract reveals stale sync timing, confusing point terminology, or friend-profile/leaderboard mismatch, split those into targeted product or sync tasks instead of reopening the entire scoring model.
+  - *Source tasks:* leaderboard/profile/per-log points clarification task.
+  - *User perspective:* Lifetime ranking, profile progression, and per-check-in rewards stay understandable even as more progression surfaces are added.
+
 - **Empty-Day and Streak Moments:** Split specific tasks for empty-day encouragement states, streak-specific haptics, shared-habit celebration feedback, or richer quote-driven moment design.
   - *Source tasks:* scoring/habit-state document, completion splash task.
   - *User perspective:* The app responds more intelligently to good days, missed days, and streaks.
@@ -119,6 +131,10 @@ This document aggregates the still-relevant "Future split guidance" from recentl
 - **Seasonal Leaderboards and Score Resets:** Seasonal ladders/reset policy, richer score-history surfaces, badge ceremonies, and QA for score-event idempotency should remain separate from the current cumulative scoring system.
   - *Source tasks:* scoring/gamification documentation, server-side gamification tasks.
   - *User perspective:* Competition can reset fairly without destabilizing lifetime progress.
+
+- **Quote Source Resilience And Vendor Strategy:** If the external quote provider remains unreliable, split provider rotation, self-hosted quote curation, upstream caching policy, or certificate-health monitoring into dedicated backend/content tasks.
+  - *Source tasks:* daily quote API integration and fallback-hardening work.
+  - *User perspective:* Daily quotes remain dependable even if one external source degrades.
 
 - **Tablet/Grid Dashboard Track:** A dedicated all-habits grid/dashboard, reusable `HabitTile` foundation, and large-screen IA should be a separate task from Home-card polish.
   - *Source tasks:* Home card/grid/dashboard follow-ups.

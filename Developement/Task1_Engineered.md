@@ -2,6 +2,8 @@
 
 ## Completed Tasks
 
+- 2026-07-13 22:04 CEST: [Standardize Safe Error Contracts Across Flutter And Worker Surfaces](Task1_Engineered.md#standardize-safe-error-contracts-across-flutter-and-worker-surfaces)
+
 - 2026-07-13 16:12 CEST: [Introduce Explicit Environment-Based Backend Targeting For Flutter And Release Builds](Task2_Archived.md#introduce-explicit-environment-based-backend-targeting-for-flutter-and-release-builds)
 
 - 2026-07-12 14:35 Z: [Add Playwright Multi-User Regression Harness For Shared Habits And Social Interactions](Task2_Archived.md#add-playwright-multi-user-regression-harness-for-shared-habits-and-social-interactions)
@@ -2116,6 +2118,42 @@ reorder correctly, the emoji at left (emoji picker appears by click), and at the
 
 **Completion notes:** Completed on 2026-07-13. Added `lib/services/first_run_quote_gate.dart` plus `lib/screens/first_run_quote_screen.dart` and wired `_AppGate` in `lib/main.dart` to show a one-time, per-user quote-first opening screen before the main shell. The gate persists via secure storage, so once dismissed it does not reappear for the same signed-in user. `lib/screens/completion_splash_screen.dart` was also reordered so the quote becomes the first and largest reader-facing element on quote-bearing completion surfaces rather than a footer after the celebration copy. Documentation was updated in `Developement/ux_habit_states_and_scoring.md` and `Developement/qa_testing.md`, and focused verification covered the storage gate plus quote-first completion ordering with `flutter test test/completion_splash_screen_test.dart test/first_run_quote_gate_test.dart test/habit_form_sheet_test.dart`.
 
+<a id="investigate-and-resolve-macos-ad-hoc-code-signing-compilation-failure-with-keychain-access-groups-entitlement"></a>
+### [ ] Investigate And Resolve macOS Ad-Hoc Code Signing Compilation Failure With Keychain Access Groups Entitlement
+
+**Raw source:** macOS build compilation fails on keychain-access-groups entitlement when compiling release build locally with ad-hoc signing ("-")
+
+**Issue:** macOS local release builds fail with `"Runner" has entitlements that require signing with a development certificate` because `Release.entitlements` contains the `keychain-access-groups` entitlement, which is not supported by ad-hoc code signing (`CODE_SIGN_IDENTITY = "-"`). Since the user reverted the manual removal of `keychain-access-groups` to keep the production plist intact, local compilation remains broken without Xcode signing overrides.
+
+**Triage:**
+- *Should exist:* Yes. Developers should be able to compile the macOS release application locally without requiring a valid Apple Developer Account or development certificates.
+- *Smallest safe scope:* Find a way to bypass or override the entitlements file during local builds or configure ad-hoc compatible signing settings while preserving the production entitlements for release/publishing.
+- *Skipped scope:* Do not remove the keychain-access-groups entitlement from production or App Store releases.
+- *Boundaries:* Do not change the committed entitlements file which is needed for AltStore PAL and App Store distribution.
+
+**Action:** Research and configure Xcode/Flutter build settings to dynamically override or ignore keychain-access-groups for ad-hoc/local builds, or document how local operators can compile release builds successfully.
+
+**Hable perspective:** Clean local compilation is critical for CI/CD and developer onboarding.
+
+**Implementation scope:**
+- `macos/Runner.xcodeproj`, entitlements configuration, local build documentation.
+- Verification and documentation of successful local compilation and how production settings are preserved.
+
+**Scalability considerations:** Local overrides should not leak into production builds.
+
+**Future split guidance:** Automated certificate provision pipelines or full App Store Connect automation are separate.
+
+**Edge cases:** Entitlement mismatches, runtime keychain access errors if sandbox is enabled, macOS Gatekeeper validation.
+
+**Acceptance criteria:**
+- Developers can run `flutter build macos --release` locally without failing on entitlements/signing errors.
+- The production `Release.entitlements` still retains `keychain-access-groups` for official distribution.
+
+**Dependencies:** `Developement/sys_build_integrity.md`, `Developement/macos_distribution.md`
+
+**Completion-note placeholder:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+
+
 <a id="finish-habit-form-information-architecture-with-description-science-based-duration-picks-and-partner-emoji-chips"></a>
 ### [x] Finish Habit Form Information Architecture With Description, Science-Based Duration Picks, And Partner Emoji Chips
 
@@ -2293,3 +2331,89 @@ reorder correctly, the emoji at left (emoji picker appears by click), and at the
 **Dependencies:** `Developement/sys_social_and_analytics.md`, `Developement/sys_offline_architecture.md`, `Developement/ux_habit_states_and_scoring.md`, `Developement/qa_testing.md`
 
 **Completion notes:** Completed on 2026-07-13. Added a Worker-owned Quotable integration in `backend/src/index.ts`: `/api/sync/daily` now resolves a normalized `quote` payload from `https://api.quotable.io/quotes/random?tags=inspirational`, coalesces successful fetches in KV by UTC day, returns cached quotes as `source: 'cache'`, and omits the quote safely when the upstream request times out, returns a non-OK response, or sends an unexpected JSON shape. Updated `lib/services/sync_service.dart` to read `quote.text` from daily sync and persist it through `AppDatabase.cacheQuote()`, and updated `lib/database/database.dart` so same-day quote caching trims empty text and replaces the current day’s quote instead of accumulating duplicates. Added `test/offline_sync_integrity_test.dart` coverage for successful synced quote persistence and missing-quote fallback-to-empty-cache behavior. Documentation was updated in `Developement/sys_social_and_analytics.md`, `Developement/sys_offline_architecture.md`, `Developement/ux_habit_states_and_scoring.md`, and `Developement/qa_testing.md`. Verification passed with `npx tsc --noEmit`, `flutter analyze lib/database/database.dart lib/services/sync_service.dart test/offline_sync_integrity_test.dart`, and `flutter test test/offline_sync_integrity_test.dart test/mascot_reminder_copy_test.dart`. Local TLS-verified `curl` to Quotable failed because the upstream certificate chain reported an expired certificate; `curl -k` confirmed the expected array response shape, and the Worker implementation preserves fallback behavior by returning no quote when upstream fetch fails.
+
+<a id="clarify-the-difference-between-leaderboard-totals-profile-gamification-and-per-log-points-surfaces"></a>
+### [x] Clarify The Difference Between Leaderboard Totals, Profile Gamification, And Per-Log Points Surfaces
+
+**Raw source:** Engineer a prompt for revising the difference behind logic of the leaderboard and the points on user profiles. Including one of the existed development files or create a new one if no one relates
+
+**Issue:** Hable already documents scoring, leaderboard ownership, and profile progression across multiple files, but the distinction between the different “points” surfaces is still easy to misread. The Social leaderboard ranks accepted friends by backend `users.total_score`; the current user profile reads backend `gamification.total_points`, level, and badges from `/api/sync/daily`; completion splashes and Profile history also show per-log `points_awarded` values such as `+5 pts` or `+10 pts`. Those surfaces are individually reasonable, but the system does not yet have one explicit contract that answers the user-facing question: why can leaderboard totals, profile totals, and per-habit or per-log point chips differ in meaning, timing, or granularity?
+
+**Triage:**
+- *Should exist:* Yes. This is a documentation and product-logic clarification task tied to an existing multi-surface scoring model.
+- *Smallest safe scope:* Revise the relevant existing development docs so the ownership, aggregation level, and refresh cadence of leaderboard totals versus profile totals versus per-log point awards are explicitly contrasted.
+- *Skipped scope:* Do not redesign the scoring system, seasonal resets, level formulas, or leaderboard UI in this task unless the clarification reveals an actual logic bug that needs its own follow-up item.
+- *Boundaries:* Prefer updating existing docs rather than creating a new file, because `ux_habit_states_and_scoring.md` and `sys_social_and_analytics.md` already own this domain. A new doc should only be created if the current files cannot cleanly host the clarification.
+
+**Action:** Revise the scoring and social development documentation so it clearly explains the difference between:
+1. backend-owned lifetime totals used by `/api/social/leaderboard`,
+2. backend-owned profile gamification totals and badges delivered via `/api/sync/daily`, and
+3. local per-log or per-completion point displays used in celebration and history surfaces.
+The revision should explicitly describe why these surfaces may update at different times, why one is cumulative while another is a single-event award, and which data source is authoritative for each UI. If needed, add a short “comparison table” or “surface contract” section to one of the existing docs rather than scattering the explanation further.
+
+**Hable perspective:** Users should feel that progression is coherent, not contradictory. Hable can show both “what this check-in earned” and “what your standing is overall,” but the product docs need to make that layering explicit so future UI work does not accidentally collapse event-level rewards, profile progression, and social ranking into one ambiguous number.
+
+**Implementation scope:**
+- `Developement/ux_habit_states_and_scoring.md`: add the primary explanation of score-surface meaning, authority, and timing.
+- `Developement/sys_social_and_analytics.md`: tighten the leaderboard/scoring section so it matches the clearer distinction and naming used in the UX doc.
+- Optionally adjust `Developement/qa_testing.md` so manual verification explicitly checks that leaderboard totals, profile totals, and per-log point chips are interpreted correctly rather than expected to match one-to-one.
+- If existing docs cannot host the clarification cleanly, create one new narrowly scoped development doc and link it from the owning files; otherwise avoid creating a parallel source of truth.
+
+**Scalability considerations:** Scalability impact: none expected. The main risk is conceptual drift, not performance. The clarification should reduce future product and engineering confusion as more score-related surfaces are added.
+
+**Future split guidance:** If this clarification reveals an actual product mismatch such as stale sync timing, inconsistent friend-profile totals, seasonal ranking needs, or duplicate point terminology in UI copy, split those into separate implementation tasks. This task is only for clarifying the logic contract and documentation ownership.
+
+**Edge cases:** Profile totals lagging until the next daily sync, leaderboard ranking fetched independently from profile gamification, shared-habit bonus upgrades that change a single log’s visible points before aggregate totals refresh, friend profile score visibility versus leaderboard visibility, and avoiding wording that implies per-log points should equal total score or rank changes instantly.
+
+**Acceptance criteria:**
+- The revised documentation explicitly distinguishes leaderboard totals, profile gamification totals, and per-log/per-completion point displays.
+- The docs identify the authoritative data source and refresh cadence for each surface.
+- The docs explain why users may see different numbers across those surfaces without implying a bug where none exists.
+- Existing development docs are reused as the primary home for the clarification unless a new file is genuinely necessary.
+- Relevant QA guidance is updated if testers currently lack a clear expected interpretation of the different point surfaces.
+
+**Dependencies:** `Developement/sys_social_and_analytics.md`, `Developement/ux_habit_states_and_scoring.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Completed on 2026-07-13. Tightened both the contract and the shipped UI so score surfaces now reflect one coherent ownership model. `Developement/ux_habit_states_and_scoring.md` now explicitly contrasts leaderboard lifetime totals, profile gamification totals, and per-check-in awards, `Developement/sys_social_and_analytics.md` now states that leaderboard totals are lifetime `total_score` while completion/history surfaces are event-level awards, and `Developement/qa_testing.md` now tells QA not to expect history badges to equal aggregate profile or leaderboard totals. In the app, `backend/src/index.ts` now derives and returns backend-owned `level_name` metadata for friend profiles and leaderboard rows so Flutter no longer invents its own level/tier logic from score totals. `lib/widgets/leaderboard_card.dart` now labels the surface as a lifetime-score ranking instead of locally deriving arbitrary tiers, `lib/screens/social/social_hub_screen.dart` clarifies the leaderboard subtitle, and `lib/screens/profile_screen.dart` now labels current-user and friend-profile totals as lifetime points while renaming the Journey chart to `30-Day Points Earned` with explicit per-check-in wording. A real logic bug was also corrected in `lib/database/database.dart`: the 30-day Journey chart no longer assumes every completion is worth `10` points and now sums persisted `logs.points_awarded`, falling back to `5` only for legacy rows with no stored award. Focused verification passed with `npx tsc --noEmit`, `flutter analyze lib/widgets/leaderboard_card.dart lib/screens/social/social_hub_screen.dart lib/screens/profile_screen.dart lib/database/database.dart test/leaderboard_card_test.dart test/log_points_history_test.dart`, and `flutter test test/leaderboard_card_test.dart test/log_points_history_test.dart`. To let `flutter test` run, the generated directory `ios/Flutter/ephemeral/Packages/.packages` had to be removed after Flutter treated it as a stale ephemeral cleanup target; the dependency docs listed above were verified and updated.
+
+<a id="standardize-safe-error-contracts-across-flutter-and-worker-surfaces"></a>
+### [x] Standardize Safe Error Contracts Across Flutter And Worker Surfaces
+
+**Raw source:** Engineering task for making the errors displays on front and backend standard and Safe. And create a document for refrences.
+
+**Issue:** Hable currently mixes raw backend error payloads, direct `Exception(response.body)` throws, widget-level `Text('Error: $e')` displays, and ad hoc `SnackBar` failure copy across Flutter and Worker surfaces. The backend usually returns `{ error: '...' }`, but not yet through one documented envelope, and the Flutter client sometimes leaks raw exception strings or response bodies into visible UI. This makes user-facing failures inconsistent, unsafe, and harder to evolve across auth, social, settings, sync, and habit-management surfaces.
+
+**Triage:**
+- *Should exist:* Yes. Error normalization is a cross-cutting correctness and UX task, not polish.
+- *Smallest safe scope:* Define one documented backend/frontend error contract, add one frontend normalization path, and apply it first to the highest-leverage surfaces that currently expose raw errors.
+- *Skipped scope:* Do not rewrite every screen in one pass, add full telemetry/observability infrastructure, or build a broad design-system toast framework in this task.
+- *Boundaries:* Keep the UI offline-first. Safe display means users see concise, actionable copy while technical detail stays in logs or development-only channels. Do not expose stack traces, SQL, auth tokens, or raw server payloads in visible UI.
+
+**Action:** Create and adopt a standard error contract across the Worker and Flutter app. On the backend, normalize route failures toward one stable JSON envelope with machine-readable codes and safe user-facing messages. On the frontend, add a shared error parser/normalizer that maps HTTP status, backend error payloads, and local exceptions into bounded UI-safe messages and presentation styles. Then apply that standard to the most important current hotspots such as auth, social requests, profile reminder flows, sync-triggered user actions, and obvious `Text('Error: $e')` surfaces. Keep the first pass narrow enough that remaining inconsistent screens can be split into follow-up tasks if needed.
+
+**Hable perspective:** Hable is offline-first and relies on Drift-backed screens that should stay calm even when network work fails. Errors should help users recover without replacing stable local content with raw exception dumps. The correct model is: backend returns safe structured errors, Flutter normalizes them once, and each surface chooses an appropriate bounded presentation (inline, snackbar, banner, or full-screen blocker) without inventing new wording per widget.
+
+**Implementation scope:**
+- `backend/src/index.ts`: define or tighten a standard error response envelope and align the first targeted routes to it.
+- Shared Flutter error layer, likely under `lib/services/` or `lib/models/`: add a normalized app-error model/parser for HTTP failures, auth/session expiry, validation, and offline/network exceptions.
+- High-value UI call sites: update the smallest critical set of screens/providers currently leaking raw errors, such as `lib/screens/social/social_hub_screen.dart`, `lib/screens/auth_screen.dart`, `lib/widgets/habit_form_sheet.dart`, `lib/screens/profile_screen.dart`, and obvious `error: (e, _) => Text('Error: $e')` loaders.
+- `Developement/sys_error_handling.md`: use the new reference doc as the canonical error-handling contract and keep it aligned with the engineered task.
+- Tests: add focused backend/frontend coverage for envelope parsing, safe message mapping, and at least one UI regression proving raw exception text is no longer displayed.
+
+**Scalability considerations:** Error handling spans many surfaces, so the main scaling risk is partial adoption and drift. The implementation should centralize parsing and message policy so new routes/providers do not duplicate logic, and it should avoid broad provider rebuild or global UI side effects when one fetch fails.
+
+**Future split guidance:** If the audit reveals separate needs for retry-state banners, offline-mode UX, field-level validation components, analytics/observability, or full design-system feedback primitives, split those into follow-up tasks. This task is only for the shared safe error contract and first-wave adoption on critical surfaces.
+
+**Edge cases:** Offline device with valid cached Drift data, expired JWT during background sync, 400 validation errors versus 500 server errors, route-specific conflicts like duplicate friend requests, unsupported-platform failures, debug-only technical details, and ensuring older backend routes that still emit legacy `{ error: '...' }` bodies remain readable through the frontend parser during migration.
+
+**Acceptance criteria:**
+- Hable has one documented reference for backend/frontend error contracts and safe display rules.
+- Backend-targeted routes in scope return a standardized safe error envelope or are explicitly normalized through one shared helper.
+- Flutter no longer exposes raw exception strings or raw response bodies in the targeted user-facing surfaces.
+- A shared frontend error-normalization path exists and is used by the first-wave critical screens/providers.
+- Focused tests cover backend envelope parsing and at least one visible UI path where raw error text used to leak.
+- Relevant docs are updated to reflect the final contract and the first-wave adoption scope.
+
+**Dependencies:** `Developement/sys_error_handling.md`, `Developement/sys_authentication.md`, `Developement/sys_offline_architecture.md`, `Developement/sys_schema_and_logic.md`, `Developement/qa_testing.md`
+
+**Completion notes:** Completed on 2026-07-13. Added `Developement/sys_error_handling.md` as the canonical safe-error contract covering backend envelope shape, frontend normalization, display-surface rules, and cross-platform differences across Flutter mobile, Flutter web, and varied build/dev environments. Introduced shared Flutter normalization in `lib/services/app_error.dart` with safe parsing for structured Worker envelopes, legacy `{ error: '...' }` bodies, timeout/network/CORS-style failures, and bounded user-facing copy. Adopted that layer across first-wave critical surfaces in `lib/providers/auth_provider.dart`, `lib/providers/calendar_provider.dart`, `lib/providers/social_providers.dart`, `lib/screens/social/social_hub_screen.dart`, `lib/screens/notification_center_screen.dart`, `lib/screens/home_screen.dart`, `lib/screens/habit_dashboard_screen.dart`, `lib/screens/profile_screen.dart`, `lib/widgets/habit_form_sheet.dart`, and `lib/main.dart` so raw exception strings and raw payload text no longer reach the user in those paths. Added a shared Worker helper in `backend/src/index.ts` and migrated the first high-value auth/profile/social routes to `{ error: { code, message } }` responses while keeping the Flutter parser backward-compatible for remaining legacy routes. Updated `Developement/sys_authentication.md`, `Developement/sys_offline_architecture.md`, `Developement/sys_schema_and_logic.md`, and `Developement/qa_testing.md` to reflect the contract and rollout expectations. Focused verification passed with `flutter analyze lib/services/app_error.dart lib/providers/auth_provider.dart lib/providers/calendar_provider.dart lib/providers/social_providers.dart lib/screens/social/social_hub_screen.dart lib/screens/notification_center_screen.dart lib/screens/home_screen.dart lib/screens/habit_dashboard_screen.dart lib/screens/profile_screen.dart lib/widgets/habit_form_sheet.dart lib/main.dart test/app_error_test.dart test/notification_center_test.dart test/auth_session_test.dart`, `flutter test test/app_error_test.dart test/notification_center_test.dart test/auth_session_test.dart`, and `npx tsc --noEmit` in `backend/`.

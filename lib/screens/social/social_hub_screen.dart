@@ -13,6 +13,7 @@ import '../../providers/database_provider.dart';
 import '../../providers/notification_providers.dart';
 import '../../providers/social_providers.dart';
 import '../../providers/sync_provider.dart';
+import '../../services/app_error.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/narrow_layout.dart';
 import '../../widgets/3d/habit_environment_visualizer.dart';
@@ -105,7 +106,15 @@ final userSearchProvider = FutureProvider.family
         }
         return results;
       }
-      throw Exception('Failed to search users: ${response.body}');
+      throw AppException(
+        AppError.fromResponse(
+          response,
+          fallbackCode: 'social_search_failed',
+          fallbackMessage:
+              'Hable could not search for friends just now. Please try again.',
+          fallbackKind: AppErrorKind.inline,
+        ),
+      );
     });
 
 final pendingFriendRequestsProvider = FutureProvider.autoDispose<List<dynamic>>(
@@ -140,7 +149,13 @@ final pendingFriendRequestsProvider = FutureProvider.autoDispose<List<dynamic>>(
       }
       return requests;
     }
-    throw Exception('Failed to fetch friend requests');
+    throw const AppException(
+      AppError(
+        code: 'social_requests_fetch_failed',
+        message: 'Hable could not load friend requests right now.',
+        kind: AppErrorKind.inline,
+      ),
+    );
   },
 );
 
@@ -236,25 +251,29 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
           ).showSnackBar(SnackBar(content: Text(message)));
         }
       } else {
-        String errorMsg = 'Unknown error';
-        try {
-          final errData = jsonDecode(response.body);
-          if (errData['error'] != null) {
-            errorMsg = errData['error'].toString();
-          } else {
-            errorMsg = response.body;
-          }
-        } catch (_) {
-          errorMsg = response.body;
-        }
-        throw Exception(errorMsg);
+        throw AppException(
+          AppError.fromResponse(
+            response,
+            fallbackCode: 'friend_request_send_failed',
+            fallbackMessage:
+                'Hable could not send that friend request just yet.',
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
-        final errText = e.toString().replaceAll('Exception: ', '');
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(errText)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppError.fromAny(
+                e,
+                fallbackCode: 'friend_request_send_failed',
+                fallbackMessage:
+                    'Hable could not send that friend request just now.',
+              ).message,
+            ),
+          ),
+        );
       }
     }
   }
@@ -306,13 +325,29 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
           ref.invalidate(pendingFriendRequestsProvider);
         }
       } else {
-        throw Exception(response.body);
+        throw AppException(
+          AppError.fromResponse(
+            response,
+            fallbackCode: 'friend_request_accept_failed',
+            fallbackMessage:
+                'Hable could not accept that friend request just yet.',
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to accept request: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppError.fromAny(
+                e,
+                fallbackCode: 'friend_request_accept_failed',
+                fallbackMessage:
+                    'Hable could not accept that request right now.',
+              ).message,
+            ),
+          ),
+        );
       }
     }
   }
@@ -354,12 +389,27 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
           );
         }
       } else {
-        throw Exception(response.body);
+        throw AppException(
+          AppError.fromResponse(
+            response,
+            fallbackCode: 'friend_request_decline_failed',
+            fallbackMessage: 'Hable could not decline that request just yet.',
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to decline request: $e')),
+          SnackBar(
+            content: Text(
+              AppError.fromAny(
+                e,
+                fallbackCode: 'friend_request_decline_failed',
+                fallbackMessage:
+                    'Hable could not decline that request right now.',
+              ).message,
+            ),
+          ),
         );
       }
     }
@@ -400,13 +450,28 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
           );
         }
       } else {
-        throw Exception(response.body);
+        throw AppException(
+          AppError.fromResponse(
+            response,
+            fallbackCode: 'friend_revoke_failed',
+            fallbackMessage: 'Hable could not update that friendship just yet.',
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to remove friend: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppError.fromAny(
+                e,
+                fallbackCode: 'friend_revoke_failed',
+                fallbackMessage:
+                    'Hable could not update that friendship right now.',
+              ).message,
+            ),
+          ),
+        );
       }
     }
   }
@@ -656,7 +721,16 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
           error: (e, _) => SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.only(top: 32.0),
-              child: Text('Error: $e', textAlign: TextAlign.center),
+              child: Text(
+                AppError.fromAny(
+                  e,
+                  fallbackCode: 'friends_load_failed',
+                  fallbackMessage:
+                      'Hable could not load your friends right now.',
+                  fallbackKind: AppErrorKind.inline,
+                ).message,
+                textAlign: TextAlign.center,
+              ),
             ),
           ),
         ),
@@ -742,7 +816,15 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
       loading: () => const HableSkeletonList(itemCount: 4),
       error: (e, _) => Padding(
         padding: const EdgeInsets.only(top: 32.0),
-        child: Text('Error: $e', textAlign: TextAlign.center),
+        child: Text(
+          AppError.fromAny(
+            e,
+            fallbackCode: 'activity_load_failed',
+            fallbackMessage: 'Hable could not load your activity right now.',
+            fallbackKind: AppErrorKind.inline,
+          ).message,
+          textAlign: TextAlign.center,
+        ),
       ),
     );
   }
@@ -835,7 +917,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
             children: [
               LeaderboardCard(
                 title: 'Friends Leaderboard',
-                subtitle: 'You and accepted friends only',
+                subtitle: 'Accepted friends ranked by lifetime score',
                 scopeLabel: 'Friends',
                 rankings: rankings,
                 currentUserId: currentUserId,
@@ -881,7 +963,13 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    '$e',
+                    AppError.fromAny(
+                      e,
+                      fallbackCode: 'leaderboard_load_failed',
+                      fallbackMessage:
+                          'Hable could not load the leaderboard right now.',
+                      fallbackKind: AppErrorKind.inline,
+                    ).message,
                     textAlign: TextAlign.center,
                     style: Theme.of(
                       context,

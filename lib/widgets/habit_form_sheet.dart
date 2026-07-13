@@ -5,6 +5,7 @@ import '../data/standard_habits.dart';
 import '../database/database.dart';
 import '../providers/habit_actions_provider.dart';
 import '../providers/social_providers.dart';
+import '../services/app_error.dart';
 import '../theme/app_theme.dart';
 import 'skeletons.dart';
 import 'usage_tracked_screen.dart';
@@ -260,8 +261,13 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
       Navigator.of(context).pop();
     } catch (error) {
       if (!mounted) return;
+      final appError = AppError.fromAny(
+        error,
+        fallbackCode: 'habit_form_save_failed',
+        fallbackMessage: 'That habit did not stick yet. Please try again.',
+      );
       setState(() {
-        _submissionError = 'Could not save this habit yet. Please try again.';
+        _submissionError = appError.message;
       });
       ScaffoldMessenger.of(
         context,
@@ -723,7 +729,15 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
                   HableSkeletonBlock(width: 74, height: 36),
                 ],
               ),
-              error: (err, _) => Text('Error: $err'),
+              error: (err, _) => Text(
+                AppError.fromAny(
+                  err,
+                  fallbackCode: 'habit_form_friends_load_failed',
+                  fallbackMessage:
+                      'Hable could not load your friend list right now.',
+                  fallbackKind: AppErrorKind.inline,
+                ).message,
+              ),
             );
           },
         ),

@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 import '../database/database.dart';
 import '../database/tables.dart';
+import '../services/app_error.dart';
 import 'database_provider.dart';
 import 'auth_provider.dart';
 
@@ -28,14 +29,25 @@ final leaderboardProvider = FutureProvider.autoDispose<List<dynamic>>((
   if (response.statusCode == 200) {
     final contentType = response.headers['content-type'] ?? '';
     if (!contentType.toLowerCase().contains('application/json')) {
-      throw Exception(
-        'Leaderboard endpoint returned ${contentType.isEmpty ? 'non-JSON' : contentType} content.',
+      throw const AppException(
+        AppError(
+          code: 'leaderboard_invalid_response',
+          message: 'Hable received an unexpected leaderboard response.',
+          kind: AppErrorKind.inline,
+        ),
       );
     }
     final data = jsonDecode(response.body);
     return data['leaderboard'] ?? [];
   }
-  throw Exception('Failed to fetch leaderboard');
+  throw AppException(
+    AppError.fromResponse(
+      response,
+      fallbackCode: 'leaderboard_fetch_failed',
+      fallbackMessage: 'Hable could not load the leaderboard right now.',
+      fallbackKind: AppErrorKind.inline,
+    ),
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -69,7 +81,15 @@ final friendProfileProvider = FutureProvider.family<FriendProfileData, String>((
   friendId,
 ) async {
   final token = ref.watch(authProvider).token;
-  if (token == null) throw Exception('Not authenticated');
+  if (token == null) {
+    throw const AppException(
+      AppError(
+        code: 'friend_profile_not_authenticated',
+        message: 'Log in to view that profile.',
+        kind: AppErrorKind.auth,
+      ),
+    );
+  }
 
   final res = await http.get(
     Uri.parse('$apiBaseUrl/api/social/user/$friendId/profile'),
@@ -79,7 +99,14 @@ final friendProfileProvider = FutureProvider.family<FriendProfileData, String>((
     final data = jsonDecode(res.body);
     return FriendProfileData(user: data['user'], habits: data['habits']);
   }
-  throw Exception('Failed to load profile');
+  throw AppException(
+    AppError.fromResponse(
+      res,
+      fallbackCode: 'friend_profile_load_failed',
+      fallbackMessage: 'Hable could not load that profile right now.',
+      fallbackKind: AppErrorKind.inline,
+    ),
+  );
 });
 
 /// Watches private messages for the current user.

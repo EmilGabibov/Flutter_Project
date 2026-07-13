@@ -20,6 +20,7 @@ import '../theme/app_theme.dart';
 import '../data/standard_habits.dart';
 import '../utils/habit_timeline.dart';
 import '../models/celebration_feedback.dart';
+import '../services/app_error.dart';
 import '../services/celebration_sequence_controller.dart';
 import '../widgets/skip_bottom_sheet.dart';
 import '../widgets/invitation_banner.dart';
@@ -220,7 +221,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child: habitsAsync.when(
             data: (habits) => _buildContent(context, habits, quoteAsync),
             loading: () => const _HomeSkeleton(),
-            error: (err, _) => Center(child: Text('Error: $err')),
+            error: (err, _) => Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  AppError.fromAny(
+                    err,
+                    fallbackCode: 'home_habits_load_failed',
+                    fallbackMessage:
+                        'Hable could not load today\'s habits right now.',
+                    fallbackKind: AppErrorKind.inline,
+                  ).message,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
           ),
         ),
       ),

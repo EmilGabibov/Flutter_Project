@@ -8,15 +8,18 @@ void main() {
       'id': 'u-1',
       'username': 'Ava',
       'avatar_url': '🏆',
+      'level_name': 'Gold',
       'total_score': '289400',
     }, 1);
 
     expect(entry.userId, 'u-1');
     expect(entry.userName, 'Ava');
     expect(entry.avatarUrl, '🏆');
+    expect(entry.levelName, 'Gold');
     expect(entry.rank, 1);
     expect(entry.score, 289400);
     expect(entry.scoreLabel, '289,400');
+    expect(entry.byline, 'Gold level');
   });
 
   testWidgets('LeaderboardCard renders podium, current user, and more rows', (

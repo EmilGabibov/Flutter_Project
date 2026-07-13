@@ -65,7 +65,8 @@ All nudges are treated as ephemeral, transient data using Cloudflare KV.
 * **Idempotency:** Score writes use `user_score_events(user_id, source_event_id)` so duplicate offline log replays do not double count.
 * **Achievements:** Backend events unlock `first_check_in`, `10_streak`, `100_streak`, `1000_streak`, `first_nudge`, and `first_supporter` in `user_achievements`.
 * **Daily Payload:** `/api/sync/daily` returns `gamification.total_points`, `level`, `level_id`, `badges`, and `newly_unlocked_badges`.
-* **Leaderboard:** Exists on the Social → Leaderboard tab. Users are ranked by backend-owned `total_score`, scoped to the current user plus accepted friends, and fetched separately from friend search so search results stay privacy-limited.
+* **Leaderboard:** Exists on the Social → Leaderboard tab. Users are ranked by backend-owned lifetime `total_score`, scoped to the current user plus accepted friends, and fetched separately from friend search so search results stay privacy-limited.
+* **Surface contract:** Leaderboard totals and profile totals are both lifetime progression surfaces, while completion splashes, habit-history rows, and Journey point charts represent per-check-in awards. These values are related but intentionally not the same metric.
 
 ## 6. Analytics Visualization (Profile View)
 

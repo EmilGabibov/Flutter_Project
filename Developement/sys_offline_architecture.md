@@ -53,6 +53,7 @@ Implement a reliable synchronization queue using packages like `connectivity_plu
 * **Usage Screen Instrumentation:** Because Hable uses direct widget swaps and `Navigator` pushes rather than a named-route table, usage diagnostics should instrument top-level screens with explicit wrappers/lifecycle hooks instead of storing route strings or screen arguments.
 * **Notification Center Reads:** The unread bell count, notification list, and reminder-setting card should all read from Drift-backed Riverpod providers so app restart and account relaunch restore the same local state without direct network dependencies.
 * **The Resistance State Isolation:** Create a specific `StateNotifier` to handle the `current_day` math. **This isolates the logic for the "Mud" animation coefficient so the UI thread doesn't calculate physics.** The UI widget will only read the final scalar outputs from this notifier.
+* **Safe Error Surfaces:** Network and sync failures should be normalized once, then rendered with bounded user-facing copy. If Drift already has usable content, keep it visible and avoid replacing it with raw exception text or route-specific payload dumps.
 
 ## 4. Conflict Resolution
 

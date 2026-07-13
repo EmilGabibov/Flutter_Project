@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -24,23 +25,30 @@ class ForcedClientResetResult {
 }
 
 Future<ForcedClientResetStatus?> fetchForcedClientResetStatus() async {
-  final uri = Uri.parse('$apiBaseUrl/api/app/version-status').replace(
-    queryParameters: {'t': DateTime.now().millisecondsSinceEpoch.toString()},
-  );
+  try {
+    final uri = Uri.parse('$apiBaseUrl/api/app/version-status').replace(
+      queryParameters: {'t': DateTime.now().millisecondsSinceEpoch.toString()},
+    );
 
-  final response = await http.get(
-    uri,
-    headers: const {'Cache-Control': 'no-cache', 'Pragma': 'no-cache'},
-  );
-  if (response.statusCode != 200) return null;
+    final response = await http
+        .get(
+          uri,
+          headers: const {'Cache-Control': 'no-cache', 'Pragma': 'no-cache'},
+        )
+        .timeout(const Duration(seconds: 3));
+    if (response.statusCode != 200) return null;
 
-  final data = jsonDecode(response.body);
-  if (data is! Map<String, dynamic>) return null;
+    final data = jsonDecode(response.body);
+    if (data is! Map<String, dynamic>) return null;
 
-  return ForcedClientResetStatus(
-    token: data['force_client_reset_token']?.toString(),
-    reason: data['force_client_reset_reason']?.toString(),
-  );
+    return ForcedClientResetStatus(
+      token: data['force_client_reset_token']?.toString(),
+      reason: data['force_client_reset_reason']?.toString(),
+    );
+  } catch (_) {
+    // Fail open at startup when the backend is unavailable.
+    return null;
+  }
 }
 
 Future<ForcedClientResetResult> _resetLocalState({
