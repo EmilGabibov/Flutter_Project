@@ -17,7 +17,7 @@ echo "=== Building Web ==="
 flutter build web --no-tree-shake-icons
 
 echo "=== Building macOS ==="
-flutter build macos
+flutter build macos --profile
 
 echo "=== Checking Windows Build ==="
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" || "$OSTYPE" == "windows" ]]; then

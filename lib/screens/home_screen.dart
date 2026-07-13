@@ -24,7 +24,7 @@ import '../services/app_error.dart';
 import '../services/celebration_sequence_controller.dart';
 import '../widgets/skip_bottom_sheet.dart';
 import '../widgets/invitation_banner.dart';
-import '../widgets/3d/habit_environment_visualizer.dart';
+
 import '../widgets/habit_form_sheet.dart';
 import '../widgets/habit_card.dart';
 import 'completion_splash_screen.dart';
@@ -401,20 +401,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         // Daily quote or empty-day encouragement
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+            padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
             child: Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
               decoration: BoxDecoration(
                 color: encouragement.backgroundColor,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(24),
               ),
               child: Row(
                 children: [
                   Text(
                     encouragement.emoji,
-                    style: const TextStyle(fontSize: 24),
+                    style: const TextStyle(fontSize: 36),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: allEmpty
                         ? Column(
@@ -423,19 +423,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             children: [
                               Text(
                                 encouragement.title,
-                                style: Theme.of(context).textTheme.titleSmall
+                                style: Theme.of(context).textTheme.titleMedium
                                     ?.copyWith(
                                       fontWeight: FontWeight.w800,
                                       color: encouragement.accentColor,
                                     ),
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 6),
                               Text(
                                 encouragement.body,
-                                style: Theme.of(context).textTheme.bodyMedium
+                                style: Theme.of(context).textTheme.bodyLarge
                                     ?.copyWith(
                                       fontWeight: FontWeight.w600,
                                       color: encouragement.accentColor,
+                                      height: 1.3,
                                     ),
                               ),
                             ],
@@ -443,17 +444,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         : quoteAsync.when(
                             data: (quote) => Text(
                               quote,
-                              style: Theme.of(context).textTheme.bodyMedium
+                              style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(
                                     fontStyle: FontStyle.italic,
+                                    fontWeight: FontWeight.w600,
                                     color: AppTheme.deepCharcoal.withValues(
-                                      alpha: 0.7,
+                                      alpha: 0.8,
                                     ),
+                                    height: 1.4,
                                   ),
                             ),
                             loading: () => const HableSkeletonBlock(
                               width: double.infinity,
-                              height: 14,
+                              height: 18,
                             ),
                             error: (_, _) => const SizedBox.shrink(),
                           ),
@@ -462,11 +465,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
           ),
-        ),
-
-        // Phase 2: 3D Environment
-        const SliverToBoxAdapter(
-          child: HabitEnvironmentVisualizer(height: 250),
         ),
 
         // Phase 2: Pending Invitations

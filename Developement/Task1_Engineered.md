@@ -2459,12 +2459,10 @@ The revision should explicitly describe why these surfaces may update at differe
 - Focused QA guidance and any feasible automated tests are updated to reflect the final platform matrix.
 - Relevant docs are updated to match the shipped reminder strategy and any deferred infrastructure follow-ups are captured separately.
 
-**Completion notes:** Completed on 2026-07-13. Added `POST_NOTIFICATIONS` and `RECEIVE_BOOT_COMPLETED` permissions along with the scheduled notification broadcast receivers to `AndroidManifest.xml` to support inexact scheduling on Android 13+. Integrated `WindowsInitializationSettings` and `WindowsNotificationDetails` into `LocalReminderService` and included Windows in the supported platforms list. Added PWA web push service worker tasks to `Developement/future_split_guidance.md` to properly document the constraints of closed-browser notifications on the web platform.
-
-**Dependencies:** `Developement/sys_offline_architecture.md`, `Developement/sys_schema_and_logic.md`, `Developement/ux_mud_and_animations.md`, `Developement/qa_testing.md`, `Developement/future_split_guidance.md`
+**Completion notes:** Completed on 2026-07-13. Added `POST_NOTIFICATIONS` and `RECEIVE_BOOT_COMPLETED` permissions along with the scheduled notification broadcast receivers to `AndroidManifest.xml` to support inexact scheduling on Android 13+. Integrated `WindowsInitializationSettings` and `WindowsNotificationDetails` into `LocalReminderService` and included Windows in the supported platforms list. Added PWA web push service worker tasks to `Developement/future_split_guidance.md` to properly document the constraints
 
 <a id="remove-home-3d-visualizer-and-promote-the-daily-quote-to-the-primary-header"></a>
-### [ ] Remove Home 3D Visualizer And Promote The Daily Quote To The Primary Header
+### [x] Remove Home 3D Visualizer And Promote The Daily Quote To The Primary Header
 
 **Raw source:** remove the 3d element from homescrenn and keep it only for friends section, instead make the quote bigger the header, as hierarchy became number 1.
 
@@ -2501,7 +2499,7 @@ The revision should explicitly describe why these surfaces may update at differe
 
 **Dependencies:** `Developement/ux_mud_and_animations.md`, `Developement/ux_habit_states_and_scoring.md`, `Developement/qa_testing.md`
 
-**Completion-note placeholder:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
+**Completion notes:** 2026-07-13: Removed the `HabitEnvironmentVisualizer` from `home_screen.dart` entirely, while preserving it in `social_hub_screen.dart`. Reconfigured the top quote/encouragement block's padding and typography in `HomeScreen` to enlarge the quote and emoji sizes (changed to `titleMedium` / `bodyLarge` with larger font sizes and generous padding) so it stands clearly as the primary entry point and header, restoring the quote-first hierarchy without 3D distraction.
 
 <a id="split-realtime-or-push-delivery-architecture-beyond-foreground-polling"></a>
 ### [ ] Split Realtime Or Push Delivery Architecture Beyond Foreground Polling
