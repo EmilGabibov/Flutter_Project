@@ -29,6 +29,7 @@ import '../providers/database_provider.dart';
 import '../providers/mud_tuning_provider.dart';
 import '../widgets/usage_tracked_screen.dart';
 import '../widgets/narrow_layout.dart';
+import '../widgets/language_selector.dart';
 
 /// Profile Screen — heavy data layer.
 /// All historical data and charts belong here exclusively.
@@ -833,11 +834,11 @@ class SettingsScreen extends ConsumerWidget {
                     'Foundation placeholder for reduced motion, larger text, and contrast preferences.',
               ),
               const SizedBox(height: 12),
-              const _SettingsPlaceholderCard(
-                icon: Icons.language_rounded,
-                title: 'Language',
-                description:
-                    'Foundation placeholder for future app language selection.',
+              const Card(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 4),
+                  child: LanguageSelector(compact: false),
+                ),
               ),
               const SizedBox(height: 12),
               Card(

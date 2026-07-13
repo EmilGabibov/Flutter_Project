@@ -5,6 +5,7 @@ import '../../providers/quote_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/skeletons.dart';
 import '../../widgets/usage_tracked_screen.dart';
+import '../../widgets/language_selector.dart';
 
 class OnboardingSlidesScreen extends ConsumerStatefulWidget {
   final VoidCallback onGetStarted;
@@ -124,6 +125,8 @@ class _OnboardingSlidesScreenState
                               ?.copyWith(fontWeight: FontWeight.w900),
                         ),
                         const Spacer(),
+                        const LanguageSelector(compact: true),
+                        const SizedBox(width: 8),
                         TextButton(
                           key: const Key('onboarding-log-in'),
                           onPressed: widget.onLogIn,

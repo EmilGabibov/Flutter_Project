@@ -5,6 +5,7 @@ import '../theme/app_theme.dart';
 import '../widgets/skeletons.dart';
 import '../widgets/usage_tracked_screen.dart';
 import 'onboarding/onboarding_slides_screen.dart';
+import '../widgets/language_selector.dart';
 
 enum AuthView { login, register, forgotPasswordRequest, forgotPasswordVerify }
 
@@ -171,6 +172,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: const [LanguageSelector(compact: true)],
+                    ),
                     const Spacer(flex: 2),
                     Text(
                       title,
