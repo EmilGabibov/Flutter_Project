@@ -17,7 +17,11 @@ echo "=== Building Web ==="
 flutter build web --no-tree-shake-icons
 
 echo "=== Building macOS ==="
-flutter build macos --profile
+# Temporarily strip keychain-access-groups to allow local ad-hoc release signing
+git checkout macos/Runner/Release.entitlements
+sed -i '' '/keychain-access-groups/,+1d' macos/Runner/Release.entitlements
+flutter build macos
+git checkout macos/Runner/Release.entitlements
 
 echo "=== Checking Windows Build ==="
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" || "$OSTYPE" == "windows" ]]; then

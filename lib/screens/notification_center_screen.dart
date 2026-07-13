@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,6 +10,7 @@ import '../theme/app_theme.dart';
 import '../widgets/skeletons.dart';
 import '../widgets/usage_tracked_screen.dart';
 import '../widgets/narrow_layout.dart';
+import 'habit_dashboard_screen.dart';
 import 'profile_screen.dart';
 import 'social/social_hub_screen.dart';
 
@@ -51,83 +53,128 @@ class NotificationCenterScreen extends ConsumerWidget {
                 );
               }
 
-              return ListView.separated(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                itemCount: notifications.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 8),
-                itemBuilder: (context, index) {
-                  final notification = notifications[index];
-                  final isUnread = notification.readAt == null;
-                  return Card(
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      side: BorderSide(
-                        color: isUnread
-                            ? AppTheme.sageGreen.withValues(alpha: 0.28)
-                            : AppTheme.warmGray.withValues(alpha: 0.12),
-                      ),
-                    ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.all(16),
-                      leading: CircleAvatar(
-                        backgroundColor: _iconTint(
-                          notification.type,
-                        ).withValues(alpha: 0.14),
-                        child: Icon(
-                          _iconForType(notification.type),
-                          color: _iconTint(notification.type),
-                        ),
-                      ),
-                      title: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              notification.title,
-                              style: Theme.of(context).textTheme.titleSmall
-                                  ?.copyWith(
-                                    fontWeight: isUnread
-                                        ? FontWeight.w800
-                                        : FontWeight.w700,
-                                  ),
-                            ),
-                          ),
-                          if (isUnread)
-                            Container(
-                              width: 10,
-                              height: 10,
-                              decoration: const BoxDecoration(
-                                color: AppTheme.sageGreen,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                        ],
-                      ),
-                      subtitle: Padding(
-                        padding: const EdgeInsets.only(top: 8),
+              final now = DateTime.now();
+              final today = <NotificationEvent>[];
+              final yesterday = <NotificationEvent>[];
+              final older = <NotificationEvent>[];
+
+              for (final n in notifications) {
+                final diffDays = now.difference(n.createdAt).inDays;
+                if (diffDays == 0 && now.day == n.createdAt.day) {
+                  today.add(n);
+                } else if (diffDays <= 1) {
+                  yesterday.add(n);
+                } else {
+                  older.add(n);
+                }
+              }
+
+              final groups = [
+                if (today.isNotEmpty) MapEntry('Today', today),
+                if (yesterday.isNotEmpty) MapEntry('Yesterday', yesterday),
+                if (older.isNotEmpty) MapEntry('Older', older),
+              ];
+
+              return CustomScrollView(
+                slivers: [
+                  for (final group in groups) ...[
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
                         child: Text(
-                          '${notification.body}\n${_formatTimestamp(notification.createdAt)}',
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: AppTheme.warmGray.withValues(alpha: 0.9),
-                                height: 1.35,
+                          group.key,
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                color: AppTheme.warmGray,
+                                fontWeight: FontWeight.w700,
                               ),
                         ),
                       ),
-                      onTap: () async {
-                        if (isUnread) {
-                          await actions.markRead(notification.notificationId);
-                        }
-                        if (!context.mounted) return;
-                        await _openNotificationAction(
-                          context,
-                          notification,
-                          userId,
-                        );
-                      },
                     ),
-                  );
-                },
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final notification = group.value[index];
+                            final isUnread = notification.readAt == null;
+                            return Card(
+                              elevation: 0,
+                              margin: const EdgeInsets.only(bottom: 8),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                                side: BorderSide(
+                                  color: isUnread
+                                      ? AppTheme.sageGreen.withValues(alpha: 0.28)
+                                      : AppTheme.warmGray.withValues(alpha: 0.12),
+                                ),
+                              ),
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.all(16),
+                                leading: CircleAvatar(
+                                  backgroundColor: _iconTint(
+                                    notification.type,
+                                  ).withValues(alpha: 0.14),
+                                  child: Icon(
+                                    _iconForType(notification.type),
+                                    color: _iconTint(notification.type),
+                                  ),
+                                ),
+                                title: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        notification.title,
+                                        style: Theme.of(context).textTheme.titleSmall
+                                            ?.copyWith(
+                                              fontWeight: isUnread
+                                                  ? FontWeight.w800
+                                                  : FontWeight.w700,
+                                            ),
+                                      ),
+                                    ),
+                                    if (isUnread)
+                                      Container(
+                                        width: 10,
+                                        height: 10,
+                                        decoration: const BoxDecoration(
+                                          color: AppTheme.sageGreen,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                subtitle: Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: Text(
+                                    '${notification.body}\n${_formatTimestamp(notification.createdAt)}',
+                                    style: Theme.of(context).textTheme.bodyMedium
+                                        ?.copyWith(
+                                          color: AppTheme.warmGray.withValues(alpha: 0.9),
+                                          height: 1.35,
+                                        ),
+                                  ),
+                                ),
+                                onTap: () async {
+                                  if (isUnread) {
+                                    await actions.markRead(notification.notificationId);
+                                  }
+                                  if (!context.mounted) return;
+                                  await _openNotificationAction(
+                                    context,
+                                    notification,
+                                    userId,
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                          childCount: group.value.length,
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                ],
               );
             },
             loading: () => const HableSkeletonList(itemCount: 5),
@@ -182,6 +229,24 @@ class NotificationCenterScreen extends ConsumerWidget {
         return;
       case 'home':
         await Navigator.of(context).maybePop();
+        return;
+      case 'habit_dashboard':
+        final payload = notification.actionPayloadJson;
+        if (payload != null) {
+          try {
+            final decoded = jsonDecode(payload);
+            final habitId = decoded['habit_id'] as String?;
+            if (habitId != null) {
+              await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => HabitDashboardScreen(habitId: habitId),
+                ),
+              );
+            }
+          } catch (_) {
+            // ignore malformed payload
+          }
+        }
         return;
       default:
         return;
