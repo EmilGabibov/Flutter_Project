@@ -79,6 +79,7 @@ class ForegroundSyncController extends Notifier<bool> {
       ref.invalidate(acceptedFriendsProvider);
       ref.invalidate(pendingIncomingFriendRelationshipsProvider);
       ref.invalidate(pendingInvitationsProvider);
+      ref.invalidate(leaderboardProvider);
     } catch (e) {
       if (kDebugMode) {
         debugPrint('Foreground sync failed: $e');

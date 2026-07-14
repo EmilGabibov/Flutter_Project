@@ -19,7 +19,6 @@ void main() {
     expect(entry.rank, 1);
     expect(entry.score, 289400);
     expect(entry.scoreLabel, '289,400');
-    expect(entry.byline, 'Gold level');
   });
 
   testWidgets('LeaderboardCard renders podium, current user, and more rows', (

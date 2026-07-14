@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hable/database/database.dart';
 import 'package:hable/database/tables.dart';
+import 'package:hable/l10n/app_localizations_en.dart';
 import 'package:hable/screens/social/social_hub_screen.dart';
 
 void main() {
@@ -45,7 +46,7 @@ void main() {
           createdAt: now.subtract(const Duration(days: 2)),
           readAt: now,
         ),
-      ], now: now);
+      ], AppLocalizationsEn(), now: now);
 
       expect(sections.map((section) => section.title).toList(), [
         'Unread',
