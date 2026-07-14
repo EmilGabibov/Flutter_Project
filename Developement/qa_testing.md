@@ -2,6 +2,20 @@
 
 **Target Stack:** Flutter / ADB / Integration Tests
 
+## 0. Android Online Connectivity Preflight
+
+Use this before any presentation Android build. The goal is to confirm the APK can reach the deployed backend directly, not through local development plumbing.
+
+1. Build the primary release APK with an explicit online target:
+   `flutter build apk --release --flavor primary -t lib/main.dart --dart-define=HABLE_APP_ENV=production`
+2. Confirm no `HABLE_API_BASE_URL` override points at `localhost`, `127.0.0.1`, `10.0.2.2`, or a LAN host.
+3. Confirm `android/app/src/main/AndroidManifest.xml` declares `INTERNET` and `ACCESS_NETWORK_STATE`.
+4. Install on a clean Android device/emulator without `adb reverse`:
+   `adb install -r build/app/outputs/flutter-apk/app-primary-release.apk`
+5. Clear stale state if the device previously ran debug builds:
+   `adb shell pm clear com.hable.app.primary`
+6. Launch the app and verify login/sign-up reaches `https://hable.pages.dev` directly. A release presentation smoke must not depend on local Wrangler, seeded debug users, or device port forwarding.
+
 ## 1. ADB Twin-App Smoke Test
 
 > [!NOTE]
@@ -35,7 +49,7 @@ Because Hable involves mutual habit tracking and a offline-first sync engine, it
 - **New-User Onboarding Slides:** From a logged-out, non-seeded launch, verify the first surface is the research-backed onboarding slide sequence. Confirm the quote slide renders provider copy or fallback copy, Next advances through Mud resistance, first commit, partners, reminders, privacy, and no-skip framing, Log in routes directly to the login form, and Start setup routes to the sign-up form. Re-run with `SEED_USER_ID` and verify the auto-login skeleton bypasses the slides.
 - **Home Habit Creation:** From Home, tap the persistent **Habit** FAB and verify it opens `HabitFormSheet`. In the empty state, tap **Add habit** and verify it opens the same sheet. After creating a habit, verify the suggested preset strip no longer crowds the active habit card.
 - **Habit Form Contract:** In `HabitFormSheet`, verify create mode exposes the icon/title row, preset suggestions, a first-class description field, curated duration presets (`21`, `33`, `40`), color selection, and friend chips with avatar emoji. Confirm validation messages appear for an empty title, an invalid duration, or an overlong description, that edit mode swaps to `Save changes` and hides partner invites, and that selecting a preset updates the title, default description, duration, and help copy coherently without overwriting an already customized description unexpectedly.
-- **Nested Settings:** From Profile, tap the gear icon and verify Settings opens with account/avatar, cloud activation, daily reminder, accessibility/language placeholders, and sign out. Settings must not appear as a fourth tab.
+- **Nested Settings:** From Profile, tap the gear icon and verify Settings opens with account/avatar, cloud activation, daily reminder, accessibility controls, language selection, and sign out. Settings must not appear as a fourth tab.
 - **App Icon Contract:** Verify the installed launcher icon matches the latest `Developement/Resources/AppIcon - Hable.png` artwork on Android, iOS, macOS, Windows, and web/PWA entry points. On web, confirm the browser tab favicon is the regenerated small-size raster rather than a stale leftover from the prior JPEG-based pipeline.
 - **Preset Habit Partner Invite:** Create a preset habit in Alice's app, select Bob from the accepted-friend chips, verify the queued habit sync runs before `sendHabitInvitation`, then open Bob's app and accept/decline the invitation banner.
 - **Shared Check-In Retention:** After Bob accepts Alice's habit invite, have Bob complete the shared habit on his app. Verify Bob's shared habit card remains visible on Home after check-in instead of disappearing from active habits.
@@ -47,6 +61,7 @@ Because Hable involves mutual habit tracking and a offline-first sync engine, it
 - **Leaderboard & Score Coherence:** Complete at least one habit, pull `/api/sync/daily`, then open Profile, a friend profile, and Social → Leaderboard. Verify the backend-owned point totals stay coherent across all three surfaces and that replaying the same `log_id` does not increase score again.
 - **Daily Reminder:** From Profile, add two daily reminder times, grant OS permission, restart the app, and verify both settings persist locally and both schedules restore without another prompt. Delete one reminder and verify the remaining reminder still exists and still fires on its own schedule. Then disable the remaining reminder and verify its schedule is canceled.
 - **Safe Error Copy:** Trigger one backend validation error and one network-style failure. Verify the UI does not show raw `Exception(...)`, raw JSON bodies, `Failed to fetch`, backend URLs, stack traces, or route-specific server wording directly.
+- **Localization Coverage:** Switch between English, German, Urdu, Russian, Tamil, and Persian/Farsi from Settings, then revisit Social → Friends/Activity/Leaderboard, Profile, friend profiles, reminder settings, accessibility settings, and habit-history sheets. Verify section headers, snackbars, tooltips, dialog buttons, semantics-backed labels, and relative-time copy re-render through `AppLocalizations` without obvious first-party English-only islands. For Urdu and Persian/Farsi, confirm mixed-direction rows stay readable and action chips/buttons do not overflow.
 - **Cross-Platform Error Normalization:** On web or a browser-like failure path, verify fetch/CORS-style failures normalize to the same safe copy family used by mobile/desktop timeout or socket failures.
 - **Offline-First Error Stability:** With cached local data already present, force a sync/read failure and verify the screen stays usable from Drift while showing only bounded recovery messaging.
 - **Personalized Copy:** With a recent skipped day, verify the offline quote/reminder fallback shifts into comeback-style copy rather than generic rotation. With a recent partner nudge or partner completion activity, verify the fallback quote/reminder copy can switch to social-momentum wording while still staying deterministic for the same day.

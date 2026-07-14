@@ -32,7 +32,8 @@ class ActivitySection {
 }
 
 List<ActivitySection> buildActivitySections(
-  List<NotificationEvent> notifications, {
+  List<NotificationEvent> notifications,
+  AppLocalizations loc, {
   DateTime? now,
 }) {
   final reference = now ?? DateTime.now();
@@ -53,13 +54,19 @@ List<ActivitySection> buildActivitySections(
 
   final sections = <ActivitySection>[];
   if (unread.isNotEmpty) {
-    sections.add(ActivitySection(title: 'Unread', items: unread));
+    sections.add(
+      ActivitySection(title: loc.socialActivityUnread, items: unread),
+    );
   }
   if (todayRead.isNotEmpty) {
-    sections.add(ActivitySection(title: 'Today', items: todayRead));
+    sections.add(
+      ActivitySection(title: loc.notificationToday, items: todayRead),
+    );
   }
   if (earlier.isNotEmpty) {
-    sections.add(ActivitySection(title: 'Earlier', items: earlier));
+    sections.add(
+      ActivitySection(title: loc.socialActivityEarlier, items: earlier),
+    );
   }
   return sections;
 }
@@ -106,15 +113,7 @@ final userSearchProvider = FutureProvider.family
         }
         return results;
       }
-      throw AppException(
-        AppError.fromResponse(
-          response,
-          fallbackCode: 'social_search_failed',
-          fallbackMessage:
-              'Hable could not search for friends just now. Please try again.',
-          fallbackKind: AppErrorKind.inline,
-        ),
-      );
+      throw Exception('social_search_failed');
     });
 
 final pendingFriendRequestsProvider = FutureProvider.autoDispose<List<dynamic>>(
@@ -149,13 +148,7 @@ final pendingFriendRequestsProvider = FutureProvider.autoDispose<List<dynamic>>(
       }
       return requests;
     }
-    throw const AppException(
-      AppError(
-        code: 'social_requests_fetch_failed',
-        message: 'Hable could not load friend requests right now.',
-        kind: AppErrorKind.inline,
-      ),
-    );
+    throw Exception('social_requests_fetch_failed');
   },
 );
 
@@ -214,6 +207,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
     if (auth.userId == targetUserId) return; // Defensive self-guard
 
     try {
+      final loc = AppLocalizations.of(context)!;
       final response = await http
           .post(
             Uri.parse('$apiBaseUrl/api/social/friend-request'),
@@ -241,10 +235,11 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
 
         if (mounted) {
           final message = switch (relationshipState) {
-            'accepted' => 'You are already friends with $username.',
-            'pending_incoming' =>
-              '$username already sent you a request. Check Requests.',
-            _ => 'Friend request sent to $username.',
+            'accepted' => loc.socialFriendRequestAlreadyFriends(username),
+            'pending_incoming' => loc.socialFriendRequestIncomingExists(
+              username,
+            ),
+            _ => loc.socialFriendRequestSent(username),
           };
           ScaffoldMessenger.of(
             context,
@@ -255,21 +250,20 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
           AppError.fromResponse(
             response,
             fallbackCode: 'friend_request_send_failed',
-            fallbackMessage:
-                'Hable could not send that friend request just yet.',
+            fallbackMessage: loc.socialFriendRequestSendFailed,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
+        final loc = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               AppError.fromAny(
                 e,
                 fallbackCode: 'friend_request_send_failed',
-                fallbackMessage:
-                    'Hable could not send that friend request just now.',
+                fallbackMessage: loc.socialFriendRequestSendFailed,
               ).message,
             ),
           ),
@@ -287,6 +281,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
     final auth = ref.read(authProvider);
     if (auth.token == null) return;
     final messenger = ScaffoldMessenger.maybeOf(context);
+    final loc = AppLocalizations.of(context)!;
 
     try {
       final response = await http
@@ -320,7 +315,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
           );
 
           messenger?.showSnackBar(
-            SnackBar(content: Text('You are now friends with $username!')),
+            SnackBar(content: Text(loc.socialFriendAccepted(username))),
           );
           ref.invalidate(pendingFriendRequestsProvider);
         }
@@ -329,8 +324,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
           AppError.fromResponse(
             response,
             fallbackCode: 'friend_request_accept_failed',
-            fallbackMessage:
-                'Hable could not accept that friend request just yet.',
+            fallbackMessage: loc.socialFriendRequestAcceptFailed,
           ),
         );
       }
@@ -342,8 +336,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
               AppError.fromAny(
                 e,
                 fallbackCode: 'friend_request_accept_failed',
-                fallbackMessage:
-                    'Hable could not accept that request right now.',
+                fallbackMessage: loc.socialFriendRequestAcceptFailed,
               ).message,
             ),
           ),
@@ -360,6 +353,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
   }) async {
     final auth = ref.read(authProvider);
     if (auth.token == null) return;
+    final loc = AppLocalizations.of(context)!;
 
     try {
       final response = await http
@@ -385,7 +379,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Declined request from $username.')),
+            SnackBar(content: Text(loc.socialFriendDeclined(username))),
           );
         }
       } else {
@@ -393,7 +387,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
           AppError.fromResponse(
             response,
             fallbackCode: 'friend_request_decline_failed',
-            fallbackMessage: 'Hable could not decline that request just yet.',
+            fallbackMessage: loc.socialFriendRequestDeclineFailed,
           ),
         );
       }
@@ -405,8 +399,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
               AppError.fromAny(
                 e,
                 fallbackCode: 'friend_request_decline_failed',
-                fallbackMessage:
-                    'Hable could not decline that request right now.',
+                fallbackMessage: loc.socialFriendRequestDeclineFailed,
               ).message,
             ),
           ),
@@ -422,6 +415,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
   }) async {
     final auth = ref.read(authProvider);
     if (auth.token == null) return;
+    final loc = AppLocalizations.of(context)!;
 
     try {
       final response = await http
@@ -446,7 +440,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Removed $username from friends.')),
+            SnackBar(content: Text(loc.socialFriendRemoved(username))),
           );
         }
       } else {
@@ -454,7 +448,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
           AppError.fromResponse(
             response,
             fallbackCode: 'friend_revoke_failed',
-            fallbackMessage: 'Hable could not update that friendship just yet.',
+            fallbackMessage: loc.socialFriendRevokeFailed,
           ),
         );
       }
@@ -466,8 +460,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
               AppError.fromAny(
                 e,
                 fallbackCode: 'friend_revoke_failed',
-                fallbackMessage:
-                    'Hable could not update that friendship right now.',
+                fallbackMessage: loc.socialFriendRevokeFailed,
               ).message,
             ),
           ),
@@ -481,6 +474,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
     required AcceptedFriend friend,
     required Offset position,
   }) async {
+    final loc = AppLocalizations.of(context)!;
     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
     final action = await showMenu<String>(
       context: context,
@@ -488,8 +482,11 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
         Rect.fromLTWH(position.dx, position.dy, 0, 0),
         Offset.zero & overlay.size,
       ),
-      items: const [
-        PopupMenuItem<String>(value: 'unfriend', child: Text('Unfriend')),
+      items: [
+        PopupMenuItem<String>(
+          value: 'unfriend',
+          child: Text(loc.socialFriendActionsUnfriend),
+        ),
       ],
     );
 
@@ -498,16 +495,16 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Remove friend?'),
-        content: Text('Remove ${friend.username} from your friends list?'),
+        title: Text(loc.socialFriendActionsRemoveTitle),
+        content: Text(loc.socialFriendActionsRemoveBody(friend.username)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(loc.settingsCancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Remove'),
+            child: Text(loc.commonRemove),
           ),
         ],
       ),
@@ -530,7 +527,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
   Widget build(BuildContext context) {
     final isSyncing = ref.watch(foregroundSyncControllerProvider);
     final userId = ref.watch(authProvider).userId ?? '';
-    final loc = AppLocalizations.of(context);
+    final loc = AppLocalizations.of(context)!;
 
     return UsageTrackedScreen(
       screenName: 'social_hub',
@@ -544,7 +541,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
                 child: Row(
                   children: [
                     Text(
-                      loc?.socialTabTitle ?? 'Social',
+                      loc.socialTabTitle,
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
                     const Spacer(),
@@ -560,7 +557,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
                     else
                       IconButton(
                         icon: const Icon(Icons.sync_rounded),
-                        tooltip: loc?.socialSyncNow ?? 'Sync now',
+                        tooltip: loc.socialSyncNow,
                         onPressed: () {
                           ref
                               .read(foregroundSyncControllerProvider.notifier)
@@ -568,10 +565,10 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
                         },
                       ),
                     Semantics(
-                      label: loc?.socialFindFriends ?? 'Find friends',
+                      label: loc.socialFindFriends,
                       button: true,
                       child: IconButton(
-                        tooltip: loc?.socialFindFriends ?? 'Find friends',
+                        tooltip: loc.socialFindFriends,
                         icon: const Icon(Icons.person_search_rounded),
                         onPressed: () => _showFindFriendsSheet(context),
                       ),
@@ -585,15 +582,15 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
                 tabs: [
                   Tab(
                     icon: const Icon(Icons.favorite_rounded),
-                    text: loc?.friendsTabTitle ?? 'Friends',
+                    text: loc.friendsTabTitle,
                   ),
                   Tab(
                     icon: const Icon(Icons.notifications_rounded),
-                    text: loc?.activityTabTitle ?? 'Activity',
+                    text: loc.activityTabTitle,
                   ),
                   Tab(
                     icon: const Icon(Icons.leaderboard_rounded),
-                    text: loc?.leaderboardTabTitle ?? 'Leaderboard',
+                    text: loc.leaderboardTabTitle,
                   ),
                 ],
                 labelColor: AppTheme.sageGreen,
@@ -623,6 +620,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
   // ---------------------------------------------------------------------------
 
   Widget _buildFriendsTab() {
+    final loc = AppLocalizations.of(context)!;
     final friendsAsync = ref.watch(acceptedFriendsProvider);
     final cachedRequestsAsync = ref.watch(
       pendingIncomingFriendRelationshipsProvider,
@@ -659,9 +657,8 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
               return SliverFillRemaining(
                 child: HableEmptyStateCard(
                   icon: Icons.favorite_border_rounded,
-                  title: 'No friends yet',
-                  description:
-                      'Tap the search icon above to find and add friends.',
+                  title: loc.socialNoFriendsTitle,
+                  description: loc.socialNoFriendsBody,
                 ),
               );
             }
@@ -704,7 +701,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
                           friend.username,
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        subtitle: const Text('Long-press for actions'),
+                        subtitle: Text(loc.socialFriendLongPressActions),
                         trailing: const Icon(
                           Icons.chevron_right_rounded,
                           color: AppTheme.warmGray,
@@ -725,8 +722,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
                 AppError.fromAny(
                   e,
                   fallbackCode: 'friends_load_failed',
-                  fallbackMessage:
-                      'Hable could not load your friends right now.',
+                  fallbackMessage: loc.socialFriendsLoadFailed,
                   fallbackKind: AppErrorKind.inline,
                 ).message,
                 textAlign: TextAlign.center,
@@ -743,11 +739,12 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
   // ---------------------------------------------------------------------------
 
   Widget _buildActivityTab() {
+    final loc = AppLocalizations.of(context)!;
     final userId = ref.watch(authProvider.select((a) => a.userId));
     if (userId == null) {
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.only(top: 32.0),
-        child: Text('Not signed in', textAlign: TextAlign.center),
+        child: Text(loc.socialNotSignedIn, textAlign: TextAlign.center),
       );
     }
 
@@ -757,14 +754,13 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
     return notificationsAsync.when(
       data: (notifications) {
         if (notifications.isEmpty) {
-          return const HableEmptyStateCard(
+          return HableEmptyStateCard(
             icon: Icons.notifications_none_rounded,
-            title: 'No activity yet',
-            description:
-                'Nudges, friend requests, invites, and messages from friends will appear here.',
+            title: loc.socialNoActivityTitle,
+            description: loc.socialNoActivityBody,
           );
         }
-        final sections = buildActivitySections(notifications);
+        final sections = buildActivitySections(notifications, loc);
         final flattenedSections = _flattenActivitySections(sections);
         return Column(
           children: [
@@ -778,7 +774,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
                     onPressed: notifications.any((n) => n.readAt == null)
                         ? () => actions.markAllRead(userId)
                         : null,
-                    child: const Text('Mark all read'),
+                    child: Text(loc.notificationMarkAllRead),
                   ),
                 ],
               ),
@@ -820,7 +816,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
           AppError.fromAny(
             e,
             fallbackCode: 'activity_load_failed',
-            fallbackMessage: 'Hable could not load your activity right now.',
+            fallbackMessage: loc.notificationLoadFailed,
             fallbackKind: AppErrorKind.inline,
           ).message,
           textAlign: TextAlign.center,
@@ -856,6 +852,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
   // ---------------------------------------------------------------------------
 
   Widget _buildLeaderboardTab() {
+    final loc = AppLocalizations.of(context)!;
     final leaderboardAsync = ref.watch(leaderboardProvider);
     final currentUserId = ref.watch(authProvider.select((auth) => auth.userId));
 
@@ -866,11 +863,11 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
             onRefresh: () => ref.refresh(leaderboardProvider.future),
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              children: const [
+              children: [
                 Padding(
                   padding: EdgeInsets.only(top: 32.0),
                   child: Text(
-                    'No leaderboard scores yet.',
+                    loc.socialLeaderboardEmpty,
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -896,11 +893,11 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
             onRefresh: () => ref.refresh(leaderboardProvider.future),
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              children: const [
+              children: [
                 Padding(
                   padding: EdgeInsets.only(top: 32.0),
                   child: Text(
-                    'No valid leaderboard scores found.',
+                    loc.socialLeaderboardNoValidScores,
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -916,9 +913,9 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
             padding: const EdgeInsets.all(16),
             children: [
               LeaderboardCard(
-                title: 'Friends Leaderboard',
-                subtitle: 'Accepted friends ranked by lifetime score',
-                scopeLabel: 'Friends',
+                title: loc.socialLeaderboardTitle,
+                subtitle: loc.socialLeaderboardSubtitle,
+                scopeLabel: loc.socialLeaderboardScopeFriends,
                 rankings: rankings,
                 currentUserId: currentUserId,
               ),
@@ -955,7 +952,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Could not load leaderboard',
+                    loc.socialLeaderboardLoadTitle,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                       color: AppTheme.deepCharcoal,
@@ -966,8 +963,7 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
                     AppError.fromAny(
                       e,
                       fallbackCode: 'leaderboard_load_failed',
-                      fallbackMessage:
-                          'Hable could not load the leaderboard right now.',
+                      fallbackMessage: loc.socialLeaderboardLoadFailed,
                       fallbackKind: AppErrorKind.inline,
                     ).message,
                     textAlign: TextAlign.center,
@@ -1029,6 +1025,7 @@ class _PendingRequestsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: Column(
@@ -1037,7 +1034,7 @@ class _PendingRequestsSection extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(left: 4, bottom: 8),
             child: Text(
-              'Friend Requests',
+              loc.socialFriendRequestsTitle,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 color: AppTheme.sageGreen,
                 fontWeight: FontWeight.w700,
@@ -1058,7 +1055,7 @@ class _PendingRequestsSection extends StatelessWidget {
                   req.username,
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
-                subtitle: const Text('Sent you a friend request'),
+                subtitle: Text(loc.socialFriendRequestIncomingSubtitle),
                 trailing: Wrap(
                   spacing: 8,
                   children: [
@@ -1071,7 +1068,7 @@ class _PendingRequestsSection extends StatelessWidget {
                               username: req.username,
                               avatarUrl: req.avatarUrl,
                             ),
-                      child: const Text('Decline'),
+                      child: Text(loc.commonDecline),
                     ),
                     ElevatedButton(
                       onPressed: requestId == null
@@ -1086,7 +1083,7 @@ class _PendingRequestsSection extends StatelessWidget {
                         backgroundColor: AppTheme.sageGreen,
                         foregroundColor: Colors.white,
                       ),
-                      child: const Text('Accept'),
+                      child: Text(loc.commonAccept),
                     ),
                   ],
                 ),
@@ -1184,7 +1181,7 @@ class _ActivityCard extends StatelessWidget {
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 8),
           child: Text(
-            '${notification.body}\n${_formatTimestamp(notification.createdAt)}',
+            '${notification.body}\n${_formatTimestamp(context, notification.createdAt)}',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: AppTheme.warmGray.withValues(alpha: 0.9),
               height: 1.35,
@@ -1218,15 +1215,14 @@ class _ActivityCard extends StatelessWidget {
     };
   }
 
-  static String _formatTimestamp(DateTime createdAt) {
+  static String _formatTimestamp(BuildContext context, DateTime createdAt) {
+    final loc = AppLocalizations.of(context)!;
     final diff = DateTime.now().difference(createdAt);
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
-    if (diff.inDays < 1) return '${diff.inHours}h ago';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
-    final month = createdAt.month.toString().padLeft(2, '0');
-    final day = createdAt.day.toString().padLeft(2, '0');
-    return '$month/$day/${createdAt.year}';
+    if (diff.inMinutes < 1) return loc.notificationJustNow;
+    if (diff.inHours < 1) return loc.notificationMinutesAgo(diff.inMinutes);
+    if (diff.inDays < 1) return loc.notificationHoursAgo(diff.inHours);
+    if (diff.inDays < 7) return loc.notificationDaysAgo(diff.inDays);
+    return MaterialLocalizations.of(context).formatShortDate(createdAt);
   }
 }
 
@@ -1257,6 +1253,7 @@ class _FindFriendsSheetState extends ConsumerState<_FindFriendsSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return DraggableScrollableSheet(
       initialChildSize: 0.7,
       minChildSize: 0.4,
@@ -1281,15 +1278,15 @@ class _FindFriendsSheetState extends ConsumerState<_FindFriendsSheet> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Find Friends',
+                loc.socialFindFriendsTitle,
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: _searchController,
                 autofocus: true,
-                decoration: const InputDecoration(
-                  labelText: 'Search username...',
+                decoration: InputDecoration(
+                  labelText: loc.socialFindFriendsSearchLabel,
                   prefixIcon: Icon(Icons.search),
                 ),
                 onChanged: (value) {
@@ -1301,10 +1298,10 @@ class _FindFriendsSheetState extends ConsumerState<_FindFriendsSheet> {
               const SizedBox(height: 16),
               Expanded(
                 child: _searchQuery.length < 2
-                    ? const Padding(
+                    ? Padding(
                         padding: EdgeInsets.only(top: 32.0),
                         child: Text(
-                          'Type at least 2 characters to search.',
+                          loc.socialFindFriendsTypeMore,
                           textAlign: TextAlign.center,
                         ),
                       )
@@ -1316,10 +1313,10 @@ class _FindFriendsSheetState extends ConsumerState<_FindFriendsSheet> {
                           return searchAsync.when(
                             data: (results) {
                               if (results.isEmpty) {
-                                return const Padding(
+                                return Padding(
                                   padding: EdgeInsets.only(top: 32.0),
                                   child: Text(
-                                    'No matches found.',
+                                    loc.socialFindFriendsNoMatches,
                                     textAlign: TextAlign.center,
                                   ),
                                 );
@@ -1343,7 +1340,12 @@ class _FindFriendsSheetState extends ConsumerState<_FindFriendsSheet> {
                             error: (e, _) => Padding(
                               padding: const EdgeInsets.only(top: 32.0),
                               child: Text(
-                                'Error: $e',
+                                AppError.fromAny(
+                                  e,
+                                  fallbackCode: 'social_search_failed',
+                                  fallbackMessage: loc.socialSearchFailed,
+                                  fallbackKind: AppErrorKind.inline,
+                                ).message,
                                 textAlign: TextAlign.center,
                               ),
                             ),
@@ -1373,9 +1375,10 @@ class _SearchResultTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final loc = AppLocalizations.of(context)!;
     final currentUserId = ref.watch(authProvider).userId;
     final userId = (user['user_id'] ?? user['id'])?.toString() ?? '';
-    final username = user['username']?.toString() ?? 'Friend';
+    final username = user['username']?.toString() ?? loc.homeFriendFallback;
     final avatarUrl = user['avatar_url']?.toString();
     final state = user['relationship_state']?.toString() ?? 'none';
     final isSelf = userId == currentUserId;
@@ -1385,27 +1388,27 @@ class _SearchResultTile extends ConsumerWidget {
       title: Text(username),
       subtitle: Text(
         isSelf
-            ? 'You'
+            ? loc.commonYou
             : switch (state) {
-                'accepted' => 'Accepted friend',
-                'pending_outgoing' => 'Request sent',
-                'pending_incoming' => 'Waiting for your response',
-                _ => 'Not connected',
+                'accepted' => loc.socialRelationshipAcceptedFriend,
+                'pending_outgoing' => loc.socialRelationshipRequestSent,
+                'pending_incoming' => loc.socialRelationshipWaiting,
+                _ => loc.socialRelationshipNotConnected,
               },
       ),
       trailing: isSelf
-          ? const Chip(label: Text('You'))
+          ? Chip(label: Text(loc.commonYou))
           : switch (state) {
-              'accepted' => const Chip(
-                avatar: Icon(Icons.check_rounded, size: 16),
-                label: Text('Friends'),
+              'accepted' => Chip(
+                avatar: const Icon(Icons.check_rounded, size: 16),
+                label: Text(loc.socialChipFriends),
               ),
-              'pending_outgoing' => const Chip(label: Text('Requested')),
-              'pending_incoming' => const Chip(
-                label: Text('Respond in Friends'),
+              'pending_outgoing' => Chip(label: Text(loc.socialChipRequested)),
+              'pending_incoming' => Chip(
+                label: Text(loc.socialChipRespondInFriends),
               ),
               _ => IconButton(
-                tooltip: 'Send friend request',
+                tooltip: loc.socialSendFriendRequestTooltip,
                 icon: const Icon(
                   Icons.person_add_rounded,
                   color: AppTheme.sageGreen,

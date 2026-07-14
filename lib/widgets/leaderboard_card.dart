@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import 'user_avatar.dart';
 
@@ -23,7 +24,7 @@ class LeaderboardEntry {
   factory LeaderboardEntry.fromJson(Map<String, dynamic> json, int rank) {
     return LeaderboardEntry(
       userId: _readString(json, 'id') ?? _readString(json, 'user_id') ?? '',
-      userName: _readString(json, 'username') ?? 'Unknown',
+      userName: _readString(json, 'username') ?? '',
       avatarUrl: _readString(json, 'avatar_url'),
       levelName: _readString(json, 'level_name') ?? _readString(json, 'level'),
       rank: rank,
@@ -33,9 +34,11 @@ class LeaderboardEntry {
 
   String get scoreLabel => _formatNumber(score);
 
-  String get byline {
-    if (levelName != null) return '$levelName level';
-    return 'Lifetime score';
+  String bylineLabel(AppLocalizations loc) {
+    if (levelName != null && levelName!.trim().isNotEmpty) {
+      return loc.profileFriendLevel(levelName!);
+    }
+    return loc.leaderboardLifetimeScoreByline;
   }
 
   static String? _readString(Map<String, dynamic> json, String key) {
@@ -95,6 +98,7 @@ class _LeaderboardCardState extends State<LeaderboardCard> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final visibleRankings = widget.rankings.take(_visibleCount).toList();
     final podiumRankings = widget.rankings.take(3).toList();
     final hasMore = widget.rankings.length > visibleRankings.length;
@@ -128,7 +132,7 @@ class _LeaderboardCardState extends State<LeaderboardCard> {
           ),
           const SizedBox(height: 22),
           Text(
-            'Rankings',
+            loc.leaderboardRankingsTitle,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
               color: AppTheme.deepCharcoal,
@@ -153,14 +157,16 @@ class _LeaderboardCardState extends State<LeaderboardCard> {
                 },
                 icon: const Icon(Icons.expand_more_rounded),
                 label: Text(
-                  'Show ${widget.rankings.length - visibleRankings.length} more',
+                  loc.leaderboardShowMore(
+                    widget.rankings.length - visibleRankings.length,
+                  ),
                 ),
               ),
             )
           else if (widget.rankings.length > widget.defaultPageSize)
             Center(
               child: Text(
-                'Showing all ${widget.rankings.length}',
+                loc.leaderboardShowingAll(widget.rankings.length),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppTheme.warmGray,
                   fontWeight: FontWeight.w700,
@@ -186,6 +192,7 @@ class _LeaderboardHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -222,7 +229,7 @@ class _LeaderboardHeader extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                scopeLabel.toLowerCase() == 'friends'
+                scopeLabel == loc.socialLeaderboardScopeFriends
                     ? Icons.group_rounded
                     : Icons.public_rounded,
                 size: 16,
@@ -323,6 +330,10 @@ class _PodiumPlace extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+    final displayName = entry.userName.isEmpty
+        ? loc.leaderboardUnknownUser
+        : entry.userName;
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
@@ -334,7 +345,7 @@ class _PodiumPlace extends StatelessWidget {
               padding: const EdgeInsets.only(top: 10),
               child: UserAvatar(
                 avatarUrl: entry.avatarUrl,
-                username: entry.userName,
+                username: displayName,
                 radius: avatarRadius,
                 backgroundColor: accent.withValues(alpha: 0.16),
               ),
@@ -347,7 +358,7 @@ class _PodiumPlace extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          entry.userName,
+          displayName,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           textAlign: TextAlign.center,
@@ -388,8 +399,8 @@ class _PodiumPlace extends StatelessWidget {
               ),
               if (isCurrentUser) ...[
                 const SizedBox(height: 4),
-                const Text(
-                  'You',
+                Text(
+                  loc.leaderboardYou,
                   style: TextStyle(
                     color: AppTheme.sageGreen,
                     fontSize: 11,
@@ -413,7 +424,11 @@ class _RankingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final accent = _rankAccent(entry.rank);
+    final displayName = entry.userName.isEmpty
+        ? loc.leaderboardUnknownUser
+        : entry.userName;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -433,7 +448,7 @@ class _RankingRow extends StatelessWidget {
           const SizedBox(width: 12),
           UserAvatar(
             avatarUrl: entry.avatarUrl,
-            username: entry.userName,
+            username: displayName,
             radius: 22,
             backgroundColor: accent.withValues(alpha: 0.12),
           ),
@@ -446,7 +461,7 @@ class _RankingRow extends StatelessWidget {
                   children: [
                     Flexible(
                       child: Text(
-                        entry.userName,
+                        displayName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.titleMedium
@@ -467,8 +482,8 @@ class _RankingRow extends StatelessWidget {
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(999),
                         ),
-                        child: const Text(
-                          'You',
+                        child: Text(
+                          loc.leaderboardYou,
                           style: TextStyle(
                             color: AppTheme.sageGreen,
                             fontSize: 11,
@@ -481,7 +496,7 @@ class _RankingRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  entry.byline,
+                  entry.bylineLabel(loc),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -504,7 +519,7 @@ class _RankingRow extends StatelessWidget {
                 ),
               ),
               Text(
-                'lifetime',
+                loc.leaderboardLifetime,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppTheme.warmGray,
                   fontWeight: FontWeight.w700,

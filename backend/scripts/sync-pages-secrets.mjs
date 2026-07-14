@@ -20,34 +20,52 @@ const download = spawnSync(
   [
     'secrets',
     'download',
-    secretsFile,
     '--format=env-no-quotes',
+    '--no-file',
     '--project',
     project,
     '--config',
     config,
     '--no-cache',
   ],
-  {
-    stdio: 'inherit',
-    encoding: 'utf8',
-  },
+  { encoding: 'utf8' },
 )
 
 if ((download.status ?? 1) !== 0) {
   process.exit(download.status ?? 1)
 }
 
-const contents = fs.readFileSync(secretsFile, 'utf8')
-const missing = requiredKeys.filter((key) => !new RegExp(`^${key}=`, 'm').test(contents))
+const contents = (download.stdout ?? '').toString()
+fs.writeFileSync(secretsFile, contents)
+const entries = contents
+  .split(/\r?\n/)
+  .map((line) => line.trim())
+  .filter(Boolean)
+  .map((line) => {
+    const separatorIndex = line.indexOf('=')
+    if (separatorIndex === -1) return null
+    return {
+      key: line.slice(0, separatorIndex),
+      value: line.slice(separatorIndex + 1),
+    }
+  })
+  .filter((entry) => entry && requiredKeys.includes(entry.key))
+
+const missing = requiredKeys.filter((key) => !entries.some((entry) => entry?.key === key))
 if (missing.length > 0) {
   console.error(`Missing required secrets in Doppler ${project}/${config}: ${missing.join(', ')}`)
   process.exit(1)
 }
 
+const filteredSecretsFile = path.join(tempDir, 'pages-secrets.filtered.env')
+fs.writeFileSync(
+  filteredSecretsFile,
+  entries.map((entry) => `${entry.key}=${entry.value}`).join('\n'),
+)
+
 const upload = spawnSync(
   'npx',
-  ['wrangler', 'pages', 'secret', 'bulk', secretsFile, '--project-name', pagesProject],
+  ['wrangler', 'pages', 'secret', 'bulk', filteredSecretsFile, '--project-name', pagesProject],
   {
     stdio: 'inherit',
     encoding: 'utf8',

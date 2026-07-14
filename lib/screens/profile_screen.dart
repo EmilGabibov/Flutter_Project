@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../database/database.dart';
 import '../database/tables.dart' show HabitStatus, LogStatus, PartnershipRole;
 import '../data/standard_habits.dart';
+import '../l10n/app_localizations.dart';
 import '../providers/habit_providers.dart';
 import '../providers/sync_provider.dart';
 import '../services/app_error.dart';
@@ -66,6 +67,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final currentUserId = ref.watch(authProvider).userId;
     final isFriend = widget.userId != currentUserId && currentUserId != null;
 
@@ -97,7 +99,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                         children: [
                           if (widget.showBackButton) ...[
                             IconButton(
-                              tooltip: 'Back',
+                              tooltip: l10n.profileBack,
                               onPressed: () => Navigator.of(context).pop(),
                               icon: const Icon(
                                 Icons.arrow_back_rounded,
@@ -107,12 +109,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                             const SizedBox(width: 8),
                           ],
                           Text(
-                            'Profile',
+                            l10n.profileTitle,
                             style: Theme.of(context).textTheme.headlineMedium,
                           ),
                           const Spacer(),
                           IconButton(
-                            tooltip: 'Open settings',
+                            tooltip: l10n.profileOpenSettings,
                             onPressed: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
@@ -158,14 +160,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        user?.username ?? 'User',
+                                        user?.username ??
+                                            l10n.profileUserFallback,
                                         style: Theme.of(
                                           context,
                                         ).textTheme.titleLarge,
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
-                                        '@${user?.username ?? 'user'}',
+                                        '@${user?.username ?? l10n.profileUsernameFallback}',
                                         style: Theme.of(
                                           context,
                                         ).textTheme.bodyMedium,
@@ -176,12 +179,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                         runSpacing: 8,
                                         children: [
                                           _InfoPill(
-                                            label: user?.levelName ?? 'Newbie',
+                                            label:
+                                                user?.levelName ??
+                                                l10n.profileLevelFallback,
                                             color: AppTheme.sageGreen,
                                           ),
                                           _InfoPill(
-                                            label:
-                                                '${user?.totalScore ?? 0} lifetime pts',
+                                            label: l10n.profileLifetimePoints(
+                                              user?.totalScore ?? 0,
+                                            ),
                                             color: AppTheme.deepCharcoal,
                                             fillColor: AppTheme.surfaceVariant,
                                           ),
@@ -189,7 +195,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                       ),
                                       const SizedBox(height: 8),
                                       Text(
-                                        'Lifetime score comes from backend sync. Journey and history show per-check-in awards.',
+                                        l10n.profileLifetimeScoreHint,
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodySmall
@@ -218,9 +224,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                         labelColor: AppTheme.deepCharcoal,
                         unselectedLabelColor: AppTheme.warmGray,
                         indicatorColor: AppTheme.sageGreen,
-                        tabs: const [
-                          Tab(text: 'Trophy Room'),
-                          Tab(text: 'Journey'),
+                        tabs: [
+                          Tab(text: l10n.profileTrophyRoomTab),
+                          Tab(text: l10n.profileJourneyTab),
                         ],
                       ),
                     ),
@@ -251,6 +257,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     AsyncValue<User?> userAsync,
     AsyncValue<List<AchievementUnlock>> achievementsAsync,
   ) {
+    final l10n = AppLocalizations.of(context)!;
     return CustomScrollView(
       slivers: [
         // Achievement badges
@@ -267,7 +274,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Achievements',
+                          l10n.profileAchievementsTitle,
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         userAsync.when(
@@ -303,7 +310,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                       data: (achievements) {
                         if (achievements.isEmpty) {
                           return Text(
-                            'Complete a habit to earn your first badge!',
+                            l10n.profileFirstBadgeHint,
                             style: Theme.of(context).textTheme.bodyMedium,
                           );
                         }
@@ -313,7 +320,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                           children: achievements
                               .map(
                                 (a) => _AchievementBadge(
-                                  title: _achievementLabel(a.achievementId),
+                                  title: _achievementLabel(
+                                    l10n,
+                                    a.achievementId,
+                                  ),
                                 ),
                               )
                               .toList(),
@@ -339,6 +349,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     AsyncValue<List<MapEntry<DateTime, int>>> historyAsync,
     AsyncValue<List<Habit>> allHabitsAsync,
   ) {
+    final l10n = AppLocalizations.of(context)!;
     return CustomScrollView(
       slivers: [
         // Pie chart — Completion Distribution
@@ -352,7 +363,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Habit Distribution',
+                      l10n.profileHabitDistributionTitle,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 20),
@@ -367,7 +378,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                             height: 160,
                             child: Center(
                               child: Text(
-                                'No data yet',
+                                l10n.profileNoData,
                                 style: Theme.of(context).textTheme.bodyMedium,
                               ),
                             ),
@@ -427,10 +438,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                       children: [
                         _Legend(
                           color: AppTheme.completionGreen,
-                          label: 'Completed',
+                          label: l10n.profileCompletedLegend,
                         ),
-                        _Legend(color: AppTheme.skipAmber, label: 'Skipped'),
-                        _Legend(color: AppTheme.overdueRose, label: 'Overdue'),
+                        _Legend(
+                          color: AppTheme.skipAmber,
+                          label: l10n.profileSkippedLegend,
+                        ),
+                        _Legend(
+                          color: AppTheme.overdueRose,
+                          label: l10n.profileOverdueLegend,
+                        ),
                       ],
                     ),
                   ],
@@ -451,12 +468,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '30-Day Points Earned',
+                      l10n.profileThirtyDayPointsTitle,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Per-check-in awards from local history. Lifetime score updates separately from daily sync.',
+                      l10n.profileThirtyDayPointsHint,
                       style: Theme.of(
                         context,
                       ).textTheme.bodySmall?.copyWith(color: AppTheme.warmGray),
@@ -469,7 +486,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                             height: 160,
                             child: Center(
                               child: Text(
-                                'No data yet',
+                                l10n.profileNoData,
                                 style: Theme.of(context).textTheme.bodyMedium,
                               ),
                             ),
@@ -531,12 +548,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Calendar Subscription',
+                      l10n.profileCalendarSubscriptionTitle,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Add your habits to your native calendar app',
+                      l10n.profileCalendarSubscriptionBody,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppTheme.warmGray.withValues(alpha: 0.8),
                       ),
@@ -558,13 +575,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Manage Habits',
+                  l10n.profileManageHabitsTitle,
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 TextButton.icon(
                   onPressed: () => HabitFormSheet.show(context),
                   icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Add New'),
+                  label: Text(l10n.profileAddNew),
                 ),
               ],
             ),
@@ -589,10 +606,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             return SliverList(
               delegate: SliverChildListDelegate([
                 if (active.isNotEmpty) ...[
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.fromLTRB(24, 16, 24, 8),
                     child: Text(
-                      'Active',
+                      l10n.profileSectionActive,
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         color: AppTheme.sageGreen,
@@ -604,10 +621,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   ),
                 ],
                 if (finished.isNotEmpty) ...[
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.fromLTRB(24, 24, 24, 8),
                     child: Text(
-                      'Hall of Fame',
+                      l10n.profileSectionHallOfFame,
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         color: AppTheme.mutedLavender,
@@ -619,10 +636,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   ),
                 ],
                 if (abandoned.isNotEmpty) ...[
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.fromLTRB(24, 24, 24, 8),
                     child: Text(
-                      'Archived history',
+                      l10n.profileSectionArchivedHistory,
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         color: AppTheme.overdueRose,
@@ -646,6 +663,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   }
 
   Widget _buildFriendProfile(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final friendProfileAsync = ref.watch(friendProfileProvider(widget.userId));
 
     return Scaffold(
@@ -668,7 +686,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Friend Profile',
+                        l10n.profileFriendProfileTitle,
                         style: Theme.of(context).textTheme.headlineMedium,
                       ),
                     ],
@@ -704,7 +722,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                     children: [
                                       Text(
                                         (user['username'] as String?) ??
-                                            'Friend',
+                                            l10n.homeFriendFallback,
                                         style: Theme.of(
                                           context,
                                         ).textTheme.titleLarge,
@@ -712,7 +730,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                       if ((user['level_name'] as String?) !=
                                           null)
                                         Text(
-                                          '${user['level_name']} level',
+                                          l10n.profileFriendLevel(
+                                            user['level_name'] as String,
+                                          ),
                                           style: Theme.of(context)
                                               .textTheme
                                               .bodySmall
@@ -722,7 +742,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                               ),
                                         ),
                                       Text(
-                                        '${user['total_score'] ?? 0} lifetime pts',
+                                        l10n.profileLifetimePoints(
+                                          (user['total_score'] as num?)
+                                                  ?.toInt() ??
+                                              0,
+                                        ),
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodyMedium
@@ -739,10 +763,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                         ),
                       ),
 
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.fromLTRB(24, 32, 24, 8),
                         child: Text(
-                          'Active Habits',
+                          l10n.profileActiveHabitsTitle,
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             color: AppTheme.sageGreen,
@@ -751,9 +775,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                       ),
 
                       if (habits.isEmpty)
-                        const Padding(
+                        Padding(
                           padding: EdgeInsets.fromLTRB(24, 16, 24, 16),
-                          child: Text('No active habits.'),
+                          child: Text(l10n.profileNoActiveHabits),
                         )
                       else
                         ...habits.map(
@@ -777,11 +801,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     ),
                   ),
                 ),
-                error: (err, _) => const SliverToBoxAdapter(
+                error: (err, _) => SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.only(top: 32.0),
+                    padding: const EdgeInsets.only(top: 32.0),
                     child: Text(
-                      'Failed to load friend profile.',
+                      l10n.profileFriendLoadFailed,
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -802,12 +826,13 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final userAsync = ref.watch(currentUserProvider);
 
     return UsageTrackedScreen(
       screenName: 'settings',
       child: Scaffold(
-        appBar: AppBar(title: const Text('Settings')),
+        appBar: AppBar(title: Text(l10n.settingsTitle)),
         body: SafeArea(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
@@ -849,12 +874,12 @@ class SettingsScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Session',
+                        l10n.settingsSessionTitle,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Sign out of this device. Local reminder scheduling is canceled for this user.',
+                        l10n.settingsSessionBody,
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 16),
@@ -863,20 +888,18 @@ class SettingsScreen extends ConsumerWidget {
                           final shouldReset = await showDialog<bool>(
                             context: context,
                             builder: (dialogContext) => AlertDialog(
-                              title: const Text('Recover This Device'),
-                              content: const Text(
-                                'This clears local Hable data on this device and sends you back to login. Use it if the app is stuck or showing old cached state.',
-                              ),
+                              title: Text(l10n.settingsRecoverTitle),
+                              content: Text(l10n.settingsRecoverBody),
                               actions: [
                                 TextButton(
                                   onPressed: () =>
                                       Navigator.of(dialogContext).pop(false),
-                                  child: const Text('Cancel'),
+                                  child: Text(l10n.settingsCancel),
                                 ),
                                 FilledButton(
                                   onPressed: () =>
                                       Navigator.of(dialogContext).pop(true),
-                                  child: const Text('Clear and Sign In Again'),
+                                  child: Text(l10n.settingsClearAndSignInAgain),
                                 ),
                               ],
                             ),
@@ -892,7 +915,7 @@ class SettingsScreen extends ConsumerWidget {
                           ).popUntil((route) => route.isFirst);
                         },
                         icon: const Icon(Icons.system_update_alt_rounded),
-                        label: const Text('Update / Recover App'),
+                        label: Text(l10n.settingsRecoverAction),
                       ),
                       const SizedBox(height: 12),
                       FilledButton.icon(
@@ -904,7 +927,7 @@ class SettingsScreen extends ConsumerWidget {
                           ).popUntil((route) => route.isFirst);
                         },
                         icon: const Icon(Icons.logout_rounded),
-                        label: const Text('Sign out'),
+                        label: Text(l10n.settingsSignOut),
                         style: FilledButton.styleFrom(
                           backgroundColor: AppTheme.deepCharcoal,
                           foregroundColor: Colors.white,
@@ -953,6 +976,7 @@ class _SettingsAccountCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -972,11 +996,11 @@ class _SettingsAccountCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        user?.username ?? 'User',
+                        user?.username ?? loc.profileUserFallback,
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       Text(
-                        user?.email ?? 'No verified email yet',
+                        user?.email ?? loc.settingsNoVerifiedEmailYet,
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ],
@@ -994,7 +1018,7 @@ class _SettingsAccountCard extends StatelessWidget {
                 );
               },
               icon: const Icon(Icons.face_retouching_natural_rounded),
-              label: const Text('Customize avatar'),
+              label: Text(loc.settingsCustomizeAvatar),
             ),
           ],
         ),
@@ -1003,12 +1027,12 @@ class _SettingsAccountCard extends StatelessWidget {
   }
 }
 
-
 class _MudTuningCard extends ConsumerWidget {
   const _MudTuningCard();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final loc = AppLocalizations.of(context)!;
     final tuning = ref.watch(mudTuningProvider);
     final actions = ref.read(mudTuningProvider.notifier);
 
@@ -1018,26 +1042,29 @@ class _MudTuningCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Mud feel', style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              loc.settingsMudFeelTitle,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 8),
             Text(
-              'Tune hold resistance and haptic feedback on this device with bounded presets.',
+              loc.settingsMudFeelBody,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 16),
             SegmentedButton<MudTuningPreset>(
-              segments: const [
+              segments: [
                 ButtonSegment(
                   value: MudTuningPreset.gentle,
-                  label: Text('Gentle'),
+                  label: Text(loc.settingsMudPresetGentle),
                 ),
                 ButtonSegment(
                   value: MudTuningPreset.standard,
-                  label: Text('Standard'),
+                  label: Text(loc.settingsMudPresetStandard),
                 ),
                 ButtonSegment(
                   value: MudTuningPreset.intense,
-                  label: Text('Intense'),
+                  label: Text(loc.settingsMudPresetIntense),
                 ),
               ],
               selected: {tuning.preset},
@@ -1049,14 +1076,11 @@ class _MudTuningCard extends ConsumerWidget {
             SwitchListTile.adaptive(
               value: tuning.hapticsEnabled,
               contentPadding: EdgeInsets.zero,
-              title: const Text('Mud haptics'),
+              title: Text(loc.settingsMudHapticsTitle),
               subtitle: Text(switch (tuning.hapticProfile) {
-                MudHapticProfile.soft =>
-                  'Soft taps during hold and a light completion pulse.',
-                MudHapticProfile.standard =>
-                  'Balanced hold taps and standard completion feedback.',
-                MudHapticProfile.strong =>
-                  'Heavier completion feedback with denser hold taps.',
+                MudHapticProfile.soft => loc.settingsMudHapticsSoft,
+                MudHapticProfile.standard => loc.settingsMudHapticsStandard,
+                MudHapticProfile.strong => loc.settingsMudHapticsStrong,
               }),
               onChanged: actions.setHapticsEnabled,
             ),
@@ -1106,6 +1130,7 @@ class _CloudSyncActivationCardState
   }
 
   Future<void> _requestPin() async {
+    final loc = AppLocalizations.of(context)!;
     final email = _emailController.text.trim();
     if (email.isEmpty) return;
 
@@ -1117,11 +1142,12 @@ class _CloudSyncActivationCardState
       setState(() => _pinSent = true);
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Verification PIN sent.')));
+      ).showSnackBar(SnackBar(content: Text(loc.settingsVerificationPinSent)));
     }
   }
 
   Future<void> _verifyPin() async {
+    final loc = AppLocalizations.of(context)!;
     final email = _emailController.text.trim();
     final pin = _pinController.text.trim();
     if (email.isEmpty || pin.isEmpty) return;
@@ -1137,12 +1163,13 @@ class _CloudSyncActivationCardState
       });
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Cloud sync activated.')));
+      ).showSnackBar(SnackBar(content: Text(loc.settingsCloudSyncActivated)));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final authState = ref.watch(authProvider);
     final user = widget.user;
     final isVerified = user?.emailVerifiedAt != null;
@@ -1166,7 +1193,9 @@ class _CloudSyncActivationCardState
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    isVerified ? 'Cloud sync active' : 'Activate cloud sync',
+                    isVerified
+                        ? loc.settingsCloudSyncActiveTitle
+                        : loc.settingsActivateCloudSyncTitle,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
@@ -1175,8 +1204,10 @@ class _CloudSyncActivationCardState
             const SizedBox(height: 8),
             Text(
               isVerified
-                  ? 'Progress recovery is linked to ${user?.email ?? 'your verified email'}.'
-                  : 'Add a verified email when you want recoverable cloud progress and password reset support.',
+                  ? loc.settingsCloudSyncLinkedToEmail(
+                      user?.email ?? loc.settingsNoVerifiedEmailYet,
+                    )
+                  : loc.settingsCloudSyncInactiveBody,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: AppTheme.warmGray.withValues(alpha: 0.9),
               ),
@@ -1189,8 +1220,8 @@ class _CloudSyncActivationCardState
                 textInputAction: _pinSent
                     ? TextInputAction.next
                     : TextInputAction.done,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
+                decoration: InputDecoration(
+                  labelText: loc.authEmailLabel,
                   prefixIcon: Icon(Icons.email_outlined),
                 ),
                 onSubmitted: (_) {
@@ -1203,8 +1234,8 @@ class _CloudSyncActivationCardState
                   controller: _pinController,
                   keyboardType: TextInputType.number,
                   textInputAction: TextInputAction.done,
-                  decoration: const InputDecoration(
-                    labelText: '6-digit PIN',
+                  decoration: InputDecoration(
+                    labelText: loc.authPinLabel,
                     prefixIcon: Icon(Icons.pin_outlined),
                   ),
                   onSubmitted: (_) => _verifyPin(),
@@ -1236,7 +1267,9 @@ class _CloudSyncActivationCardState
                                   ? Icons.verified_rounded
                                   : Icons.mark_email_read_rounded,
                             ),
-                      label: Text(_pinSent ? 'Verify PIN' : 'Send PIN'),
+                      label: Text(
+                        _pinSent ? loc.authVerifyTitle : loc.authSendPinButton,
+                      ),
                     ),
                   ),
                   if (_pinSent) ...[
@@ -1248,7 +1281,7 @@ class _CloudSyncActivationCardState
                               _pinSent = false;
                               _pinController.clear();
                             }),
-                      child: const Text('Change email'),
+                      child: Text(loc.settingsChangeEmail),
                     ),
                   ],
                 ],
@@ -1268,12 +1301,20 @@ class _DailyReminderCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final reminderAsync = ref.watch(reminderSettingsForUserProvider(userId));
     final actions = ref.read(notificationActionsProvider);
+    final reminderService = ref.read(localReminderServiceProvider);
+    final supportsScheduling = reminderService.supportsScheduling;
 
     return reminderAsync.when(
       data: (settings) {
         final hasDenied = settings.any((s) => s.isPermissionDenied);
+        final hasSettings = settings.isNotEmpty;
+        final hasEnabledSetting = settings.any((s) => s.isEnabled);
+        final bodyText = hasSettings
+            ? l10n.settingsDailyRemindersEnabled
+            : l10n.settingsDailyRemindersEmpty;
 
         return Card(
           child: Padding(
@@ -1290,21 +1331,35 @@ class _DailyReminderCard extends ConsumerWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Daily reminders',
+                        l10n.settingsDailyRemindersTitle,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),
+                    if (hasSettings)
+                      _StatusPill(
+                        label: hasEnabledSetting
+                            ? l10n.settingsStatusOn
+                            : l10n.settingsStatusOff,
+                        color: hasEnabledSetting
+                            ? AppTheme.completionGreen
+                            : AppTheme.warmGray,
+                      ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  settings.isEmpty
-                      ? 'Enable daily reminders to return to your habits.'
-                      : 'Hable will remind you each day at these times.',
+                  bodyText,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppTheme.warmGray.withValues(alpha: 0.9),
                   ),
                 ),
+                if (!supportsScheduling) ...[
+                  const SizedBox(height: 12),
+                  _ReminderNotice(
+                    icon: Icons.phone_iphone_rounded,
+                    text: l10n.settingsReminderUnsupported,
+                  ),
+                ],
                 if (hasDenied)
                   Padding(
                     padding: const EdgeInsets.only(top: 12.0),
@@ -1312,7 +1367,7 @@ class _DailyReminderCard extends ConsumerWidget {
                       onPressed: () =>
                           ref.read(localReminderServiceProvider).openSettings(),
                       icon: const Icon(Icons.settings),
-                      label: const Text('Enable in System Settings'),
+                      label: Text(l10n.settingsEnableInSystemSettings),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Theme.of(context).colorScheme.error,
                         side: BorderSide(
@@ -1322,81 +1377,131 @@ class _DailyReminderCard extends ConsumerWidget {
                     ),
                   ),
                 const SizedBox(height: 16),
-                if (settings.isNotEmpty) ...[
+                if (hasSettings) ...[
                   for (final setting in settings)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8.0),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () async {
-                                final initial = TimeOfDay(
-                                  hour: setting.hour,
-                                  minute: setting.minute,
-                                );
-                                final picked = await showTimePicker(
-                                  context: context,
-                                  initialTime: initial,
-                                );
-                                if (picked == null || !context.mounted) return;
-                                await actions.updateDailyReminder(
-                                  setting: setting,
-                                  enabled: setting.isEnabled,
-                                  hour: picked.hour,
-                                  minute: picked.minute,
-                                );
-                              },
-                              icon: const Icon(Icons.schedule_rounded),
-                              label: Text(
-                                _formatReminderTime(
-                                  setting.hour,
-                                  setting.minute,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest
+                              .withValues(alpha: 0.45),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.outlineVariant
+                                .withValues(alpha: 0.65),
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: supportsScheduling
+                                      ? () async {
+                                          final initial = TimeOfDay(
+                                            hour: setting.hour,
+                                            minute: setting.minute,
+                                          );
+                                          final picked = await showTimePicker(
+                                            context: context,
+                                            initialTime: initial,
+                                          );
+                                          if (picked == null ||
+                                              !context.mounted) {
+                                            return;
+                                          }
+                                          await actions.updateDailyReminder(
+                                            setting: setting,
+                                            enabled: setting.isEnabled,
+                                            hour: picked.hour,
+                                            minute: picked.minute,
+                                          );
+                                        }
+                                      : null,
+                                  icon: const Icon(Icons.schedule_rounded),
+                                  label: Text(
+                                    _formatReminderTime(
+                                      context,
+                                      setting.hour,
+                                      setting.minute,
+                                    ),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    alignment: Alignment.centerLeft,
+                                  ),
                                 ),
                               ),
-                              style: OutlinedButton.styleFrom(
-                                alignment: Alignment.centerLeft,
+                              const SizedBox(width: 8),
+                              Switch.adaptive(
+                                value: setting.isEnabled,
+                                onChanged: supportsScheduling
+                                    ? (value) async {
+                                        await actions.updateDailyReminder(
+                                          setting: setting,
+                                          enabled: value,
+                                          hour: setting.hour,
+                                          minute: setting.minute,
+                                        );
+                                      }
+                                    : null,
                               ),
-                            ),
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline),
+                                tooltip: l10n.settingsRemoveReminderTooltip,
+                                onPressed: supportsScheduling
+                                    ? () async {
+                                        await actions.removeDailyReminder(
+                                          setting,
+                                        );
+                                      }
+                                    : null,
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 8),
-                          Switch(
-                            value: setting.isEnabled,
-                            onChanged: (value) async {
-                              await actions.updateDailyReminder(
-                                setting: setting,
-                                enabled: value,
-                                hour: setting.hour,
-                                minute: setting.minute,
-                              );
-                            },
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete_outline),
-                            onPressed: () async {
-                              await actions.removeDailyReminder(setting);
-                            },
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   const SizedBox(height: 8),
                 ],
                 FilledButton.icon(
-                  onPressed: () async {
-                    final picked = await showTimePicker(
-                      context: context,
-                      initialTime: const TimeOfDay(hour: 20, minute: 0),
-                    );
-                    if (picked == null || !context.mounted) return;
-                    await actions.addDailyReminder(
-                      userId: userId,
-                      hour: picked.hour,
-                      minute: picked.minute,
-                    );
-                  },
+                  onPressed: supportsScheduling
+                      ? () async {
+                          final picked = await showTimePicker(
+                            context: context,
+                            initialTime: const TimeOfDay(hour: 20, minute: 0),
+                          );
+                          if (picked == null || !context.mounted) return;
+                          final result = await actions.addDailyReminder(
+                            userId: userId,
+                            hour: picked.hour,
+                            minute: picked.minute,
+                          );
+                          if (!context.mounted) return;
+                          if (result == ReminderUpdateResult.denied) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(l10n.settingsRemindersBlocked),
+                              ),
+                            );
+                          } else if (result ==
+                              ReminderUpdateResult.unsupported) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(l10n.settingsReminderUnsupported),
+                              ),
+                            );
+                          }
+                        }
+                      : null,
                   icon: const Icon(Icons.add),
-                  label: const Text('Add Time'),
+                  label: Text(
+                    hasSettings
+                        ? l10n.settingsAddTime
+                        : l10n.settingsEnableDailyReminder,
+                  ),
                 ),
               ],
             ),
@@ -1408,18 +1513,77 @@ class _DailyReminderCard extends ConsumerWidget {
         AppError.fromAny(
           e,
           fallbackCode: 'profile_reminders_load_failed',
-          fallbackMessage: 'Hable could not load your reminders right now.',
+          fallbackMessage: l10n.settingsRemindersLoadFailed,
           fallbackKind: AppErrorKind.inline,
         ).message,
       ),
     );
   }
 
-  String _formatReminderTime(int hour, int minute) {
-    final period = hour >= 12 ? 'PM' : 'AM';
-    final hour12 = hour % 12 == 0 ? 12 : hour % 12;
-    final minuteText = minute.toString().padLeft(2, '0');
-    return '$hour12:$minuteText $period';
+  String _formatReminderTime(BuildContext context, int hour, int minute) {
+    final localizations = MaterialLocalizations.of(context);
+    return localizations.formatTimeOfDay(TimeOfDay(hour: hour, minute: minute));
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _StatusPill({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.2,
+        ),
+      ),
+    );
+  }
+}
+
+class _ReminderNotice extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _ReminderNotice({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: AppTheme.warmGray),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppTheme.warmGray),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -1434,7 +1598,9 @@ class _FriendHabitListTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final title = habitData['title'] as String? ?? 'Habit';
+    final loc = AppLocalizations.of(context)!;
+    final title =
+        habitData['title'] as String? ?? loc.profileHabitFallbackTitle;
     final description = habitData['description'] as String?;
     final habitId = habitData['id']?.toString();
     final duration = habitData['target_duration'] as int? ?? 10;
@@ -1446,13 +1612,13 @@ class _FriendHabitListTile extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
       child: HabitCardShell(
         semanticsLabel:
-            '$title.${description == null || description.trim().isEmpty ? '' : ' ${description.trim()}.'} $duration day challenge on friend profile. Encourage or follow this habit.',
+            '$title.${description == null || description.trim().isEmpty ? '' : ' ${description.trim()}.'} ${loc.profileDayChallenge(duration)}. ${loc.profileFriendHabitBody}',
         title: title,
         subtitle: description,
         minHeight: 220,
         centerPadding: const EdgeInsets.fromLTRB(20, 56, 20, 24),
         topTrailing: _ProfileHabitPill(
-          label: '$duration days',
+          label: loc.profileDaysLabel(duration),
           color: habitColor,
         ),
         centerChild: Column(
@@ -1477,12 +1643,12 @@ class _FriendHabitListTile extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              '$duration day challenge',
+              loc.profileDayChallenge(duration),
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 6),
             Text(
-              'Encourage your friend or follow the same habit yourself.',
+              loc.profileFriendHabitBody,
               textAlign: TextAlign.center,
               style: Theme.of(
                 context,
@@ -1511,7 +1677,9 @@ class _FriendHabitListTile extends ConsumerWidget {
                           if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Encouragement queued for $title.'),
+                              content: Text(
+                                loc.profileEncouragementQueued(title),
+                              ),
                               behavior: SnackBarBehavior.floating,
                               backgroundColor: habitColor.withValues(
                                 alpha: 0.9,
@@ -1521,7 +1689,7 @@ class _FriendHabitListTile extends ConsumerWidget {
                           );
                         },
                   icon: const Icon(Icons.back_hand_rounded, size: 16),
-                  label: const Text('Encourage'),
+                  label: Text(loc.profileEncourage),
                   style: FilledButton.styleFrom(backgroundColor: habitColor),
                 ),
                 OutlinedButton.icon(
@@ -1529,7 +1697,7 @@ class _FriendHabitListTile extends ConsumerWidget {
                     HabitFormSheet.show(context, prefilledTitle: title);
                   },
                   icon: const Icon(Icons.copy_rounded, size: 16),
-                  label: const Text('Follow'),
+                  label: Text(loc.profileFollow),
                   style: OutlinedButton.styleFrom(foregroundColor: habitColor),
                 ),
               ],
@@ -1541,20 +1709,20 @@ class _FriendHabitListTile extends ConsumerWidget {
   }
 }
 
-String _achievementLabel(String achievementId) {
+String _achievementLabel(AppLocalizations loc, String achievementId) {
   switch (achievementId) {
     case 'first_check_in':
-      return 'First check-in';
+      return loc.profileAchievementFirstCheckIn;
     case '10_streak':
-      return '10-day streak';
+      return loc.profileAchievementTenStreak;
     case '100_streak':
-      return '100-day streak';
+      return loc.profileAchievementHundredStreak;
     case '1000_streak':
-      return '1000-day streak';
+      return loc.profileAchievementThousandStreak;
     case 'first_nudge':
-      return 'First nudge';
+      return loc.profileAchievementFirstNudge;
     case 'first_supporter':
-      return 'First supporter';
+      return loc.profileAchievementFirstSupporter;
     default:
       return achievementId
           .split('_')
@@ -1634,6 +1802,7 @@ class _HabitListTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final loc = AppLocalizations.of(context)!;
     final partnersAsync = ref.watch(habitPartnersProvider(habit.habitId));
     final role = partnersAsync.when(
       data: _viewerRoleForPartners,
@@ -1655,7 +1824,7 @@ class _HabitListTile extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
         child: HabitCardShell(
           semanticsLabel:
-              '${habit.title}.${description == null || description.trim().isEmpty ? '' : ' ${description.trim()}.'} ${habit.currentDuration} days left. ${_roleLabel(role)} habit on profile.',
+              '${habit.title}.${description == null || description.trim().isEmpty ? '' : ' ${description.trim()}.'} ${loc.profileDaysLeft(habit.currentDuration)}. ${_roleLabel(loc, role)}.',
           title: habit.title,
           subtitle: description,
           minHeight: 236,
@@ -1691,12 +1860,12 @@ class _HabitListTile extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                '${habit.currentDuration} days left',
+                loc.profileDaysLeft(habit.currentDuration),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 6),
               Text(
-                _roleLabel(role),
+                _roleLabel(loc, role),
                 style: Theme.of(
                   context,
                 ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),
@@ -1726,11 +1895,13 @@ class _HabitListTile extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _ProfileHabitPill(
-                  label: hasPartners ? 'Shared habit' : 'Solo habit',
+                  label: hasPartners
+                      ? loc.profileSharedHabit
+                      : loc.profileSoloHabit,
                   color: habitColor,
                 ),
                 Text(
-                  'Active',
+                  loc.profileSectionActive,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: habitColor,
                     fontWeight: FontWeight.w700,
@@ -1765,8 +1936,8 @@ class _HabitListTile extends ConsumerWidget {
         children: [
           Text(
             isActive
-                ? '${habit.currentDuration} days left · ${role.name}'
-                : '${habit.targetDuration} day challenge · ${role.name}',
+                ? '${loc.profileDaysLeft(habit.currentDuration)} · ${_roleLabel(loc, role)}'
+                : '${loc.profileDayChallenge(habit.targetDuration)} · ${_roleLabel(loc, role)}',
           ),
           const SizedBox(height: 6),
           partnersAsync.when(
@@ -1781,7 +1952,7 @@ class _HabitListTile extends ConsumerWidget {
       ),
       trailing: canEdit
           ? PopupMenuButton<String>(
-              tooltip: 'Open habit actions',
+              tooltip: loc.profileOpenHabitActions,
               icon: const Icon(Icons.more_horiz_rounded),
               onSelected: (value) async {
                 final actions = ref.read(habitActionsProvider);
@@ -1799,20 +1970,18 @@ class _HabitListTile extends ConsumerWidget {
                     final confirmed = await showDialog<bool>(
                       context: context,
                       builder: (dialogContext) => AlertDialog(
-                        title: const Text('Delete habit?'),
-                        content: Text(
-                          'This will permanently delete "${habit.title}" and remove it from synced devices.',
-                        ),
+                        title: Text(loc.profileDeleteHabitTitle),
+                        content: Text(loc.profileDeleteHabitBody(habit.title)),
                         actions: [
                           TextButton(
                             onPressed: () =>
                                 Navigator.of(dialogContext).pop(false),
-                            child: const Text('Cancel'),
+                            child: Text(loc.settingsCancel),
                           ),
                           TextButton(
                             onPressed: () =>
                                 Navigator.of(dialogContext).pop(true),
-                            child: const Text('Delete'),
+                            child: Text(loc.commonDelete),
                           ),
                         ],
                       ),
@@ -1834,33 +2003,33 @@ class _HabitListTile extends ConsumerWidget {
               },
               itemBuilder: (context) => isActive
                   ? [
-                      const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                      const PopupMenuItem(
+                      PopupMenuItem(value: 'edit', child: Text(loc.commonEdit)),
+                      PopupMenuItem(
                         value: 'archive',
-                        child: Text('Archive'),
+                        child: Text(loc.profileArchive),
                       ),
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'delete',
                         child: Text(
-                          'Delete',
+                          loc.commonDelete,
                           style: TextStyle(color: AppTheme.overdueRose),
                         ),
                       ),
                     ]
                   : [
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'history',
-                        child: Text('View History'),
+                        child: Text(loc.profileViewHistory),
                       ),
                       if (!hasPartners)
-                        const PopupMenuItem(
+                        PopupMenuItem(
                           value: 'rerun',
-                          child: Text('Rerun'),
+                          child: Text(loc.profileRerun),
                         ),
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'delete',
                         child: Text(
-                          'Delete',
+                          loc.commonDelete,
                           style: TextStyle(color: AppTheme.overdueRose),
                         ),
                       ),
@@ -1877,8 +2046,9 @@ class _HabitListTile extends ConsumerWidget {
     required bool canEdit,
     required bool hasPartners,
   }) {
+    final loc = AppLocalizations.of(context)!;
     return PopupMenuButton<String>(
-      tooltip: 'Open habit actions',
+      tooltip: loc.profileOpenHabitActions,
       icon: const Icon(Icons.more_horiz_rounded),
       onSelected: (value) async {
         final actions = ref.read(habitActionsProvider);
@@ -1896,18 +2066,16 @@ class _HabitListTile extends ConsumerWidget {
             final confirmed = await showDialog<bool>(
               context: context,
               builder: (dialogContext) => AlertDialog(
-                title: const Text('Delete habit?'),
-                content: Text(
-                  'This will permanently delete "${habit.title}" and remove it from synced devices.',
-                ),
+                title: Text(loc.profileDeleteHabitTitle),
+                content: Text(loc.profileDeleteHabitBody(habit.title)),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.of(dialogContext).pop(false),
-                    child: const Text('Cancel'),
+                    child: Text(loc.settingsCancel),
                   ),
                   TextButton(
                     onPressed: () => Navigator.of(dialogContext).pop(true),
-                    child: const Text('Delete'),
+                    child: Text(loc.commonDelete),
                   ),
                 ],
               ),
@@ -1929,27 +2097,27 @@ class _HabitListTile extends ConsumerWidget {
       },
       itemBuilder: (context) => isActive
           ? [
-              const PopupMenuItem(value: 'edit', child: Text('Edit')),
-              const PopupMenuItem(value: 'archive', child: Text('Archive')),
-              const PopupMenuItem(
+              PopupMenuItem(value: 'edit', child: Text(loc.commonEdit)),
+              PopupMenuItem(value: 'archive', child: Text(loc.profileArchive)),
+              PopupMenuItem(
                 value: 'delete',
                 child: Text(
-                  'Delete',
+                  loc.commonDelete,
                   style: TextStyle(color: AppTheme.overdueRose),
                 ),
               ),
             ]
           : [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'history',
-                child: Text('View History'),
+                child: Text(loc.profileViewHistory),
               ),
               if (!hasPartners)
-                const PopupMenuItem(value: 'rerun', child: Text('Rerun')),
-              const PopupMenuItem(
+                PopupMenuItem(value: 'rerun', child: Text(loc.profileRerun)),
+              PopupMenuItem(
                 value: 'delete',
                 child: Text(
-                  'Delete',
+                  loc.commonDelete,
                   style: TextStyle(color: AppTheme.overdueRose),
                 ),
               ),
@@ -2002,14 +2170,14 @@ class _ProfileHabitPill extends StatelessWidget {
   }
 }
 
-String _roleLabel(PartnershipRole role) {
+String _roleLabel(AppLocalizations loc, PartnershipRole role) {
   switch (role) {
     case PartnershipRole.owner:
-      return 'Owner view';
+      return loc.profileRoleOwnerView;
     case PartnershipRole.partner:
-      return 'Partner view';
+      return loc.profileRolePartnerView;
     case PartnershipRole.supporter:
-      return 'Supporter view';
+      return loc.profileRoleSupporterView;
   }
 }
 
@@ -2031,6 +2199,7 @@ class _HabitHistorySheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final loc = AppLocalizations.of(context)!;
     final logsAsync = ref.watch(habitLogsProvider(habit.habitId));
 
     return SafeArea(
@@ -2043,7 +2212,7 @@ class _HabitHistorySheet extends ConsumerWidget {
             Text(habit.title, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 4),
             Text(
-              'Archived challenge history and per-check-in awards',
+              loc.profileHistoryIntro,
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(color: AppTheme.warmGray),
@@ -2053,7 +2222,7 @@ class _HabitHistorySheet extends ConsumerWidget {
               child: logsAsync.when(
                 data: (logs) {
                   if (logs.isEmpty) {
-                    return const Text('No history recorded yet.');
+                    return Text(loc.profileNoHistoryYet);
                   }
 
                   return ListView.separated(
@@ -2064,8 +2233,10 @@ class _HabitHistorySheet extends ConsumerWidget {
                       final log = logs[index];
                       return ListTile(
                         contentPadding: EdgeInsets.zero,
-                        title: Text(_historyLabel(log)),
-                        subtitle: Text(_formatHistoryDate(log.actionDate)),
+                        title: Text(_historyLabel(loc, log)),
+                        subtitle: Text(
+                          _formatHistoryDate(context, log.actionDate),
+                        ),
                         trailing: log.pointsAwarded > 0
                             ? Container(
                                 padding: const EdgeInsets.symmetric(
@@ -2079,7 +2250,7 @@ class _HabitHistorySheet extends ConsumerWidget {
                                   borderRadius: BorderRadius.circular(999),
                                 ),
                                 child: Text(
-                                  '+${log.pointsAwarded} pts',
+                                  loc.profilePointsAwarded(log.pointsAwarded),
                                   style: Theme.of(context).textTheme.labelMedium
                                       ?.copyWith(
                                         color: AppTheme.sageGreen,
@@ -2094,7 +2265,7 @@ class _HabitHistorySheet extends ConsumerWidget {
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (_, _) => const Text('Unable to load habit history.'),
+                error: (_, _) => Text(loc.profileUnableLoadHistory),
               ),
             ),
           ],
@@ -2103,32 +2274,18 @@ class _HabitHistorySheet extends ConsumerWidget {
     );
   }
 
-  String _historyLabel(Log log) {
+  String _historyLabel(AppLocalizations loc, Log log) {
     if (log.status == LogStatus.completed) {
-      return 'Completed';
+      return loc.profileHistoryCompleted;
     }
     final note = log.journalNote?.trim();
-    return note?.isNotEmpty == true ? 'Skipped: $note' : 'Skipped';
+    return note?.isNotEmpty == true
+        ? loc.profileHistorySkippedWithNote(note!)
+        : loc.profileHistorySkipped;
   }
 
-  String _formatHistoryDate(DateTime date) {
-    const months = <String>[
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    final month = months[date.month - 1];
-    final day = date.day.toString().padLeft(2, '0');
-    return '$month $day, ${date.year}';
+  String _formatHistoryDate(BuildContext context, DateTime date) {
+    return MaterialLocalizations.of(context).formatMediumDate(date);
   }
 }
 
@@ -2163,6 +2320,7 @@ class _CalendarSubscriptionCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final loc = AppLocalizations.of(context)!;
     final calendarState = ref.watch(calendarFeedProvider);
 
     // Load feed URL on first build
@@ -2198,7 +2356,7 @@ class _CalendarSubscriptionCard extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            calendarState.error ?? 'Unknown error',
+            calendarState.error ?? loc.profileCalendarUnknownError,
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(color: AppTheme.overdueRose),
@@ -2209,7 +2367,7 @@ class _CalendarSubscriptionCard extends ConsumerWidget {
               ref.read(calendarFeedProvider.notifier).fetchCalendarFeedUrl();
             },
             icon: const Icon(Icons.refresh, size: 18),
-            label: const Text('Retry'),
+            label: Text(loc.commonRetry),
           ),
         ],
       );
@@ -2221,7 +2379,7 @@ class _CalendarSubscriptionCard extends ConsumerWidget {
           ref.read(calendarFeedProvider.notifier).fetchCalendarFeedUrl();
         },
         icon: const Icon(Icons.link, size: 18),
-        label: const Text('Generate Subscription Link'),
+        label: Text(loc.profileCalendarGenerateLink),
       );
     }
 
@@ -2242,7 +2400,7 @@ class _CalendarSubscriptionCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Subscription URL',
+                      loc.profileCalendarSubscriptionUrl,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: AppTheme.warmGray.withValues(alpha: 0.7),
                       ),
@@ -2268,13 +2426,13 @@ class _CalendarSubscriptionCard extends ConsumerWidget {
                     ClipboardData(text: calendarState.feedUrl!),
                   );
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Calendar feed URL copied to clipboard'),
+                    SnackBar(
+                      content: Text(loc.profileCalendarCopied),
                       duration: Duration(seconds: 2),
                     ),
                   );
                 },
-                tooltip: 'Copy subscription URL',
+                tooltip: loc.profileCalendarCopyTooltip,
               ),
             ],
           ),
@@ -2284,7 +2442,7 @@ class _CalendarSubscriptionCard extends ConsumerWidget {
           children: [
             Expanded(
               child: Text(
-                'Paste this URL into your native calendar app to subscribe',
+                loc.profileCalendarPasteHint,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppTheme.warmGray.withValues(alpha: 0.7),
                 ),
@@ -2300,11 +2458,11 @@ class _CalendarSubscriptionCard extends ConsumerWidget {
                   ref.read(calendarFeedProvider.notifier).rotateCalendarToken();
                 },
           icon: const Icon(Icons.refresh_rounded, size: 18),
-          label: const Text('Rotate Token'),
+          label: Text(loc.profileCalendarRotateToken),
         ),
         const SizedBox(height: 8),
         Text(
-          'Rotating the token will invalidate the old subscription link',
+          loc.profileCalendarRotateHint,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: AppTheme.warmGray.withValues(alpha: 0.6),
             fontStyle: FontStyle.italic,

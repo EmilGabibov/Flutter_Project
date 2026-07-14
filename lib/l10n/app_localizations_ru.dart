@@ -535,4 +535,720 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get habitFormFriendsLoadFailed =>
       'Hable could not load your friend list right now.';
+
+  @override
+  String get homeCreateHabitSemantics => 'Create a new habit';
+
+  @override
+  String get homeCreateHabitCta => 'Habit';
+
+  @override
+  String get homeLoadFailed =>
+      'Hable could not load today\'s habits right now.';
+
+  @override
+  String get homeFriendFallback => 'Friend';
+
+  @override
+  String get homeOpenDashboard => 'Open dashboard';
+
+  @override
+  String get homeOpenNotifications => 'Open notifications';
+
+  @override
+  String get homeNoHabits => 'No active habits yet.\nStart one from Home.';
+
+  @override
+  String get homeAddHabit => 'Add habit';
+
+  @override
+  String get homeGreetingMorning => 'Good morning';
+
+  @override
+  String get homeGreetingAfternoon => 'Good afternoon';
+
+  @override
+  String get homeGreetingEvening => 'Good evening';
+
+  @override
+  String get homeSuggestedHabits => 'Suggested Habits';
+
+  @override
+  String get profileBack => 'Back';
+
+  @override
+  String get profileTitle => 'Profile';
+
+  @override
+  String get profileOpenSettings => 'Open settings';
+
+  @override
+  String get profileUserFallback => 'User';
+
+  @override
+  String get profileUsernameFallback => 'user';
+
+  @override
+  String get profileLevelFallback => 'Newbie';
+
+  @override
+  String profileLifetimePoints(int points) {
+    return '$points lifetime pts';
+  }
+
+  @override
+  String get profileLifetimeScoreHint =>
+      'Lifetime score comes from backend sync. Journey and history show per-check-in awards.';
+
+  @override
+  String get profileTrophyRoomTab => 'Trophy Room';
+
+  @override
+  String get profileJourneyTab => 'Journey';
+
+  @override
+  String get profileAchievementsTitle => 'Achievements';
+
+  @override
+  String get profileFirstBadgeHint =>
+      'Complete a habit to earn your first badge!';
+
+  @override
+  String get profileHabitDistributionTitle => 'Habit Distribution';
+
+  @override
+  String get profileNoData => 'No data yet';
+
+  @override
+  String get profileCompletedLegend => 'Completed';
+
+  @override
+  String get profileSkippedLegend => 'Skipped';
+
+  @override
+  String get profileOverdueLegend => 'Overdue';
+
+  @override
+  String get profileThirtyDayPointsTitle => '30-Day Points Earned';
+
+  @override
+  String get profileThirtyDayPointsHint =>
+      'Per-check-in awards from local history. Lifetime score updates separately from daily sync.';
+
+  @override
+  String get profileCalendarSubscriptionTitle => 'Calendar Subscription';
+
+  @override
+  String get profileCalendarSubscriptionBody =>
+      'Add your habits to your native calendar app';
+
+  @override
+  String get profileManageHabitsTitle => 'Manage Habits';
+
+  @override
+  String get profileAddNew => 'Add New';
+
+  @override
+  String get profileSectionActive => 'Active';
+
+  @override
+  String get profileSectionHallOfFame => 'Hall of Fame';
+
+  @override
+  String get profileSectionArchivedHistory => 'Archived history';
+
+  @override
+  String get profileFriendProfileTitle => 'Friend Profile';
+
+  @override
+  String profileFriendLevel(String level) {
+    return '$level level';
+  }
+
+  @override
+  String get profileActiveHabitsTitle => 'Active Habits';
+
+  @override
+  String get profileNoActiveHabits => 'No active habits.';
+
+  @override
+  String get profileFriendLoadFailed => 'Failed to load friend profile.';
+
+  @override
+  String get dashboardTitle => 'Habit Dashboard';
+
+  @override
+  String get dashboardAchievementUnlocked => 'You unlocked a new badge!';
+
+  @override
+  String get dashboardLoadFailed =>
+      'Hable could not load this habit dashboard right now.';
+
+  @override
+  String get dashboardEmptyState =>
+      'No active habits yet. Create one from Home to see it here.';
+
+  @override
+  String get dashboardSummaryTitle => 'Dashboard Summary';
+
+  @override
+  String get dashboardActiveHabitsLabel => 'Active habits';
+
+  @override
+  String get dashboardChallengeHabitsLabel => 'Challenge habits';
+
+  @override
+  String get dashboardContinuousHabitsLabel => 'Continuous habits';
+
+  @override
+  String get dashboardQuoteOfDayTitle => 'Quote of the day';
+
+  @override
+  String get dashboardQuoteLoading => 'Loading quote...';
+
+  @override
+  String get dashboardQuoteFallback =>
+      'Keep going. The dashboard is here when you need the full field view.';
+
+  @override
+  String get notificationTitle => 'Notifications';
+
+  @override
+  String get notificationMarkAllRead => 'Mark all read';
+
+  @override
+  String get notificationEmptyTitle => 'No notifications yet';
+
+  @override
+  String get notificationEmptyBody =>
+      'Friend requests, invites, nudges, and reminder updates will appear here.';
+
+  @override
+  String get notificationToday => 'Today';
+
+  @override
+  String get notificationYesterday => 'Yesterday';
+
+  @override
+  String get notificationOlder => 'Older';
+
+  @override
+  String get notificationLoadFailed =>
+      'Hable could not load your notifications right now.';
+
+  @override
+  String get notificationJustNow => 'Just now';
+
+  @override
+  String notificationMinutesAgo(int minutes) {
+    return '${minutes}m ago';
+  }
+
+  @override
+  String notificationHoursAgo(int hours) {
+    return '${hours}h ago';
+  }
+
+  @override
+  String notificationDaysAgo(int days) {
+    return '${days}d ago';
+  }
+
+  @override
+  String get settingsSessionTitle => 'Session';
+
+  @override
+  String get settingsSessionBody =>
+      'Sign out of this device. Local reminder scheduling is canceled for this user.';
+
+  @override
+  String get settingsRecoverTitle => 'Recover This Device';
+
+  @override
+  String get settingsRecoverBody =>
+      'This clears local Hable data on this device and sends you back to login. Use it if the app is stuck or showing old cached state.';
+
+  @override
+  String get settingsCancel => 'Cancel';
+
+  @override
+  String get settingsClearAndSignInAgain => 'Clear and Sign In Again';
+
+  @override
+  String get settingsRecoverAction => 'Update / Recover App';
+
+  @override
+  String get settingsSignOut => 'Sign out';
+
+  @override
+  String get commonAccept => 'Accept';
+
+  @override
+  String get commonDecline => 'Decline';
+
+  @override
+  String get commonEdit => 'Edit';
+
+  @override
+  String get commonDelete => 'Delete';
+
+  @override
+  String get commonRemove => 'Remove';
+
+  @override
+  String get commonRetry => 'Retry';
+
+  @override
+  String get commonYou => 'You';
+
+  @override
+  String get socialActivityUnread => 'Unread';
+
+  @override
+  String get socialActivityEarlier => 'Earlier';
+
+  @override
+  String get socialSearchFailed =>
+      'Hable could not search for friends just now. Please try again.';
+
+  @override
+  String get socialFriendRequestSendFailed =>
+      'Hable could not send that friend request just now.';
+
+  @override
+  String get socialFriendRequestAcceptFailed =>
+      'Hable could not accept that request right now.';
+
+  @override
+  String get socialFriendRequestDeclineFailed =>
+      'Hable could not decline that request right now.';
+
+  @override
+  String get socialFriendRevokeFailed =>
+      'Hable could not update that friendship right now.';
+
+  @override
+  String socialFriendRequestAlreadyFriends(String username) {
+    return 'You are already friends with $username.';
+  }
+
+  @override
+  String socialFriendRequestIncomingExists(String username) {
+    return '$username already sent you a request. Check Requests.';
+  }
+
+  @override
+  String socialFriendRequestSent(String username) {
+    return 'Friend request sent to $username.';
+  }
+
+  @override
+  String socialFriendAccepted(String username) {
+    return 'You are now friends with $username!';
+  }
+
+  @override
+  String socialFriendDeclined(String username) {
+    return 'Declined request from $username.';
+  }
+
+  @override
+  String socialFriendRemoved(String username) {
+    return 'Removed $username from friends.';
+  }
+
+  @override
+  String get socialFriendActionsUnfriend => 'Unfriend';
+
+  @override
+  String get socialFriendActionsRemoveTitle => 'Remove friend?';
+
+  @override
+  String socialFriendActionsRemoveBody(String username) {
+    return 'Remove $username from your friends list?';
+  }
+
+  @override
+  String get socialNoFriendsTitle => 'No friends yet';
+
+  @override
+  String get socialNoFriendsBody =>
+      'Tap the search icon above to find and add friends.';
+
+  @override
+  String get socialFriendLongPressActions => 'Long-press for actions';
+
+  @override
+  String get socialFriendsLoadFailed =>
+      'Hable could not load your friends right now.';
+
+  @override
+  String get socialNotSignedIn => 'Not signed in';
+
+  @override
+  String get socialNoActivityTitle => 'No activity yet';
+
+  @override
+  String get socialNoActivityBody =>
+      'Nudges, friend requests, invites, and messages from friends will appear here.';
+
+  @override
+  String get socialLeaderboardEmpty => 'No leaderboard scores yet.';
+
+  @override
+  String get socialLeaderboardNoValidScores =>
+      'No valid leaderboard scores found.';
+
+  @override
+  String get socialLeaderboardTitle => 'Friends Leaderboard';
+
+  @override
+  String get socialLeaderboardSubtitle =>
+      'Accepted friends ranked by lifetime score';
+
+  @override
+  String get socialLeaderboardScopeFriends => 'Friends';
+
+  @override
+  String get socialLeaderboardLoadTitle => 'Could not load leaderboard';
+
+  @override
+  String get socialLeaderboardLoadFailed =>
+      'Hable could not load the leaderboard right now.';
+
+  @override
+  String get socialFriendRequestsTitle => 'Friend Requests';
+
+  @override
+  String get socialFriendRequestIncomingSubtitle => 'Sent you a friend request';
+
+  @override
+  String get socialFindFriendsTitle => 'Find Friends';
+
+  @override
+  String get socialFindFriendsSearchLabel => 'Search username...';
+
+  @override
+  String get socialFindFriendsTypeMore =>
+      'Type at least 2 characters to search.';
+
+  @override
+  String get socialFindFriendsNoMatches => 'No matches found.';
+
+  @override
+  String get socialRelationshipAcceptedFriend => 'Accepted friend';
+
+  @override
+  String get socialRelationshipRequestSent => 'Request sent';
+
+  @override
+  String get socialRelationshipWaiting => 'Waiting for your response';
+
+  @override
+  String get socialRelationshipNotConnected => 'Not connected';
+
+  @override
+  String get socialChipFriends => 'Friends';
+
+  @override
+  String get socialChipRequested => 'Requested';
+
+  @override
+  String get socialChipRespondInFriends => 'Respond in Friends';
+
+  @override
+  String get socialSendFriendRequestTooltip => 'Send friend request';
+
+  @override
+  String habitCompletionProgressSemantics(int percent) {
+    return 'Completion progress $percent percent.';
+  }
+
+  @override
+  String get leaderboardRankingsTitle => 'Rankings';
+
+  @override
+  String leaderboardShowMore(int count) {
+    return 'Show $count more';
+  }
+
+  @override
+  String leaderboardShowingAll(int count) {
+    return 'Showing all $count';
+  }
+
+  @override
+  String get leaderboardYou => 'You';
+
+  @override
+  String get leaderboardUnknownUser => 'Unknown';
+
+  @override
+  String get leaderboardLifetime => 'lifetime';
+
+  @override
+  String get leaderboardLifetimeScoreByline => 'Lifetime score';
+
+  @override
+  String get settingsNoVerifiedEmailYet => 'No verified email yet';
+
+  @override
+  String get settingsCustomizeAvatar => 'Customize avatar';
+
+  @override
+  String get settingsMudFeelTitle => 'Mud feel';
+
+  @override
+  String get settingsMudFeelBody =>
+      'Tune hold resistance and haptic feedback on this device with bounded presets.';
+
+  @override
+  String get settingsMudPresetGentle => 'Gentle';
+
+  @override
+  String get settingsMudPresetStandard => 'Standard';
+
+  @override
+  String get settingsMudPresetIntense => 'Intense';
+
+  @override
+  String get settingsMudHapticsTitle => 'Mud haptics';
+
+  @override
+  String get settingsMudHapticsSoft =>
+      'Soft taps during hold and a light completion pulse.';
+
+  @override
+  String get settingsMudHapticsStandard =>
+      'Balanced hold taps and standard completion feedback.';
+
+  @override
+  String get settingsMudHapticsStrong =>
+      'Heavier completion feedback with denser hold taps.';
+
+  @override
+  String get settingsVerificationPinSent => 'Verification PIN sent.';
+
+  @override
+  String get settingsCloudSyncActivated => 'Cloud sync activated.';
+
+  @override
+  String get settingsCloudSyncActiveTitle => 'Cloud sync active';
+
+  @override
+  String get settingsActivateCloudSyncTitle => 'Activate cloud sync';
+
+  @override
+  String settingsCloudSyncLinkedToEmail(String email) {
+    return 'Progress recovery is linked to $email.';
+  }
+
+  @override
+  String get settingsCloudSyncInactiveBody =>
+      'Add a verified email when you want recoverable cloud progress and password reset support.';
+
+  @override
+  String get settingsChangeEmail => 'Change email';
+
+  @override
+  String get settingsDailyRemindersTitle => 'Daily reminders';
+
+  @override
+  String get settingsDailyRemindersEmpty =>
+      'Enable daily reminders to return to your habits.';
+
+  @override
+  String get settingsDailyRemindersEnabled =>
+      'Hable will remind you each day at these times.';
+
+  @override
+  String get settingsEnableInSystemSettings => 'Enable in System Settings';
+
+  @override
+  String get settingsAddTime => 'Add Time';
+
+  @override
+  String get settingsStatusActive => 'Active';
+
+  @override
+  String get settingsStatusSaved => 'Saved';
+
+  @override
+  String get settingsStatusOn => 'On';
+
+  @override
+  String get settingsStatusOff => 'Off';
+
+  @override
+  String get settingsReminderUnsupported =>
+      'Reminder scheduling is not available on this platform.';
+
+  @override
+  String get settingsRemindersBlocked =>
+      'Notifications are blocked. Enable them in System Settings.';
+
+  @override
+  String get settingsRemoveReminderTooltip => 'Remove reminder';
+
+  @override
+  String get settingsRemindersLoadFailed =>
+      'Hable could not load your reminders right now.';
+
+  @override
+  String get profileHabitFallbackTitle => 'Habit';
+
+  @override
+  String profileDaysLabel(int days) {
+    return '$days days';
+  }
+
+  @override
+  String profileDaysLeft(int days) {
+    return '$days days left';
+  }
+
+  @override
+  String profileDayChallenge(int days) {
+    return '$days day challenge';
+  }
+
+  @override
+  String get profileFriendHabitBody =>
+      'Encourage your friend or follow the same habit yourself.';
+
+  @override
+  String profileEncouragementQueued(String title) {
+    return 'Encouragement queued for $title.';
+  }
+
+  @override
+  String get profileEncourage => 'Encourage';
+
+  @override
+  String get profileFollow => 'Follow';
+
+  @override
+  String get profileAchievementFirstCheckIn => 'First check-in';
+
+  @override
+  String get profileAchievementTenStreak => '10-day streak';
+
+  @override
+  String get profileAchievementHundredStreak => '100-day streak';
+
+  @override
+  String get profileAchievementThousandStreak => '1000-day streak';
+
+  @override
+  String get profileAchievementFirstNudge => 'First nudge';
+
+  @override
+  String get profileAchievementFirstSupporter => 'First supporter';
+
+  @override
+  String get profileSharedHabit => 'Shared habit';
+
+  @override
+  String get profileSoloHabit => 'Solo habit';
+
+  @override
+  String get profileOpenHabitActions => 'Open habit actions';
+
+  @override
+  String get profileDeleteHabitTitle => 'Delete habit?';
+
+  @override
+  String profileDeleteHabitBody(String title) {
+    return 'This will permanently delete \"$title\" and remove it from synced devices.';
+  }
+
+  @override
+  String get profileArchive => 'Archive';
+
+  @override
+  String get profileViewHistory => 'View History';
+
+  @override
+  String get profileRerun => 'Rerun';
+
+  @override
+  String get profileRoleOwnerView => 'Owner view';
+
+  @override
+  String get profileRolePartnerView => 'Partner view';
+
+  @override
+  String get profileRoleSupporterView => 'Supporter view';
+
+  @override
+  String get profileHistoryIntro =>
+      'Archived challenge history and per-check-in awards';
+
+  @override
+  String get profileNoHistoryYet => 'No history recorded yet.';
+
+  @override
+  String profilePointsAwarded(int points) {
+    return '+$points pts';
+  }
+
+  @override
+  String get profileUnableLoadHistory => 'Unable to load habit history.';
+
+  @override
+  String get profileHistoryCompleted => 'Completed';
+
+  @override
+  String profileHistorySkippedWithNote(String note) {
+    return 'Skipped: $note';
+  }
+
+  @override
+  String get profileHistorySkipped => 'Skipped';
+
+  @override
+  String get profileCalendarUnknownError => 'Unknown error';
+
+  @override
+  String get profileCalendarGenerateLink => 'Generate Subscription Link';
+
+  @override
+  String get profileCalendarSubscriptionUrl => 'Subscription URL';
+
+  @override
+  String get profileCalendarCopied => 'Calendar feed URL copied to clipboard';
+
+  @override
+  String get profileCalendarCopyTooltip => 'Copy subscription URL';
+
+  @override
+  String get profileCalendarPasteHint =>
+      'Paste this URL into your native calendar app to subscribe';
+
+  @override
+  String get profileCalendarRotateToken => 'Rotate Token';
+
+  @override
+  String get profileCalendarRotateHint =>
+      'Rotating the token will invalidate the old subscription link';
+
+  @override
+  String get accessibilityReducedMotionTitle => 'Reduced Motion';
+
+  @override
+  String get accessibilityReducedMotionBody =>
+      'Disable animations and transitions';
+
+  @override
+  String get accessibilityHighContrastTitle => 'High Contrast';
+
+  @override
+  String get accessibilityHighContrastBody =>
+      'Increase color contrast for better readability';
+
+  @override
+  String get accessibilityLargerTextTitle => 'Larger Text';
+
+  @override
+  String get accessibilityLargerTextBody => 'Increase the global text scale';
 }

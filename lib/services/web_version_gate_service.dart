@@ -40,10 +40,7 @@ Future<DeployedWebVersionStatus?> _fetchDeployedWebVersionStatus() async {
     queryParameters: {'t': DateTime.now().millisecondsSinceEpoch.toString()},
   );
 
-  final response = await http.get(
-    uri,
-    headers: const {'Cache-Control': 'no-cache', 'Pragma': 'no-cache'},
-  );
+  final response = await http.get(uri);
   if (response.statusCode != 200) return null;
 
   final data = jsonDecode(response.body);

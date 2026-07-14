@@ -9,6 +9,15 @@ type Bindings = {
   ENVIRONMENT?: string
   MIN_SUPPORTED_APP_VERSION?: string
   MIN_SUPPORTED_SERVICE_WORKER_VERSION?: string
+  EMAIL?: {
+    send: (message: {
+      to: string | string[]
+      from: string | { email: string; name?: string }
+      subject: string
+      html?: string
+      text?: string
+    }) => Promise<{ messageId?: string }>
+  }
   EMAIL_WORKER?: {
     fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
   }
@@ -312,6 +321,17 @@ async function sendPinEmail(
     throw new Error('Cloudflare email sender is not configured.')
   }
 
+  if (env.EMAIL) {
+    await env.EMAIL.send({
+      to,
+      from: { email: sender, name: 'Hable' },
+      subject,
+      html,
+      text,
+    })
+    return
+  }
+
   const accountId = env.CLOUDFLARE_ACCOUNT_ID
   const apiToken = env.PRIVATE_CLOUDFLARE_EMAIL_API_TOKEN
   if (!accountId || !apiToken) {
@@ -328,7 +348,7 @@ async function sendPinEmail(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: { email: sender, name: 'Hable' },
+      from: sender,
       to,
       subject,
       html,

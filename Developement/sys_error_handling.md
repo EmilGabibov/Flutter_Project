@@ -27,6 +27,7 @@ This creates three risks:
 
 - Never show raw exception objects directly to users.
 - Never render `response.body` verbatim in UI.
+- Route first-party fallback/error copy through `AppLocalizations` when the surface is localized; do not keep new user-visible safety strings embedded as English literals in providers, widgets, or screens.
 - Prefer bounded user-facing copy such as:
   - `Couldn't load your friends right now.`
   - `Couldn't save this change. Try again.`
@@ -78,6 +79,7 @@ Important differences:
 - Development builds can fail due to backend boot/CORS/base-URL issues more often than production.
 
 Raw platform/build exceptions may differ, but the user-facing copy should normalize to one safe message policy.
+That policy also needs to stay language-aware: if the surrounding surface is localized, the normalized safe message should come from the active locale resources rather than a hard-coded English fallback.
 
 ## 3. Target Contract
 

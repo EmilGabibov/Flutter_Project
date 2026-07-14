@@ -2,21 +2,16 @@
 
 ## Raw Tasks Intake
 
-- Transferred to [Task1_Engineered.md](Task1_Engineered.md#remove-home-3d-visualizer-and-promote-the-daily-quote-to-the-primary-header) on 2026-07-13 23:01 CEST — Remove Home 3D visualizer and promote the daily quote to the primary header.
+- issue report: Users are not able to see their friends' active habits; every user have a set of data available on server:
+  - public: username, profilePicture (emoji)
+  - friends: 
+    - username, profilePicture (emoji), active habits, lifetime score, acheivements (list of names, or ids (for programming perspective) which includes your mutual habits(partnersd-up with eachother, and also with others).
 
-- Transferred to [Task1_Engineered.md](Task1_Engineered.md#split-realtime-or-push-delivery-architecture-beyond-foreground-polling) on 2026-07-13 23:01 CEST — Split realtime or push delivery architecture beyond foreground polling.
+- in search modal, the buttons and status should be dynamic; the add button should change state to request sent (able to click again to cancel the request). consider the abusing, but be genrase.
 
-- Transferred to [Task1_Engineered.md](Task1_Engineered.md#strengthen-shared-habit-consistency-for-multi-device-and-realtime-conflict-cases) on 2026-07-13 23:01 CEST — Strengthen shared-habit consistency for multi-device and realtime conflict cases.
+- on MacOS after during signing in, app prompts system consistantly for using autofill data: Hable wants to use your confidential information stored in "flutter_secure_storage_service" in your keychain.
+  - its disturbing, because it keeps asking again and again, no matter you allow or deny! 
+  - good to be able to use system passwords, but in a propper safe way for user. not abusing way.
 
-- Transferred to [Task1_Engineered.md](Task1_Engineered.md#upgrade-the-notification-inbox-with-grouping-deep-links-and-platform-actions) on 2026-07-13 23:01 CEST — Upgrade the notification inbox with grouping, deep links, and platform actions.
-
-- Transferred to [Task1_Engineered.md](Task1_Engineered.md#build-dedicated-cross-platform-push-notification-infrastructure) on 2026-07-13 23:01 CEST — Build dedicated cross-platform push notification infrastructure.
-
-- Transferred to [Task1_Engineered.md](Task1_Engineered.md#expand-avatar-identity-from-emoji-only-to-managed-profile-media) on 2026-07-13 23:01 CEST — Expand avatar identity from emoji-only to managed profile media.
-
-- Transferred to [Task1_Engineered.md](Task1_Engineered.md#add-startup-diagnostics-and-recovery-visibility-for-sync-gated-shell) on 2026-07-13 23:01 CEST — Add startup diagnostics and recovery visibility for the sync-gated shell.
-
-- Transferred to [Task1_Engineered.md](Task1_Engineered.md#expand-offline-logging-and-notification-regression-coverage) on 2026-07-13 23:01 CEST — Expand offline logging and notification regression coverage.
-
-- Transferred to [Task1_Engineered.md](Task1_Engineered.md#build-a-cross-platform-release-automation-matrix-and-refresh-build-integrity-docs) on 2026-07-13 23:01 CEST — Build a cross-platform release automation matrix and refresh build integrity docs.
+- revise the habit creator modal texts; too much subtitles, it's confusing.
 

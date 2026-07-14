@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../database/database.dart';
 import '../database/tables.dart' show PartnershipRole;
@@ -136,7 +137,7 @@ class HabitCard extends StatefulWidget {
   final QueuedNudgeFeedback? sentNudgeFeedback;
 
   const HabitCard({
-    Key? key,
+    super.key,
     required this.habit,
     required this.userId,
     required this.challengeDay,
@@ -158,7 +159,7 @@ class HabitCard extends StatefulWidget {
     required this.onNudgeTap,
     this.isShowingCompletionFeedback = false,
     this.sentNudgeFeedback,
-  }) : super(key: key);
+  });
 
   @override
   State<HabitCard> createState() => _HabitCardState();
@@ -175,6 +176,7 @@ class _HabitCardState extends State<HabitCard> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final habit = widget.habit;
     final habitMeta = standardHabitForTitle(habit.title);
     final habitDescription = habit.description?.trim().isNotEmpty == true
@@ -198,11 +200,11 @@ class _HabitCardState extends State<HabitCard> {
 
     return HabitCardShell(
       semanticsLabel:
-          '${habit.title}.${habitDescription == null ? '' : ' $habitDescription.'} Challenge day ${widget.challengeDay} of ${widget.targetDays}. ${widget.isCompletedToday
-              ? "Completed today."
+          '${habit.title}.${habitDescription == null ? '' : ' $habitDescription.'} ${loc.habitDayProgress(widget.challengeDay, widget.targetDays)}. ${widget.isCompletedToday
+              ? loc.habitCompletedToday
               : widget.isSkippedToday
-              ? "Skipped today."
-              : "Not completed today."}${widget.recentNudge == null ? "" : " ${widget.recentNudge!.username} nudged this habit."}',
+              ? loc.habitSkippedToday
+              : loc.habitNotCompletedToday}${widget.recentNudge == null ? "" : " ${loc.habitNudgedBy(widget.recentNudge!.username)}."}',
       title: habit.title,
       subtitle: habitDescription,
       topTrailing: HabitPartnerRow(
@@ -246,7 +248,7 @@ class _HabitCardState extends State<HabitCard> {
         children: [
           if (widget.recentNudge != null) ...[
             _HabitNudgeChip(
-              label: 'Nudged by ${widget.recentNudge!.username}',
+              label: loc.habitNudgedBy(widget.recentNudge!.username),
               color: habitColor,
               icon: Icons.notifications_active_rounded,
             ),
@@ -254,7 +256,7 @@ class _HabitCardState extends State<HabitCard> {
           ],
           if (visibleSentNudgeFeedback != null) ...[
             _HabitNudgeChip(
-              label: 'Nudge queued for ${visibleSentNudgeFeedback.partnerName}',
+              label: loc.habitNudgeQueued(visibleSentNudgeFeedback.partnerName),
               color: habitColor,
               icon: Icons.back_hand_rounded,
             ),
@@ -264,7 +266,7 @@ class _HabitCardState extends State<HabitCard> {
             Padding(
               padding: const EdgeInsets.only(bottom: 8.0),
               child: Text(
-                'Following',
+                loc.habitFollowing,
                 style: Theme.of(
                   context,
                 ).textTheme.bodySmall?.copyWith(color: AppTheme.warmGray),
@@ -278,9 +280,14 @@ class _HabitCardState extends State<HabitCard> {
                 onTap: widget.onSkip,
                 borderRadius: BorderRadius.circular(4),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   child: Text(
-                    widget.isSkippedToday ? 'Skipped today' : 'Skip today',
+                    widget.isSkippedToday
+                        ? loc.habitSkippedToday
+                        : loc.habitSkipToday,
                     style: TextStyle(color: AppTheme.warmGray, fontSize: 11),
                   ),
                 ),
@@ -302,8 +309,11 @@ class _HabitCardState extends State<HabitCard> {
               children: [
                 Text(
                   widget.isContinuous
-                      ? 'Continuous'
-                      : 'Day ${widget.challengeDay} of ${widget.targetDays}',
+                      ? loc.habitContinuous
+                      : loc.habitDayProgress(
+                          widget.challengeDay,
+                          widget.targetDays,
+                        ),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppTheme.deepCharcoal.withValues(alpha: 0.7),
                     fontSize: 11,
@@ -322,8 +332,9 @@ class _HabitCardState extends State<HabitCard> {
             ),
           ),
           Semantics(
-            label:
-                'Completion progress ${((widget.progressFraction * 100).round())} percent.',
+            label: loc.habitCompletionProgressSemantics(
+              (widget.progressFraction * 100).round(),
+            ),
             child: Container(
               height: 4,
               decoration: BoxDecoration(

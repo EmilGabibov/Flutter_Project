@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import 'package:drift/drift.dart' hide Column;
+import '../l10n/app_localizations.dart';
 import '../database/database.dart';
 import '../database/tables.dart' show LogStatus, PartnershipRole, SyncAction;
 import '../providers/database_provider.dart';
@@ -194,6 +195,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     ref.listen<List<AchievementUnlock>>(celebrationProvider, (previous, next) {
       if (next.isEmpty) return;
       _enqueueAchievementCelebrations(next);
@@ -206,7 +208,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       screenName: 'home',
       child: Scaffold(
         floatingActionButton: Semantics(
-          label: 'Create a new habit',
+          label: l10n.homeCreateHabitSemantics,
           button: true,
           child: FloatingActionButton.extended(
             heroTag: 'home-create-habit',
@@ -214,7 +216,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             backgroundColor: AppTheme.deepCharcoal,
             foregroundColor: Colors.white,
             icon: const Icon(Icons.add_rounded),
-            label: const Text('Habit'),
+            label: Text(l10n.homeCreateHabitCta),
           ),
         ),
         body: SafeArea(
@@ -228,8 +230,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   AppError.fromAny(
                     err,
                     fallbackCode: 'home_habits_load_failed',
-                    fallbackMessage:
-                        'Hable could not load today\'s habits right now.',
+                    fallbackMessage: l10n.homeLoadFailed,
                     fallbackKind: AppErrorKind.inline,
                   ).message,
                   textAlign: TextAlign.center,
@@ -247,6 +248,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     List<Habit> habits,
     AsyncValue<String> quoteAsync,
   ) {
+    final l10n = AppLocalizations.of(context)!;
     bool allEmpty = true;
     for (final h in habits) {
       final log = ref.watch(todaysLogProvider(h.habitId)).value;
@@ -274,7 +276,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _greeting(),
+                        _greeting(context),
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 4),
@@ -283,7 +285,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           final userAsync = ref.watch(currentUserProvider);
                           return userAsync.when(
                             data: (user) => Text(
-                              user?.username ?? 'Friend',
+                              user?.username ?? l10n.homeFriendFallback,
                               style: Theme.of(context).textTheme.headlineMedium,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -304,7 +306,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       builder: (context, ref, _) {
                         ref.watch(unreadNotificationCountProvider);
                         return IconButton(
-                          tooltip: 'Open dashboard',
+                          tooltip: l10n.homeOpenDashboard,
                           onPressed: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
@@ -336,7 +338,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         );
                         final unreadCount = unreadAsync.value ?? 0;
                         return IconButton(
-                          tooltip: 'Open notifications',
+                          tooltip: l10n.homeOpenNotifications,
                           onPressed: widget.onOpenActivity,
                           icon: Stack(
                             clipBehavior: Clip.none,
@@ -484,7 +486,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'No active habits yet.\nStart one from Home.',
+                    l10n.homeNoHabits,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
@@ -492,7 +494,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ElevatedButton.icon(
                     onPressed: () => HabitFormSheet.show(context),
                     icon: const Icon(Icons.add_rounded),
-                    label: const Text('Add habit'),
+                    label: Text(l10n.homeAddHabit),
                   ),
                 ],
               ),
@@ -525,21 +527,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  String _greeting() {
+  String _greeting(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return l10n.homeGreetingMorning;
+    if (hour < 17) return l10n.homeGreetingAfternoon;
+    return l10n.homeGreetingEvening;
   }
 
   Widget _buildSuggestedHabits() {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
           child: Text(
-            'Suggested Habits',
+            l10n.homeSuggestedHabits,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
               color: AppTheme.sageGreen,

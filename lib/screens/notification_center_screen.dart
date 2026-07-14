@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../database/database.dart';
 import '../database/tables.dart';
+import '../l10n/app_localizations.dart';
 import '../providers/notification_providers.dart';
 import '../services/app_error.dart';
 import '../theme/app_theme.dart';
@@ -21,6 +22,7 @@ class NotificationCenterScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final notificationsAsync = ref.watch(notificationsForUserProvider(userId));
     final actions = ref.read(notificationActionsProvider);
 
@@ -28,14 +30,14 @@ class NotificationCenterScreen extends ConsumerWidget {
       screenName: 'notification_center',
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Notifications'),
+          title: Text(l10n.notificationTitle),
           actions: [
             notificationsAsync.maybeWhen(
               data: (items) => TextButton(
                 onPressed: items.isEmpty
                     ? null
                     : () => actions.markAllRead(userId),
-                child: const Text('Mark all read'),
+                child: Text(l10n.notificationMarkAllRead),
               ),
               orElse: () => const SizedBox.shrink(),
             ),
@@ -45,11 +47,10 @@ class NotificationCenterScreen extends ConsumerWidget {
           child: notificationsAsync.when(
             data: (notifications) {
               if (notifications.isEmpty) {
-                return const HableEmptyStateCard(
+                return HableEmptyStateCard(
                   icon: Icons.notifications_none_rounded,
-                  title: 'No notifications yet',
-                  description:
-                      'Friend requests, invites, nudges, and reminder updates will appear here.',
+                  title: l10n.notificationEmptyTitle,
+                  description: l10n.notificationEmptyBody,
                 );
               }
 
@@ -70,9 +71,10 @@ class NotificationCenterScreen extends ConsumerWidget {
               }
 
               final groups = [
-                if (today.isNotEmpty) MapEntry('Today', today),
-                if (yesterday.isNotEmpty) MapEntry('Yesterday', yesterday),
-                if (older.isNotEmpty) MapEntry('Older', older),
+                if (today.isNotEmpty) MapEntry(l10n.notificationToday, today),
+                if (yesterday.isNotEmpty)
+                  MapEntry(l10n.notificationYesterday, yesterday),
+                if (older.isNotEmpty) MapEntry(l10n.notificationOlder, older),
               ];
 
               return CustomScrollView(
@@ -83,7 +85,8 @@ class NotificationCenterScreen extends ConsumerWidget {
                         padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
                         child: Text(
                           group.key,
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
                                 color: AppTheme.warmGray,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -93,83 +96,86 @@ class NotificationCenterScreen extends ConsumerWidget {
                     SliverPadding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final notification = group.value[index];
-                            final isUnread = notification.readAt == null;
-                            return Card(
-                              elevation: 0,
-                              margin: const EdgeInsets.only(bottom: 8),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                                side: BorderSide(
-                                  color: isUnread
-                                      ? AppTheme.sageGreen.withValues(alpha: 0.28)
-                                      : AppTheme.warmGray.withValues(alpha: 0.12),
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final notification = group.value[index];
+                          final isUnread = notification.readAt == null;
+                          return Card(
+                            elevation: 0,
+                            margin: const EdgeInsets.only(bottom: 8),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              side: BorderSide(
+                                color: isUnread
+                                    ? AppTheme.sageGreen.withValues(alpha: 0.28)
+                                    : AppTheme.warmGray.withValues(alpha: 0.12),
+                              ),
+                            ),
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.all(16),
+                              leading: CircleAvatar(
+                                backgroundColor: _iconTint(
+                                  notification.type,
+                                ).withValues(alpha: 0.14),
+                                child: Icon(
+                                  _iconForType(notification.type),
+                                  color: _iconTint(notification.type),
                                 ),
                               ),
-                              child: ListTile(
-                                contentPadding: const EdgeInsets.all(16),
-                                leading: CircleAvatar(
-                                  backgroundColor: _iconTint(
-                                    notification.type,
-                                  ).withValues(alpha: 0.14),
-                                  child: Icon(
-                                    _iconForType(notification.type),
-                                    color: _iconTint(notification.type),
+                              title: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      notification.title,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleSmall
+                                          ?.copyWith(
+                                            fontWeight: isUnread
+                                                ? FontWeight.w800
+                                                : FontWeight.w700,
+                                          ),
+                                    ),
                                   ),
-                                ),
-                                title: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        notification.title,
-                                        style: Theme.of(context).textTheme.titleSmall
-                                            ?.copyWith(
-                                              fontWeight: isUnread
-                                                  ? FontWeight.w800
-                                                  : FontWeight.w700,
-                                            ),
+                                  if (isUnread)
+                                    Container(
+                                      width: 10,
+                                      height: 10,
+                                      decoration: const BoxDecoration(
+                                        color: AppTheme.sageGreen,
+                                        shape: BoxShape.circle,
                                       ),
                                     ),
-                                    if (isUnread)
-                                      Container(
-                                        width: 10,
-                                        height: 10,
-                                        decoration: const BoxDecoration(
-                                          color: AppTheme.sageGreen,
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                                subtitle: Padding(
-                                  padding: const EdgeInsets.only(top: 8),
-                                  child: Text(
-                                    '${notification.body}\n${_formatTimestamp(notification.createdAt)}',
-                                    style: Theme.of(context).textTheme.bodyMedium
-                                        ?.copyWith(
-                                          color: AppTheme.warmGray.withValues(alpha: 0.9),
-                                          height: 1.35,
-                                        ),
-                                  ),
-                                ),
-                                onTap: () async {
-                                  if (isUnread) {
-                                    await actions.markRead(notification.notificationId);
-                                  }
-                                  if (!context.mounted) return;
-                                  await _openNotificationAction(
-                                    context,
-                                    notification,
-                                    userId,
-                                  );
-                                },
+                                ],
                               ),
-                            );
-                          },
-                          childCount: group.value.length,
-                        ),
+                              subtitle: Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Text(
+                                  '${notification.body}\n${_formatTimestamp(context, notification.createdAt)}',
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(
+                                        color: AppTheme.warmGray.withValues(
+                                          alpha: 0.9,
+                                        ),
+                                        height: 1.35,
+                                      ),
+                                ),
+                              ),
+                              onTap: () async {
+                                if (isUnread) {
+                                  await actions.markRead(
+                                    notification.notificationId,
+                                  );
+                                }
+                                if (!context.mounted) return;
+                                await _openNotificationAction(
+                                  context,
+                                  notification,
+                                  userId,
+                                );
+                              },
+                            ),
+                          );
+                        }, childCount: group.value.length),
                       ),
                     ),
                   ],
@@ -184,8 +190,7 @@ class NotificationCenterScreen extends ConsumerWidget {
                 AppError.fromAny(
                   error,
                   fallbackCode: 'notification_center_load_failed',
-                  fallbackMessage:
-                      'Hable could not load your notifications right now.',
+                  fallbackMessage: l10n.notificationLoadFailed,
                   fallbackKind: AppErrorKind.inline,
                 ).message,
                 textAlign: TextAlign.center,
@@ -287,14 +292,13 @@ class NotificationCenterScreen extends ConsumerWidget {
     }
   }
 
-  String _formatTimestamp(DateTime createdAt) {
+  String _formatTimestamp(BuildContext context, DateTime createdAt) {
+    final l10n = AppLocalizations.of(context)!;
     final diff = DateTime.now().difference(createdAt);
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
-    if (diff.inDays < 1) return '${diff.inHours}h ago';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
-    final month = createdAt.month.toString().padLeft(2, '0');
-    final day = createdAt.day.toString().padLeft(2, '0');
-    return '$month/$day/${createdAt.year}';
+    if (diff.inMinutes < 1) return l10n.notificationJustNow;
+    if (diff.inHours < 1) return l10n.notificationMinutesAgo(diff.inMinutes);
+    if (diff.inDays < 1) return l10n.notificationHoursAgo(diff.inHours);
+    if (diff.inDays < 7) return l10n.notificationDaysAgo(diff.inDays);
+    return MaterialLocalizations.of(context).formatShortDate(createdAt);
   }
 }

@@ -120,7 +120,7 @@ This document aggregates the still-relevant "Future split guidance" from recentl
   - *Source tasks:* `Audit And Raise Accessibility Compatibility Across Mobile Desktop And Web Surfaces`.
   - *User perspective:* Accessibility can deepen over time without blocking the baseline compatibility contract.
 
-- **Localized Content Operations:** Locale-specific quote sourcing, translated fallback-content governance, regional experimentation, or backend-delivered multilingual content should remain separate from the first-party Flutter localization baseline.
+- **Localized Content Operations:** First-party Flutter shell coverage is now expected across high-traffic screens and reusable surfaces. Locale-specific quote sourcing, native-speaker translation review, translated fallback-content governance, regional experimentation, or backend-delivered multilingual content should remain separate from that baseline.
   - *Source tasks:* `Expand Hable Localization To English German Urdu Russian Tamil And Persian`, quote-engine follow-ups.
   - *User perspective:* More languages and smarter localized content can grow after the app shell itself is consistently multilingual.
 

@@ -30,12 +30,7 @@ Future<ForcedClientResetStatus?> fetchForcedClientResetStatus() async {
       queryParameters: {'t': DateTime.now().millisecondsSinceEpoch.toString()},
     );
 
-    final response = await http
-        .get(
-          uri,
-          headers: const {'Cache-Control': 'no-cache', 'Pragma': 'no-cache'},
-        )
-        .timeout(const Duration(seconds: 3));
+    final response = await http.get(uri).timeout(const Duration(seconds: 3));
     if (response.statusCode != 200) return null;
 
     final data = jsonDecode(response.body);

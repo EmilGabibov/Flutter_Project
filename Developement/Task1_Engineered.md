@@ -2,6 +2,8 @@
 
 ## Completed Tasks
 
+- 2026-07-14 16:20 CEST: [Complete Remaining Localization Coverage Across All User-Facing Flutter Surfaces](Task2_Archived.md#complete-remaining-localization-coverage-across-all-user-facing-flutter-surfaces)
+
 - 2026-07-13 22:04 CEST: [Standardize Safe Error Contracts Across Flutter And Worker Surfaces](Task2_Archived.md#standardize-safe-error-contracts-across-flutter-and-worker-surfaces)
 
 - 2026-07-13 16:12 CEST: [Introduce Explicit Environment-Based Backend Targeting For Flutter And Release Builds](Task2_Archived.md#introduce-explicit-environment-based-backend-targeting-for-flutter-and-release-builds)
@@ -74,3 +76,51 @@
 - 2026-07-12 09:20 UTC+2: [Refine And Organize Development Documentation](Task2_Archived.md#refine-and-organize-development-documentation)
 - 2026-07-12 10:37 UTC+2: [Design Web Multi-User Browser Test Plan For Core Social Habit And Leaderboard Flows](Task2_Archived.md#design-web-multi-user-browser-test-plan-for-core-social-habit-and-leaderboard-flows)
 - 2026-07-12 10:37 UTC+2: [Document Scoring Leaderboard Quotes Rewards And Habit State Moments](Task2_Archived.md#document-scoring-leaderboard-quotes-rewards-and-habit-state-moments)
+
+## Remaining Tasks
+
+<a id="prepare-the-primary-android-build-for-online-presentation-readiness"></a>
+### [ ] Prepare The Primary Android Build For Online Presentation Readiness
+
+**Raw source:** Engineer a task for preparing the Android build for presentation; all primary function should be functional, not locally but online.
+
+**Issue:** Hable has Android build commands, release signing work, local ADB twin-harness coverage, and prior production web/backend smoke history, but there is no single presentation-readiness task that proves the primary Android APK can be installed on a real device and exercise the main product against the deployed online backend. Local debug success with `adb reverse`, seeded users, or Wrangler D1 is not enough for a presentation build because auth, sync, friend/social flows, scoring, reminders, safe error copy, and deployed Cloudflare secrets can fail differently once the app targets `https://hable.pages.dev`.
+
+**Connectivity preflight:** 2026-07-14: Before starting the full presentation smoke, the Android release connectivity baseline was hardened. `android/app/src/main/AndroidManifest.xml` now declares `INTERNET` and `ACCESS_NETWORK_STATE`; `test/api_config_test.dart` verifies production resolution stays on HTTPS and never falls back to localhost-style Android development hosts; `Developement/Commands.md` and `Developement/qa_testing.md` document the online Android build/install guard. Verified with `flutter test test/api_config_test.dart`, `flutter analyze lib/config/api_config.dart test/api_config_test.dart`, `flutter build apk --release --flavor primary -t lib/main.dart --dart-define=HABLE_APP_ENV=production`, and `aapt dump permissions build/app/outputs/flutter-apk/app-primary-release.apk`. Follow-up platform check found no equivalent missing network permission on iOS or Windows: iOS uses HTTPS by default and has no `NSAppTransportSecurity` override blocking `https://hable.pages.dev`; Windows is currently a Win32 Flutter runner, not UWP/MSIX, so there is no `internetClient` capability to declare. iOS compilation is still host-blocked by Xcode destination registration (`xcrun simctl list` shows no runtimes/devices), and Windows compilation is host-blocked on macOS.
+
+**Triage:**
+- *Should exist:* Yes. This is a release confidence and demo-readiness task, distinct from general cross-platform build automation.
+- *Smallest safe scope:* Prepare and verify the primary Android flavor as a production-targeted APK backed by the deployed Cloudflare Pages Functions/D1/KV/secrets environment, then document the exact operator steps and smoke result.
+- *Skipped scope:* Do not solve Play Store distribution, app signing key rotation, push notification infrastructure, iOS presentation builds, Windows/macOS packaging, or broad release CI in this task.
+- *Boundaries:* The build must use the online backend. Do not rely on local Wrangler, `adb reverse`, local seed users, or debug-only identity bypasses for the final presentation smoke. Local checks may be used only as preflight diagnostics.
+
+**Action:** Produce a presentation-ready primary Android APK and verify the core Hable experience online. First confirm the backend production surface is deployed, reachable, schema-current, and has required runtime secrets for auth, email/PIN recovery, sync, social, scoring, quotes, and calendar/feed endpoints. Then build the Android primary flavor with explicit production targeting, install it on a physical device or emulator without local backend forwarding, and run a focused smoke pass through the primary functions needed for presentation: onboarding/sign-up or login, Home, habit create/edit/check-in, Social friend search/request/invite or a documented account-pair alternative, notification/activity visibility, Profile/settings/reminders, leaderboard/profile score refresh, daily sync, localization sanity, and safe online error behavior. Capture any production-only blockers as separate raw tasks if they are not safe to fix inside the readiness pass.
+
+**Hable perspective:** A presentation build should feel like a real app session, not a developer harness. The online backend is authoritative for identity, social graph, score totals, shared habit permissions, daily sync, and cloud-backed recovery. The Android app can still render offline-first from Drift after data is loaded, but the demo path must prove that the deployed service is healthy enough for new or known accounts on a device that has no connection to local development infrastructure.
+
+**Implementation scope:**
+- Backend production preflight: verify `https://hable.pages.dev` API routes respond correctly for auth, daily sync, social search/friend requests, habit sync, leaderboard/profile score, quote, calendar, and safe error envelope behavior.
+- Backend deployment/secrets: confirm Cloudflare Pages Functions, D1 schema, KV bindings, JWT secret, email/PIN delivery secrets, CORS, and any production reset/version headers are in the expected state; update `Developement/Commands.md` or the relevant backend docs if the operator commands are stale.
+- Android build: build the primary APK with explicit production targeting, for example `flutter build apk --release --flavor primary -t lib/main.dart --dart-define=HABLE_APP_ENV=production`, and verify `lib/config/api_config.dart` resolves the online API base without manual local overrides.
+- Device install: install the release APK on a clean Android device/emulator without `adb reverse`, clear prior app data as needed, and verify startup does not use stale debug tokens or local database state.
+- Presentation smoke: run a compact but representative online checklist covering auth/onboarding, Home habit lifecycle, cloud sync, Social, shared habit/invite path where feasible, notifications/activity, Profile/settings, reminders permission behavior, localization switch sanity, leaderboard/score consistency, and safe error messaging.
+- Documentation: add or update a dedicated Android presentation section in `Developement/qa_testing.md` or `Developement/Commands.md` with exact commands, online backend target, accounts/test data expectations, and pass/fail notes.
+
+**Scalability considerations:** The smoke pass should use production-like data carefully. Avoid destructive broad database resets on the deployed backend. Prefer disposable presentation accounts or a small documented account pair, and keep the verification repeatable so future builds can be checked without contaminating real user state.
+
+**Future split guidance:** If production D1 schema drift, missing Cloudflare secrets, email delivery, push notifications, or app-store-grade signing blocks readiness, create focused follow-up tasks for those areas. Do not expand this task into full release automation unless the presentation build cannot be made reliable manually.
+
+**Edge cases:** Release build accidentally targeting local backend, stale secure-storage tokens from a debug install, Android backup restoring old auth state, production CORS differences, remote D1 missing a recent column, production email/PIN delivery unavailable, user search with sparse production data, duplicate friend requests from prior smoke accounts, offline transition after online login, safe-error copy hiding useful operator diagnostics, localization overflow on device, and Android notification/reminder permission differences by API level.
+
+**Acceptance criteria:**
+- The primary Android APK is built in release mode with explicit production/online backend targeting.
+- The installed app can complete the main presentation path on Android without local Wrangler, `adb reverse`, seeded debug users, or manual `HABLE_API_BASE_URL` pointing to a local host.
+- Production backend preflight confirms auth, sync, social, leaderboard/profile score, quote, and safe error routes are reachable and schema-compatible.
+- At least one real online account flow works end to end: sign-up/login, create or sync a habit, complete/check in, refresh Profile/leaderboard state, and reopen after app restart.
+- Social functionality is demonstrated online through friend search/request/accept or a documented production-safe account-pair substitute.
+- Offline-first behavior remains acceptable after online data loads: disabling network should leave cached Home/Profile data usable and show bounded recovery copy.
+- A dedicated QA/commands note records the exact build command, install command, backend URL, test accounts/data policy, smoke checklist, and result.
+
+**Dependencies:** `Developement/Commands.md`, `Developement/qa_testing.md`, `Developement/sys_authentication.md`, `Developement/sys_offline_architecture.md`, `Developement/sys_schema_and_logic.md`, `Developement/sys_error_handling.md`
+
+**Completion notes:** [Placeholder for completion notes, online backend target, APK path, device/emulator used, smoke result, blockers split, and completion timestamp]

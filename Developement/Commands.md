@@ -25,7 +25,17 @@ cd /Flutter/hable && \
 flutter build web --release --base-href / --dart-define=HABLE_APP_ENV=production && \
 cd backend && \
 npx wrangler pages deploy ../build/web --project-name=hable
+```
 
+```bash
+cd /Flutter/hable/backend && \
+npx wrangler pages deploy public --project-name=hable
+```
+
+Deploy only the backend from the existing `backend/public` output:
+```bash
+cd /Flutter/hable/backend && \
+npx wrangler pages deploy public --project-name=hable
 ```
 
 ## Build Android APKs
@@ -56,15 +66,26 @@ flutter build apk --debug --flavor primary -t lib/main.dart \
 ```
 The override above is the usual emulator case; replace the URL as needed.
 
-To make a debug or profile build talk to production explicitly:
+Build the **primary** Android APK for the online presentation backend:
 ```bash
-flutter run -d chrome \
+flutter build apk --release --flavor primary -t lib/main.dart \
   --dart-define=HABLE_APP_ENV=production
 ```
 
+Run the **primary** Android flavor against the online backend on a connected device:
+```bash
+flutter run --release --flavor primary -t lib/main.dart \
+  --dart-define=HABLE_APP_ENV=production
+```
+
+Connectivity guard for Android presentation builds:
+- Do not set `HABLE_API_BASE_URL` to a localhost or LAN URL.
+- Do not rely on `adb reverse`; the app must reach `https://hable.pages.dev` directly.
+- Confirm `android/app/src/main/AndroidManifest.xml` includes `INTERNET` and `ACCESS_NETWORK_STATE`.
+
 To target a dedicated staging backend alias:
 ```bash
-flutter run -d chrome \
+flutter run --release --flavor primary -t lib/main.dart \
   --dart-define=HABLE_APP_ENV=staging \
   --dart-define=HABLE_STAGING_API_BASE_URL=https://staging-hable.pages.dev
 ```

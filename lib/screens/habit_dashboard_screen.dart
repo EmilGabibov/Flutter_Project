@@ -9,6 +9,7 @@ import 'package:uuid/uuid.dart';
 
 import '../database/database.dart';
 import '../database/tables.dart' show LogStatus, PartnershipRole, SyncAction;
+import '../l10n/app_localizations.dart';
 import '../providers/celebration_provider.dart';
 import '../providers/database_provider.dart';
 import '../providers/habit_providers.dart';
@@ -70,10 +71,11 @@ class _HabitDashboardScreenState extends ConsumerState<HabitDashboardScreen> {
       _celebrationSequence.enqueue(
         _DashboardCelebrationRequest(
           present: (context, ref) async {
+            final l10n = AppLocalizations.of(context)!;
             await BadgeRevealDialog.show(
               context,
               title,
-              'You unlocked a new badge!',
+              l10n.dashboardAchievementUnlocked,
             );
             await ref
                 .read(celebrationProvider.notifier)
@@ -124,6 +126,7 @@ class _HabitDashboardScreenState extends ConsumerState<HabitDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     ref.listen<List<AchievementUnlock>>(celebrationProvider, (previous, next) {
       if (next.isEmpty) return;
       _enqueueAchievementCelebrations(next);
@@ -133,7 +136,7 @@ class _HabitDashboardScreenState extends ConsumerState<HabitDashboardScreen> {
     final quoteAsync = ref.watch(quoteProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Habit Dashboard')),
+      appBar: AppBar(title: Text(l10n.dashboardTitle)),
       body: habitsAsync.when(
         data: (habits) => LayoutBuilder(
           builder: (context, constraints) {
@@ -193,8 +196,7 @@ class _HabitDashboardScreenState extends ConsumerState<HabitDashboardScreen> {
               AppError.fromAny(
                 error,
                 fallbackCode: 'habit_dashboard_load_failed',
-                fallbackMessage:
-                    'Hable could not load this habit dashboard right now.',
+                fallbackMessage: l10n.dashboardLoadFailed,
                 fallbackKind: AppErrorKind.inline,
               ).message,
               textAlign: TextAlign.center,
@@ -227,12 +229,9 @@ class _DashboardGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (habits.isEmpty) {
-      return const Center(
-        child: Text(
-          'No active habits yet. Create one from Home to see it here.',
-        ),
-      );
+      return Center(child: Text(l10n.dashboardEmptyState));
     }
 
     return GridView.builder(
@@ -263,6 +262,7 @@ class _DashboardSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final totalHabits = habits.length;
     final challengeHabits = habits
         .where((habit) => habit.targetDuration > 0)
@@ -276,26 +276,33 @@ class _DashboardSummaryCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Dashboard Summary',
+              l10n.dashboardSummaryTitle,
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 12),
-            _SummaryRow(label: 'Active habits', value: '$totalHabits'),
-            _SummaryRow(label: 'Challenge habits', value: '$challengeHabits'),
-            _SummaryRow(label: 'Continuous habits', value: '$continuousHabits'),
+            _SummaryRow(
+              label: l10n.dashboardActiveHabitsLabel,
+              value: '$totalHabits',
+            ),
+            _SummaryRow(
+              label: l10n.dashboardChallengeHabitsLabel,
+              value: '$challengeHabits',
+            ),
+            _SummaryRow(
+              label: l10n.dashboardContinuousHabitsLabel,
+              value: '$continuousHabits',
+            ),
             const SizedBox(height: 20),
             Text(
-              'Quote of the day',
+              l10n.dashboardQuoteOfDayTitle,
               style: Theme.of(context).textTheme.titleSmall,
             ),
             const SizedBox(height: 8),
             quoteAsync.when(
               data: (quote) =>
                   Text(quote, style: Theme.of(context).textTheme.bodyMedium),
-              loading: () => const Text('Loading quote...'),
-              error: (_, _) => const Text(
-                'Keep going. The dashboard is here when you need the full field view.',
-              ),
+              loading: () => Text(l10n.dashboardQuoteLoading),
+              error: (_, _) => Text(l10n.dashboardQuoteFallback),
             ),
           ],
         ),

@@ -1053,6 +1053,1266 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Hable could not load your friend list right now.'**
   String get habitFormFriendsLoadFailed;
+
+  /// No description provided for @homeCreateHabitSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a new habit'**
+  String get homeCreateHabitSemantics;
+
+  /// No description provided for @homeCreateHabitCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Habit'**
+  String get homeCreateHabitCta;
+
+  /// No description provided for @homeLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Hable could not load today\'s habits right now.'**
+  String get homeLoadFailed;
+
+  /// No description provided for @homeFriendFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Friend'**
+  String get homeFriendFallback;
+
+  /// No description provided for @homeOpenDashboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Open dashboard'**
+  String get homeOpenDashboard;
+
+  /// No description provided for @homeOpenNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Open notifications'**
+  String get homeOpenNotifications;
+
+  /// No description provided for @homeNoHabits.
+  ///
+  /// In en, this message translates to:
+  /// **'No active habits yet.\nStart one from Home.'**
+  String get homeNoHabits;
+
+  /// No description provided for @homeAddHabit.
+  ///
+  /// In en, this message translates to:
+  /// **'Add habit'**
+  String get homeAddHabit;
+
+  /// No description provided for @homeGreetingMorning.
+  ///
+  /// In en, this message translates to:
+  /// **'Good morning'**
+  String get homeGreetingMorning;
+
+  /// No description provided for @homeGreetingAfternoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Good afternoon'**
+  String get homeGreetingAfternoon;
+
+  /// No description provided for @homeGreetingEvening.
+  ///
+  /// In en, this message translates to:
+  /// **'Good evening'**
+  String get homeGreetingEvening;
+
+  /// No description provided for @homeSuggestedHabits.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested Habits'**
+  String get homeSuggestedHabits;
+
+  /// No description provided for @profileBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get profileBack;
+
+  /// No description provided for @profileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get profileTitle;
+
+  /// No description provided for @profileOpenSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get profileOpenSettings;
+
+  /// No description provided for @profileUserFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'User'**
+  String get profileUserFallback;
+
+  /// No description provided for @profileUsernameFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'user'**
+  String get profileUsernameFallback;
+
+  /// No description provided for @profileLevelFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Newbie'**
+  String get profileLevelFallback;
+
+  /// No description provided for @profileLifetimePoints.
+  ///
+  /// In en, this message translates to:
+  /// **'{points} lifetime pts'**
+  String profileLifetimePoints(int points);
+
+  /// No description provided for @profileLifetimeScoreHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Lifetime score comes from backend sync. Journey and history show per-check-in awards.'**
+  String get profileLifetimeScoreHint;
+
+  /// No description provided for @profileTrophyRoomTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Trophy Room'**
+  String get profileTrophyRoomTab;
+
+  /// No description provided for @profileJourneyTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Journey'**
+  String get profileJourneyTab;
+
+  /// No description provided for @profileAchievementsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Achievements'**
+  String get profileAchievementsTitle;
+
+  /// No description provided for @profileFirstBadgeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete a habit to earn your first badge!'**
+  String get profileFirstBadgeHint;
+
+  /// No description provided for @profileHabitDistributionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Habit Distribution'**
+  String get profileHabitDistributionTitle;
+
+  /// No description provided for @profileNoData.
+  ///
+  /// In en, this message translates to:
+  /// **'No data yet'**
+  String get profileNoData;
+
+  /// No description provided for @profileCompletedLegend.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get profileCompletedLegend;
+
+  /// No description provided for @profileSkippedLegend.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped'**
+  String get profileSkippedLegend;
+
+  /// No description provided for @profileOverdueLegend.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get profileOverdueLegend;
+
+  /// No description provided for @profileThirtyDayPointsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'30-Day Points Earned'**
+  String get profileThirtyDayPointsTitle;
+
+  /// No description provided for @profileThirtyDayPointsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Per-check-in awards from local history. Lifetime score updates separately from daily sync.'**
+  String get profileThirtyDayPointsHint;
+
+  /// No description provided for @profileCalendarSubscriptionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar Subscription'**
+  String get profileCalendarSubscriptionTitle;
+
+  /// No description provided for @profileCalendarSubscriptionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your habits to your native calendar app'**
+  String get profileCalendarSubscriptionBody;
+
+  /// No description provided for @profileManageHabitsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Habits'**
+  String get profileManageHabitsTitle;
+
+  /// No description provided for @profileAddNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Add New'**
+  String get profileAddNew;
+
+  /// No description provided for @profileSectionActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get profileSectionActive;
+
+  /// No description provided for @profileSectionHallOfFame.
+  ///
+  /// In en, this message translates to:
+  /// **'Hall of Fame'**
+  String get profileSectionHallOfFame;
+
+  /// No description provided for @profileSectionArchivedHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived history'**
+  String get profileSectionArchivedHistory;
+
+  /// No description provided for @profileFriendProfileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Friend Profile'**
+  String get profileFriendProfileTitle;
+
+  /// No description provided for @profileFriendLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'{level} level'**
+  String profileFriendLevel(String level);
+
+  /// No description provided for @profileActiveHabitsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Habits'**
+  String get profileActiveHabitsTitle;
+
+  /// No description provided for @profileNoActiveHabits.
+  ///
+  /// In en, this message translates to:
+  /// **'No active habits.'**
+  String get profileNoActiveHabits;
+
+  /// No description provided for @profileFriendLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load friend profile.'**
+  String get profileFriendLoadFailed;
+
+  /// No description provided for @dashboardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Habit Dashboard'**
+  String get dashboardTitle;
+
+  /// No description provided for @dashboardAchievementUnlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'You unlocked a new badge!'**
+  String get dashboardAchievementUnlocked;
+
+  /// No description provided for @dashboardLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Hable could not load this habit dashboard right now.'**
+  String get dashboardLoadFailed;
+
+  /// No description provided for @dashboardEmptyState.
+  ///
+  /// In en, this message translates to:
+  /// **'No active habits yet. Create one from Home to see it here.'**
+  String get dashboardEmptyState;
+
+  /// No description provided for @dashboardSummaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Dashboard Summary'**
+  String get dashboardSummaryTitle;
+
+  /// No description provided for @dashboardActiveHabitsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Active habits'**
+  String get dashboardActiveHabitsLabel;
+
+  /// No description provided for @dashboardChallengeHabitsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Challenge habits'**
+  String get dashboardChallengeHabitsLabel;
+
+  /// No description provided for @dashboardContinuousHabitsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Continuous habits'**
+  String get dashboardContinuousHabitsLabel;
+
+  /// No description provided for @dashboardQuoteOfDayTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote of the day'**
+  String get dashboardQuoteOfDayTitle;
+
+  /// No description provided for @dashboardQuoteLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading quote...'**
+  String get dashboardQuoteLoading;
+
+  /// No description provided for @dashboardQuoteFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep going. The dashboard is here when you need the full field view.'**
+  String get dashboardQuoteFallback;
+
+  /// No description provided for @notificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notificationTitle;
+
+  /// No description provided for @notificationMarkAllRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all read'**
+  String get notificationMarkAllRead;
+
+  /// No description provided for @notificationEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No notifications yet'**
+  String get notificationEmptyTitle;
+
+  /// No description provided for @notificationEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Friend requests, invites, nudges, and reminder updates will appear here.'**
+  String get notificationEmptyBody;
+
+  /// No description provided for @notificationToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get notificationToday;
+
+  /// No description provided for @notificationYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get notificationYesterday;
+
+  /// No description provided for @notificationOlder.
+  ///
+  /// In en, this message translates to:
+  /// **'Older'**
+  String get notificationOlder;
+
+  /// No description provided for @notificationLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Hable could not load your notifications right now.'**
+  String get notificationLoadFailed;
+
+  /// No description provided for @notificationJustNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Just now'**
+  String get notificationJustNow;
+
+  /// No description provided for @notificationMinutesAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes}m ago'**
+  String notificationMinutesAgo(int minutes);
+
+  /// No description provided for @notificationHoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h ago'**
+  String notificationHoursAgo(int hours);
+
+  /// No description provided for @notificationDaysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{days}d ago'**
+  String notificationDaysAgo(int days);
+
+  /// No description provided for @settingsSessionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Session'**
+  String get settingsSessionTitle;
+
+  /// No description provided for @settingsSessionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out of this device. Local reminder scheduling is canceled for this user.'**
+  String get settingsSessionBody;
+
+  /// No description provided for @settingsRecoverTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recover This Device'**
+  String get settingsRecoverTitle;
+
+  /// No description provided for @settingsRecoverBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This clears local Hable data on this device and sends you back to login. Use it if the app is stuck or showing old cached state.'**
+  String get settingsRecoverBody;
+
+  /// No description provided for @settingsCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get settingsCancel;
+
+  /// No description provided for @settingsClearAndSignInAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear and Sign In Again'**
+  String get settingsClearAndSignInAgain;
+
+  /// No description provided for @settingsRecoverAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Update / Recover App'**
+  String get settingsRecoverAction;
+
+  /// No description provided for @settingsSignOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get settingsSignOut;
+
+  /// No description provided for @commonAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get commonAccept;
+
+  /// No description provided for @commonDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get commonDecline;
+
+  /// No description provided for @commonEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get commonEdit;
+
+  /// No description provided for @commonDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get commonDelete;
+
+  /// No description provided for @commonRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get commonRemove;
+
+  /// No description provided for @commonRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get commonRetry;
+
+  /// No description provided for @commonYou.
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get commonYou;
+
+  /// No description provided for @socialActivityUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Unread'**
+  String get socialActivityUnread;
+
+  /// No description provided for @socialActivityEarlier.
+  ///
+  /// In en, this message translates to:
+  /// **'Earlier'**
+  String get socialActivityEarlier;
+
+  /// No description provided for @socialSearchFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Hable could not search for friends just now. Please try again.'**
+  String get socialSearchFailed;
+
+  /// No description provided for @socialFriendRequestSendFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Hable could not send that friend request just now.'**
+  String get socialFriendRequestSendFailed;
+
+  /// No description provided for @socialFriendRequestAcceptFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Hable could not accept that request right now.'**
+  String get socialFriendRequestAcceptFailed;
+
+  /// No description provided for @socialFriendRequestDeclineFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Hable could not decline that request right now.'**
+  String get socialFriendRequestDeclineFailed;
+
+  /// No description provided for @socialFriendRevokeFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Hable could not update that friendship right now.'**
+  String get socialFriendRevokeFailed;
+
+  /// No description provided for @socialFriendRequestAlreadyFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'You are already friends with {username}.'**
+  String socialFriendRequestAlreadyFriends(String username);
+
+  /// No description provided for @socialFriendRequestIncomingExists.
+  ///
+  /// In en, this message translates to:
+  /// **'{username} already sent you a request. Check Requests.'**
+  String socialFriendRequestIncomingExists(String username);
+
+  /// No description provided for @socialFriendRequestSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Friend request sent to {username}.'**
+  String socialFriendRequestSent(String username);
+
+  /// No description provided for @socialFriendAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'You are now friends with {username}!'**
+  String socialFriendAccepted(String username);
+
+  /// No description provided for @socialFriendDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Declined request from {username}.'**
+  String socialFriendDeclined(String username);
+
+  /// No description provided for @socialFriendRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed {username} from friends.'**
+  String socialFriendRemoved(String username);
+
+  /// No description provided for @socialFriendActionsUnfriend.
+  ///
+  /// In en, this message translates to:
+  /// **'Unfriend'**
+  String get socialFriendActionsUnfriend;
+
+  /// No description provided for @socialFriendActionsRemoveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove friend?'**
+  String get socialFriendActionsRemoveTitle;
+
+  /// No description provided for @socialFriendActionsRemoveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {username} from your friends list?'**
+  String socialFriendActionsRemoveBody(String username);
+
+  /// No description provided for @socialNoFriendsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No friends yet'**
+  String get socialNoFriendsTitle;
+
+  /// No description provided for @socialNoFriendsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the search icon above to find and add friends.'**
+  String get socialNoFriendsBody;
+
+  /// No description provided for @socialFriendLongPressActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Long-press for actions'**
+  String get socialFriendLongPressActions;
+
+  /// No description provided for @socialFriendsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Hable could not load your friends right now.'**
+  String get socialFriendsLoadFailed;
+
+  /// No description provided for @socialNotSignedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Not signed in'**
+  String get socialNotSignedIn;
+
+  /// No description provided for @socialNoActivityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No activity yet'**
+  String get socialNoActivityTitle;
+
+  /// No description provided for @socialNoActivityBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Nudges, friend requests, invites, and messages from friends will appear here.'**
+  String get socialNoActivityBody;
+
+  /// No description provided for @socialLeaderboardEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No leaderboard scores yet.'**
+  String get socialLeaderboardEmpty;
+
+  /// No description provided for @socialLeaderboardNoValidScores.
+  ///
+  /// In en, this message translates to:
+  /// **'No valid leaderboard scores found.'**
+  String get socialLeaderboardNoValidScores;
+
+  /// No description provided for @socialLeaderboardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Friends Leaderboard'**
+  String get socialLeaderboardTitle;
+
+  /// No description provided for @socialLeaderboardSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepted friends ranked by lifetime score'**
+  String get socialLeaderboardSubtitle;
+
+  /// No description provided for @socialLeaderboardScopeFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'Friends'**
+  String get socialLeaderboardScopeFriends;
+
+  /// No description provided for @socialLeaderboardLoadTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load leaderboard'**
+  String get socialLeaderboardLoadTitle;
+
+  /// No description provided for @socialLeaderboardLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Hable could not load the leaderboard right now.'**
+  String get socialLeaderboardLoadFailed;
+
+  /// No description provided for @socialFriendRequestsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Friend Requests'**
+  String get socialFriendRequestsTitle;
+
+  /// No description provided for @socialFriendRequestIncomingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent you a friend request'**
+  String get socialFriendRequestIncomingSubtitle;
+
+  /// No description provided for @socialFindFriendsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Find Friends'**
+  String get socialFindFriendsTitle;
+
+  /// No description provided for @socialFindFriendsSearchLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Search username...'**
+  String get socialFindFriendsSearchLabel;
+
+  /// No description provided for @socialFindFriendsTypeMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Type at least 2 characters to search.'**
+  String get socialFindFriendsTypeMore;
+
+  /// No description provided for @socialFindFriendsNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No matches found.'**
+  String get socialFindFriendsNoMatches;
+
+  /// No description provided for @socialRelationshipAcceptedFriend.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepted friend'**
+  String get socialRelationshipAcceptedFriend;
+
+  /// No description provided for @socialRelationshipRequestSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Request sent'**
+  String get socialRelationshipRequestSent;
+
+  /// No description provided for @socialRelationshipWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for your response'**
+  String get socialRelationshipWaiting;
+
+  /// No description provided for @socialRelationshipNotConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Not connected'**
+  String get socialRelationshipNotConnected;
+
+  /// No description provided for @socialChipFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'Friends'**
+  String get socialChipFriends;
+
+  /// No description provided for @socialChipRequested.
+  ///
+  /// In en, this message translates to:
+  /// **'Requested'**
+  String get socialChipRequested;
+
+  /// No description provided for @socialChipRespondInFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'Respond in Friends'**
+  String get socialChipRespondInFriends;
+
+  /// No description provided for @socialSendFriendRequestTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Send friend request'**
+  String get socialSendFriendRequestTooltip;
+
+  /// No description provided for @habitCompletionProgressSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Completion progress {percent} percent.'**
+  String habitCompletionProgressSemantics(int percent);
+
+  /// No description provided for @leaderboardRankingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rankings'**
+  String get leaderboardRankingsTitle;
+
+  /// No description provided for @leaderboardShowMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Show {count} more'**
+  String leaderboardShowMore(int count);
+
+  /// No description provided for @leaderboardShowingAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing all {count}'**
+  String leaderboardShowingAll(int count);
+
+  /// No description provided for @leaderboardYou.
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get leaderboardYou;
+
+  /// No description provided for @leaderboardUnknownUser.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get leaderboardUnknownUser;
+
+  /// No description provided for @leaderboardLifetime.
+  ///
+  /// In en, this message translates to:
+  /// **'lifetime'**
+  String get leaderboardLifetime;
+
+  /// No description provided for @leaderboardLifetimeScoreByline.
+  ///
+  /// In en, this message translates to:
+  /// **'Lifetime score'**
+  String get leaderboardLifetimeScoreByline;
+
+  /// No description provided for @settingsNoVerifiedEmailYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No verified email yet'**
+  String get settingsNoVerifiedEmailYet;
+
+  /// No description provided for @settingsCustomizeAvatar.
+  ///
+  /// In en, this message translates to:
+  /// **'Customize avatar'**
+  String get settingsCustomizeAvatar;
+
+  /// No description provided for @settingsMudFeelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Mud feel'**
+  String get settingsMudFeelTitle;
+
+  /// No description provided for @settingsMudFeelBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Tune hold resistance and haptic feedback on this device with bounded presets.'**
+  String get settingsMudFeelBody;
+
+  /// No description provided for @settingsMudPresetGentle.
+  ///
+  /// In en, this message translates to:
+  /// **'Gentle'**
+  String get settingsMudPresetGentle;
+
+  /// No description provided for @settingsMudPresetStandard.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard'**
+  String get settingsMudPresetStandard;
+
+  /// No description provided for @settingsMudPresetIntense.
+  ///
+  /// In en, this message translates to:
+  /// **'Intense'**
+  String get settingsMudPresetIntense;
+
+  /// No description provided for @settingsMudHapticsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Mud haptics'**
+  String get settingsMudHapticsTitle;
+
+  /// No description provided for @settingsMudHapticsSoft.
+  ///
+  /// In en, this message translates to:
+  /// **'Soft taps during hold and a light completion pulse.'**
+  String get settingsMudHapticsSoft;
+
+  /// No description provided for @settingsMudHapticsStandard.
+  ///
+  /// In en, this message translates to:
+  /// **'Balanced hold taps and standard completion feedback.'**
+  String get settingsMudHapticsStandard;
+
+  /// No description provided for @settingsMudHapticsStrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Heavier completion feedback with denser hold taps.'**
+  String get settingsMudHapticsStrong;
+
+  /// No description provided for @settingsVerificationPinSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification PIN sent.'**
+  String get settingsVerificationPinSent;
+
+  /// No description provided for @settingsCloudSyncActivated.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud sync activated.'**
+  String get settingsCloudSyncActivated;
+
+  /// No description provided for @settingsCloudSyncActiveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud sync active'**
+  String get settingsCloudSyncActiveTitle;
+
+  /// No description provided for @settingsActivateCloudSyncTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate cloud sync'**
+  String get settingsActivateCloudSyncTitle;
+
+  /// No description provided for @settingsCloudSyncLinkedToEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress recovery is linked to {email}.'**
+  String settingsCloudSyncLinkedToEmail(String email);
+
+  /// No description provided for @settingsCloudSyncInactiveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a verified email when you want recoverable cloud progress and password reset support.'**
+  String get settingsCloudSyncInactiveBody;
+
+  /// No description provided for @settingsChangeEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Change email'**
+  String get settingsChangeEmail;
+
+  /// No description provided for @settingsDailyRemindersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily reminders'**
+  String get settingsDailyRemindersTitle;
+
+  /// No description provided for @settingsDailyRemindersEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable daily reminders to return to your habits.'**
+  String get settingsDailyRemindersEmpty;
+
+  /// No description provided for @settingsDailyRemindersEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Hable will remind you each day at these times.'**
+  String get settingsDailyRemindersEnabled;
+
+  /// No description provided for @settingsEnableInSystemSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable in System Settings'**
+  String get settingsEnableInSystemSettings;
+
+  /// No description provided for @settingsAddTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Time'**
+  String get settingsAddTime;
+
+  /// No description provided for @settingsStatusActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get settingsStatusActive;
+
+  /// No description provided for @settingsStatusSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get settingsStatusSaved;
+
+  /// No description provided for @settingsStatusOn.
+  ///
+  /// In en, this message translates to:
+  /// **'On'**
+  String get settingsStatusOn;
+
+  /// No description provided for @settingsStatusOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get settingsStatusOff;
+
+  /// No description provided for @settingsReminderUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder scheduling is not available on this platform.'**
+  String get settingsReminderUnsupported;
+
+  /// No description provided for @settingsRemindersBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are blocked. Enable them in System Settings.'**
+  String get settingsRemindersBlocked;
+
+  /// No description provided for @settingsRemoveReminderTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove reminder'**
+  String get settingsRemoveReminderTooltip;
+
+  /// No description provided for @settingsRemindersLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Hable could not load your reminders right now.'**
+  String get settingsRemindersLoadFailed;
+
+  /// No description provided for @profileHabitFallbackTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Habit'**
+  String get profileHabitFallbackTitle;
+
+  /// No description provided for @profileDaysLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days'**
+  String profileDaysLabel(int days);
+
+  /// No description provided for @profileDaysLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days left'**
+  String profileDaysLeft(int days);
+
+  /// No description provided for @profileDayChallenge.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} day challenge'**
+  String profileDayChallenge(int days);
+
+  /// No description provided for @profileFriendHabitBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Encourage your friend or follow the same habit yourself.'**
+  String get profileFriendHabitBody;
+
+  /// No description provided for @profileEncouragementQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'Encouragement queued for {title}.'**
+  String profileEncouragementQueued(String title);
+
+  /// No description provided for @profileEncourage.
+  ///
+  /// In en, this message translates to:
+  /// **'Encourage'**
+  String get profileEncourage;
+
+  /// No description provided for @profileFollow.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow'**
+  String get profileFollow;
+
+  /// No description provided for @profileAchievementFirstCheckIn.
+  ///
+  /// In en, this message translates to:
+  /// **'First check-in'**
+  String get profileAchievementFirstCheckIn;
+
+  /// No description provided for @profileAchievementTenStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'10-day streak'**
+  String get profileAchievementTenStreak;
+
+  /// No description provided for @profileAchievementHundredStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'100-day streak'**
+  String get profileAchievementHundredStreak;
+
+  /// No description provided for @profileAchievementThousandStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'1000-day streak'**
+  String get profileAchievementThousandStreak;
+
+  /// No description provided for @profileAchievementFirstNudge.
+  ///
+  /// In en, this message translates to:
+  /// **'First nudge'**
+  String get profileAchievementFirstNudge;
+
+  /// No description provided for @profileAchievementFirstSupporter.
+  ///
+  /// In en, this message translates to:
+  /// **'First supporter'**
+  String get profileAchievementFirstSupporter;
+
+  /// No description provided for @profileSharedHabit.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared habit'**
+  String get profileSharedHabit;
+
+  /// No description provided for @profileSoloHabit.
+  ///
+  /// In en, this message translates to:
+  /// **'Solo habit'**
+  String get profileSoloHabit;
+
+  /// No description provided for @profileOpenHabitActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Open habit actions'**
+  String get profileOpenHabitActions;
+
+  /// No description provided for @profileDeleteHabitTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete habit?'**
+  String get profileDeleteHabitTitle;
+
+  /// No description provided for @profileDeleteHabitBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This will permanently delete \"{title}\" and remove it from synced devices.'**
+  String profileDeleteHabitBody(String title);
+
+  /// No description provided for @profileArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get profileArchive;
+
+  /// No description provided for @profileViewHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'View History'**
+  String get profileViewHistory;
+
+  /// No description provided for @profileRerun.
+  ///
+  /// In en, this message translates to:
+  /// **'Rerun'**
+  String get profileRerun;
+
+  /// No description provided for @profileRoleOwnerView.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner view'**
+  String get profileRoleOwnerView;
+
+  /// No description provided for @profileRolePartnerView.
+  ///
+  /// In en, this message translates to:
+  /// **'Partner view'**
+  String get profileRolePartnerView;
+
+  /// No description provided for @profileRoleSupporterView.
+  ///
+  /// In en, this message translates to:
+  /// **'Supporter view'**
+  String get profileRoleSupporterView;
+
+  /// No description provided for @profileHistoryIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived challenge history and per-check-in awards'**
+  String get profileHistoryIntro;
+
+  /// No description provided for @profileNoHistoryYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No history recorded yet.'**
+  String get profileNoHistoryYet;
+
+  /// No description provided for @profilePointsAwarded.
+  ///
+  /// In en, this message translates to:
+  /// **'+{points} pts'**
+  String profilePointsAwarded(int points);
+
+  /// No description provided for @profileUnableLoadHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load habit history.'**
+  String get profileUnableLoadHistory;
+
+  /// No description provided for @profileHistoryCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get profileHistoryCompleted;
+
+  /// No description provided for @profileHistorySkippedWithNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped: {note}'**
+  String profileHistorySkippedWithNote(String note);
+
+  /// No description provided for @profileHistorySkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped'**
+  String get profileHistorySkipped;
+
+  /// No description provided for @profileCalendarUnknownError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown error'**
+  String get profileCalendarUnknownError;
+
+  /// No description provided for @profileCalendarGenerateLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate Subscription Link'**
+  String get profileCalendarGenerateLink;
+
+  /// No description provided for @profileCalendarSubscriptionUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription URL'**
+  String get profileCalendarSubscriptionUrl;
+
+  /// No description provided for @profileCalendarCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar feed URL copied to clipboard'**
+  String get profileCalendarCopied;
+
+  /// No description provided for @profileCalendarCopyTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy subscription URL'**
+  String get profileCalendarCopyTooltip;
+
+  /// No description provided for @profileCalendarPasteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste this URL into your native calendar app to subscribe'**
+  String get profileCalendarPasteHint;
+
+  /// No description provided for @profileCalendarRotateToken.
+  ///
+  /// In en, this message translates to:
+  /// **'Rotate Token'**
+  String get profileCalendarRotateToken;
+
+  /// No description provided for @profileCalendarRotateHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Rotating the token will invalidate the old subscription link'**
+  String get profileCalendarRotateHint;
+
+  /// No description provided for @accessibilityReducedMotionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reduced Motion'**
+  String get accessibilityReducedMotionTitle;
+
+  /// No description provided for @accessibilityReducedMotionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Disable animations and transitions'**
+  String get accessibilityReducedMotionBody;
+
+  /// No description provided for @accessibilityHighContrastTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'High Contrast'**
+  String get accessibilityHighContrastTitle;
+
+  /// No description provided for @accessibilityHighContrastBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Increase color contrast for better readability'**
+  String get accessibilityHighContrastBody;
+
+  /// No description provided for @accessibilityLargerTextTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Larger Text'**
+  String get accessibilityLargerTextTitle;
+
+  /// No description provided for @accessibilityLargerTextBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Increase the global text scale'**
+  String get accessibilityLargerTextBody;
 }
 
 class _AppLocalizationsDelegate

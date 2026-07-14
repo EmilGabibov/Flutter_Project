@@ -84,6 +84,48 @@ void main() {
       );
     });
 
+    test('web production prefers the current hable pages origin', () {
+      expect(
+        resolveApiBaseUrl(
+          apiBaseOverride: '',
+          environment: HableAppEnvironment.production,
+          currentWebOrigin: 'https://preview-123.hable.pages.dev',
+        ),
+        'https://preview-123.hable.pages.dev',
+      );
+    });
+
+    test('web production ignores non-hable or non-https origins', () {
+      expect(
+        resolveApiBaseUrl(
+          apiBaseOverride: '',
+          environment: HableAppEnvironment.production,
+          currentWebOrigin: 'http://localhost:8080',
+        ),
+        productionApiBaseUrl,
+      );
+      expect(
+        resolveApiBaseUrl(
+          apiBaseOverride: '',
+          environment: HableAppEnvironment.production,
+          currentWebOrigin: 'https://example.com',
+        ),
+        productionApiBaseUrl,
+      );
+    });
+
+    test('production presentation builds never resolve to localhost', () {
+      final url = resolveApiBaseUrl(
+        apiBaseOverride: '',
+        environment: HableAppEnvironment.production,
+      );
+
+      expect(url, startsWith('https://'));
+      expect(url, isNot(contains('localhost')));
+      expect(url, isNot(contains('127.0.0.1')));
+      expect(url, isNot(contains('10.0.2.2')));
+    });
+
     test('staging uses the staging override when provided', () {
       expect(
         resolveApiBaseUrl(
@@ -95,14 +137,17 @@ void main() {
       );
     });
 
-    test('staging falls back to production when no staging url is configured', () {
-      expect(
-        resolveApiBaseUrl(
-          apiBaseOverride: '',
-          environment: HableAppEnvironment.staging,
-        ),
-        productionApiBaseUrl,
-      );
-    });
+    test(
+      'staging falls back to production when no staging url is configured',
+      () {
+        expect(
+          resolveApiBaseUrl(
+            apiBaseOverride: '',
+            environment: HableAppEnvironment.staging,
+          ),
+          productionApiBaseUrl,
+        );
+      },
+    );
   });
 }

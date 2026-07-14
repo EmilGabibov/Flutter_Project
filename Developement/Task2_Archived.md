@@ -5679,3 +5679,52 @@ The revision should explicitly describe why these surfaces may update at differe
 
 **Completion-note placeholder:** [Placeholder for completion notes, touched files, behavior verified, and completion timestamp]
 
+<a id="complete-remaining-localization-coverage-across-all-user-facing-flutter-surfaces"></a>
+### [x] Complete Remaining Localization Coverage Across All User-Facing Flutter Surfaces
+
+**Raw source:** Complete localization coverage across all remaining parts of the Flutter app so no meaningful user-facing English-only UI remains. Engineered from the user-supplied raw prompt on 2026-07-14 because `Task0_Raw.md` had no pending open intake items at the time of triage.
+
+**Issue:** Hable already completed the localization scaffold and a first high-value language pass, but the app is still only partially localized in practice. Recent implementation work confirmed that several major surfaces still contain hard-coded English across screens, reusable widgets, fallback errors, empty states, date/time-relative labels, semantics, and nested settings/profile flows. That creates an inconsistent product experience: users can switch languages, but still encounter English-only islands on daily flows. It also weakens the maintainability of the six-language contract because any remaining inline strings will keep growing as features ship unless the cleanup is finished at the reusable-surface level.
+
+**Triage:**
+- *Should exist:* Yes. This is a real follow-up task, not duplicate backlog noise, because the archived localization baseline task established the language framework but did not finish coverage across the full current app surface.
+- *Smallest safe scope:* Audit the full Flutter `lib/` tree for remaining first-party user-facing strings, localize the remaining high-traffic and reusable surfaces, align visible date/time formatting where practical, and verify the result with generated bindings plus focused analysis.
+- *Skipped scope:* Do not broaden this into professional translation review, locale-specific quote sourcing, backend-translated content delivery, custom typography work, or full accessibility certification.
+- *Boundaries:* Preserve the existing `AppLocalizations` architecture, current supported-language set, and offline-first product behavior. Localize first-party product copy only; do not translate user-generated content or force external quote content to be localized when Hable intentionally permits English quote text.
+
+**Action:** Perform a repo-wide localization completion pass across the remaining user-facing Flutter surfaces. Audit screens, widgets, sheets, dialogs, snackbars, tooltips, CTA labels, empty states, validation messages, settings/help copy, notification timestamps, and semantics labels for hard-coded first-party English. Move remaining copy into the existing ARB pipeline for English, German, Urdu, Russian, Tamil, and Persian/Farsi. Keep all locale files key-complete, use the project’s established localization import style, and replace ad hoc date/time labels with locale-aware formatting where the change is low-risk and clearly user-facing.
+
+**Hable perspective:** Hable’s emotional tone is carried by compact interface copy across onboarding, habit creation, daily check-ins, social feedback, and recovery/error states. A half-localized shell is not good enough because users hit these surfaces every session. The right completion task is not another infrastructure rewrite; it is a disciplined cleanup that finishes localization coverage at the UI-component layer so future features inherit the correct pattern by default.
+
+**Implementation scope:**
+- Flutter UI surfaces across `lib/screens/**` and `lib/widgets/**`: finish localizing app bars, tabs, buttons, helper text, placeholders, chips, banners, dialogs, bottom sheets, snackbars, section headings, profile/settings copy, onboarding copy, social copy, notification-center labels, and dashboard summary text.
+- Reusable localization resources in `lib/l10n/*.arb` and generated bindings: add missing keys across `app_en.arb`, `app_de.arb`, `app_ru.arb`, `app_ta.arb`, `app_ur.arb`, and `app_fa.arb`, keeping non-English files key-complete even when temporary fallback text is still English.
+- Existing locale state path: preserve `localeProvider` / `LanguageSelector` behavior and ensure touched files use the repo’s current `AppLocalizations` import style rather than introducing mixed patterns.
+- User-facing formatting surfaces: tighten notification relative-time labels, short dates, plural-sensitive strings, and similar copy where Flutter/Intl or `MaterialLocalizations` already provides the safer path.
+- Accessibility surfaces: localize visible semantics/tooltips that users encounter through assistive technology on habit cards, partner rows, notifications, and major navigation actions.
+- Test and QA surfaces: add or update focused verification where practical, and refresh manual QA expectations for locale switching, translation completeness, and visible RTL/formatting checks.
+
+**Scalability considerations:** Localization debt scales with feature count, so this task should eliminate hard-coded strings primarily on shared and high-traffic surfaces rather than treating each screen as a one-off exception. Keep locale ownership centralized in ARB resources, avoid recomputing copy in deeply nested widgets when providers can expose raw state instead, and prefer locale-aware framework formatting over custom string assembly so future growth does not create another cleanup wave.
+
+**Future split guidance:** If this pass exposes deeper needs such as translation-quality review by native speakers, locale-specific quote curation, backend-delivered multilingual content, advanced ICU pluralization refactors, or comprehensive accessibility/RTL audits, append those as separate follow-up tasks. This task should finish broad first-party UI coverage, not become a multilingual content-operations program.
+
+**Edge cases:** Mixed LTR/RTL content on the same row, user-authored habit titles and partner names embedded inside localized labels, long translated strings on narrow cards/buttons, timestamps that cross “minutes/hours/days” thresholds, locale switching during runtime, error fallbacks that currently pass inline strings into `AppError.fromAny(...)`, hidden English in tooltips/semantics, and stale generated localization bindings after ARB edits.
+
+**Acceptance criteria:**
+- The remaining obvious first-party hard-coded English on normal app usage paths is removed or explicitly documented as intentionally deferred.
+- All six supported locale ARB files remain key-complete and generate clean localization bindings.
+- Touched files use the project’s established `AppLocalizations` import/access pattern consistently.
+- User-facing relative-time/date labels touched by the pass use locale-aware formatting where practical and low-risk.
+- `flutter gen-l10n`, `dart format`, and focused `flutter analyze` are part of verification for the touched surfaces.
+- QA/development documentation is verified and updated anywhere localization expectations materially changed.
+- Any intentionally deferred strings or ambiguous product-copy decisions are called out explicitly in the eventual completion notes.
+
+**Dependencies:** `Developement/qa_testing.md`, `Developement/future_split_guidance.md`, `Developement/ux_mud_and_animations.md`, `Developement/sys_error_handling.md`
+
+**Completion notes:**
+- Touched files: `lib/l10n/app_en.arb`, `lib/l10n/app_de.arb`, `lib/l10n/app_ru.arb`, `lib/l10n/app_ta.arb`, `lib/l10n/app_ur.arb`, `lib/l10n/app_fa.arb`, regenerated `lib/l10n/app_localizations*.dart`, `lib/screens/social/social_hub_screen.dart`, `lib/screens/profile_screen.dart`, `lib/widgets/habit_card.dart`, `lib/widgets/accessibility_selector.dart`, `lib/widgets/leaderboard_card.dart`, `Developement/qa_testing.md`, `Developement/sys_error_handling.md`, `Developement/ux_mud_and_animations.md`, and `Developement/future_split_guidance.md`.
+- Behavior implemented: localized the remaining high-traffic Social/Profile/widget surfaces, including snackbars, dialogs, tooltips, chips, leaderboard/profile labels, accessibility copy, reminder/settings copy, habit-card semantics, and activity relative-time labels; replaced several English fallback error paths with localized safe-copy usage plus `MaterialLocalizations` where date formatting was safer than custom strings.
+- Verification run: `flutter gen-l10n`, `dart format lib/screens/social/social_hub_screen.dart lib/screens/profile_screen.dart lib/widgets/habit_card.dart lib/widgets/accessibility_selector.dart lib/widgets/leaderboard_card.dart`, and `flutter analyze lib/screens/social/social_hub_screen.dart lib/screens/profile_screen.dart lib/widgets/habit_card.dart lib/widgets/accessibility_selector.dart lib/widgets/leaderboard_card.dart` all completed cleanly. MobAI/device validation was not available in this environment, so verification was limited to tooling plus targeted code review.
+- Docs verified/updated: `Developement/qa_testing.md`, `Developement/sys_error_handling.md`, `Developement/ux_mud_and_animations.md`, and `Developement/future_split_guidance.md` were updated to reflect the localization baseline and localized safe-copy expectations.
+- Intentional deferment: the six locale files are now key-complete for the newly added strings, but many of the new non-English values intentionally remain English fallback text until a separate native-speaker translation-quality pass.
+- Completed At: 2026-07-14 16:20 CEST
