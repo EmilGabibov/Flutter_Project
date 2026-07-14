@@ -181,7 +181,6 @@ class LocalReminderService {
         windows: WindowsNotificationDetails(),
       ),
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-      matchDateTimeComponents: DateTimeComponents.time,
       payload: payload ?? 'home',
     );
   }
