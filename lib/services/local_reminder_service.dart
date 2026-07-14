@@ -32,7 +32,7 @@ class LocalReminderService {
     if (_initialized || !_pluginAvailable) return;
 
     const androidSettings = AndroidInitializationSettings(
-      '@mipmap/ic_launcher',
+      '@mipmap/ic_notification',
     );
     const darwinSettings = DarwinInitializationSettings(
       requestAlertPermission: false,
@@ -83,7 +83,8 @@ class LocalReminderService {
               'habit_reminders',
               'Habit reminders',
               description: 'Daily Hable reminder notifications',
-              importance: Importance.defaultImportance,
+              importance: Importance.high,
+              playSound: true,
             ),
           );
     }
@@ -173,14 +174,16 @@ class LocalReminderService {
           'habit_reminders',
           'Habit reminders',
           channelDescription: 'Daily Hable reminder notifications',
-          importance: Importance.defaultImportance,
-          priority: Priority.defaultPriority,
+          importance: Importance.high,
+          priority: Priority.high,
+          playSound: true,
         ),
         iOS: DarwinNotificationDetails(),
         macOS: DarwinNotificationDetails(),
         windows: WindowsNotificationDetails(),
       ),
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time,
       payload: payload ?? 'home',
     );
   }
