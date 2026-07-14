@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../models/daily_quote.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -246,7 +247,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildContent(
     BuildContext context,
     List<Habit> habits,
-    AsyncValue<String> quoteAsync,
+    AsyncValue<DailyQuote> quoteAsync,
   ) {
     final l10n = AppLocalizations.of(context)!;
     bool allEmpty = true;

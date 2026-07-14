@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../models/daily_quote.dart';
 import '../../providers/quote_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/skeletons.dart';
@@ -198,7 +199,7 @@ class _OnboardingSlide {
 
 class _OnboardingSlideView extends StatelessWidget {
   final _OnboardingSlide slide;
-  final AsyncValue<String>? quote;
+  final AsyncValue<DailyQuote>? quote;
   final double availableHeight;
 
   const _OnboardingSlideView({
@@ -271,7 +272,7 @@ class _OnboardingSlideView extends StatelessWidget {
 }
 
 class _QuotePanel extends StatelessWidget {
-  final AsyncValue<String> quote;
+  final AsyncValue<DailyQuote> quote;
 
   const _QuotePanel({required this.quote});
 
@@ -287,20 +288,36 @@ class _QuotePanel extends StatelessWidget {
         border: Border.all(color: AppTheme.warmGray.withValues(alpha: 0.12)),
       ),
       child: quote.when(
-        data: (value) => Text(
-          '"$value"',
+        data: (value) => Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(text: '"${value.text}"'),
+              if (value.author != null && value.author!.isNotEmpty)
+                TextSpan(
+                  text: '\n— ${value.author}',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: AppTheme.deepCharcoal.withValues(alpha: 0.8),
+                    fontStyle: FontStyle.normal,
+                    height: 1.6,
+                  ),
+                ),
+            ],
+          ),
           key: const Key('onboarding-quote-text'),
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             color: AppTheme.deepCharcoal,
             fontStyle: FontStyle.italic,
             height: 1.45,
           ),
+          textAlign: TextAlign.center,
         ),
-        loading: () => const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            HableSkeletonBlock(width: 220, height: 14),
-            SizedBox(height: 10),
+        loading: () => Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            HableSkeletonBlock(width: double.infinity, height: 18),
+            SizedBox(height: 8),
+            HableSkeletonBlock(width: double.infinity, height: 18),
+            SizedBox(height: 8),
             HableSkeletonBlock(width: 160, height: 14),
           ],
         ),
@@ -312,6 +329,7 @@ class _QuotePanel extends StatelessWidget {
             fontStyle: FontStyle.italic,
             height: 1.45,
           ),
+          textAlign: TextAlign.center,
         ),
       ),
     );

@@ -3,9 +3,11 @@ import 'dart:math' as math;
 
 import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
+import '../models/daily_quote.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import '../theme/app_theme.dart';
 
 import '../database/database.dart';
 import '../database/tables.dart' show LogStatus, PartnershipRole, SyncAction;
@@ -258,7 +260,7 @@ class _DashboardSummaryCard extends StatelessWidget {
   const _DashboardSummaryCard({required this.habits, required this.quoteAsync});
 
   final List<Habit> habits;
-  final AsyncValue<String> quoteAsync;
+  final AsyncValue<DailyQuote> quoteAsync;
 
   @override
   Widget build(BuildContext context) {
