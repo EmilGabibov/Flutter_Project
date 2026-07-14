@@ -122,6 +122,7 @@ class SyncQueue extends Table {
 class CachedQuotes extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get quoteText => text()();
+  TextColumn get author => text().nullable()();
   DateTimeColumn get fetchedAt => dateTime().withDefault(currentDateAndTime)();
 }
 

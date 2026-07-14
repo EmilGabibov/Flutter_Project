@@ -299,8 +299,22 @@ class _DashboardSummaryCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             quoteAsync.when(
-              data: (quote) =>
-                  Text(quote, style: Theme.of(context).textTheme.bodyMedium),
+              data: (quote) => Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(text: quote.text),
+                    if (quote.author != null && quote.author!.isNotEmpty)
+                      TextSpan(
+                        text: '\n— ${quote.author}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppTheme.warmGray,
+                              fontStyle: FontStyle.italic,
+                            ),
+                      ),
+                  ],
+                ),
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
               loading: () => Text(l10n.dashboardQuoteLoading),
               error: (_, _) => Text(l10n.dashboardQuoteFallback),
             ),

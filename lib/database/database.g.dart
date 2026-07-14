@@ -2713,6 +2713,15 @@ class $CachedQuotesTable extends CachedQuotes
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _authorMeta = const VerificationMeta('author');
+  @override
+  late final GeneratedColumn<String> author = GeneratedColumn<String>(
+    'author',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _fetchedAtMeta = const VerificationMeta(
     'fetchedAt',
   );
@@ -2726,7 +2735,7 @@ class $CachedQuotesTable extends CachedQuotes
     defaultValue: currentDateAndTime,
   );
   @override
-  List<GeneratedColumn> get $columns => [id, quoteText, fetchedAt];
+  List<GeneratedColumn> get $columns => [id, quoteText, author, fetchedAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -2749,6 +2758,12 @@ class $CachedQuotesTable extends CachedQuotes
       );
     } else if (isInserting) {
       context.missing(_quoteTextMeta);
+    }
+    if (data.containsKey('author')) {
+      context.handle(
+        _authorMeta,
+        author.isAcceptableOrUnknown(data['author']!, _authorMeta),
+      );
     }
     if (data.containsKey('fetched_at')) {
       context.handle(
@@ -2773,6 +2788,10 @@ class $CachedQuotesTable extends CachedQuotes
         DriftSqlType.string,
         data['${effectivePrefix}quote_text'],
       )!,
+      author: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}author'],
+      ),
       fetchedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}fetched_at'],
@@ -2789,10 +2808,12 @@ class $CachedQuotesTable extends CachedQuotes
 class CachedQuote extends DataClass implements Insertable<CachedQuote> {
   final int id;
   final String quoteText;
+  final String? author;
   final DateTime fetchedAt;
   const CachedQuote({
     required this.id,
     required this.quoteText,
+    this.author,
     required this.fetchedAt,
   });
   @override
@@ -2800,6 +2821,9 @@ class CachedQuote extends DataClass implements Insertable<CachedQuote> {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['quote_text'] = Variable<String>(quoteText);
+    if (!nullToAbsent || author != null) {
+      map['author'] = Variable<String>(author);
+    }
     map['fetched_at'] = Variable<DateTime>(fetchedAt);
     return map;
   }
@@ -2808,6 +2832,9 @@ class CachedQuote extends DataClass implements Insertable<CachedQuote> {
     return CachedQuotesCompanion(
       id: Value(id),
       quoteText: Value(quoteText),
+      author: author == null && nullToAbsent
+          ? const Value.absent()
+          : Value(author),
       fetchedAt: Value(fetchedAt),
     );
   }
@@ -2820,6 +2847,7 @@ class CachedQuote extends DataClass implements Insertable<CachedQuote> {
     return CachedQuote(
       id: serializer.fromJson<int>(json['id']),
       quoteText: serializer.fromJson<String>(json['quoteText']),
+      author: serializer.fromJson<String?>(json['author']),
       fetchedAt: serializer.fromJson<DateTime>(json['fetchedAt']),
     );
   }
@@ -2829,20 +2857,27 @@ class CachedQuote extends DataClass implements Insertable<CachedQuote> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'quoteText': serializer.toJson<String>(quoteText),
+      'author': serializer.toJson<String?>(author),
       'fetchedAt': serializer.toJson<DateTime>(fetchedAt),
     };
   }
 
-  CachedQuote copyWith({int? id, String? quoteText, DateTime? fetchedAt}) =>
-      CachedQuote(
-        id: id ?? this.id,
-        quoteText: quoteText ?? this.quoteText,
-        fetchedAt: fetchedAt ?? this.fetchedAt,
-      );
+  CachedQuote copyWith({
+    int? id,
+    String? quoteText,
+    Value<String?> author = const Value.absent(),
+    DateTime? fetchedAt,
+  }) => CachedQuote(
+    id: id ?? this.id,
+    quoteText: quoteText ?? this.quoteText,
+    author: author.present ? author.value : this.author,
+    fetchedAt: fetchedAt ?? this.fetchedAt,
+  );
   CachedQuote copyWithCompanion(CachedQuotesCompanion data) {
     return CachedQuote(
       id: data.id.present ? data.id.value : this.id,
       quoteText: data.quoteText.present ? data.quoteText.value : this.quoteText,
+      author: data.author.present ? data.author.value : this.author,
       fetchedAt: data.fetchedAt.present ? data.fetchedAt.value : this.fetchedAt,
     );
   }
@@ -2852,44 +2887,51 @@ class CachedQuote extends DataClass implements Insertable<CachedQuote> {
     return (StringBuffer('CachedQuote(')
           ..write('id: $id, ')
           ..write('quoteText: $quoteText, ')
+          ..write('author: $author, ')
           ..write('fetchedAt: $fetchedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, quoteText, fetchedAt);
+  int get hashCode => Object.hash(id, quoteText, author, fetchedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is CachedQuote &&
           other.id == this.id &&
           other.quoteText == this.quoteText &&
+          other.author == this.author &&
           other.fetchedAt == this.fetchedAt);
 }
 
 class CachedQuotesCompanion extends UpdateCompanion<CachedQuote> {
   final Value<int> id;
   final Value<String> quoteText;
+  final Value<String?> author;
   final Value<DateTime> fetchedAt;
   const CachedQuotesCompanion({
     this.id = const Value.absent(),
     this.quoteText = const Value.absent(),
+    this.author = const Value.absent(),
     this.fetchedAt = const Value.absent(),
   });
   CachedQuotesCompanion.insert({
     this.id = const Value.absent(),
     required String quoteText,
+    this.author = const Value.absent(),
     this.fetchedAt = const Value.absent(),
   }) : quoteText = Value(quoteText);
   static Insertable<CachedQuote> custom({
     Expression<int>? id,
     Expression<String>? quoteText,
+    Expression<String>? author,
     Expression<DateTime>? fetchedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (quoteText != null) 'quote_text': quoteText,
+      if (author != null) 'author': author,
       if (fetchedAt != null) 'fetched_at': fetchedAt,
     });
   }
@@ -2897,11 +2939,13 @@ class CachedQuotesCompanion extends UpdateCompanion<CachedQuote> {
   CachedQuotesCompanion copyWith({
     Value<int>? id,
     Value<String>? quoteText,
+    Value<String?>? author,
     Value<DateTime>? fetchedAt,
   }) {
     return CachedQuotesCompanion(
       id: id ?? this.id,
       quoteText: quoteText ?? this.quoteText,
+      author: author ?? this.author,
       fetchedAt: fetchedAt ?? this.fetchedAt,
     );
   }
@@ -2915,6 +2959,9 @@ class CachedQuotesCompanion extends UpdateCompanion<CachedQuote> {
     if (quoteText.present) {
       map['quote_text'] = Variable<String>(quoteText.value);
     }
+    if (author.present) {
+      map['author'] = Variable<String>(author.value);
+    }
     if (fetchedAt.present) {
       map['fetched_at'] = Variable<DateTime>(fetchedAt.value);
     }
@@ -2926,6 +2973,7 @@ class CachedQuotesCompanion extends UpdateCompanion<CachedQuote> {
     return (StringBuffer('CachedQuotesCompanion(')
           ..write('id: $id, ')
           ..write('quoteText: $quoteText, ')
+          ..write('author: $author, ')
           ..write('fetchedAt: $fetchedAt')
           ..write(')'))
         .toString();
@@ -10784,12 +10832,14 @@ typedef $$CachedQuotesTableCreateCompanionBuilder =
     CachedQuotesCompanion Function({
       Value<int> id,
       required String quoteText,
+      Value<String?> author,
       Value<DateTime> fetchedAt,
     });
 typedef $$CachedQuotesTableUpdateCompanionBuilder =
     CachedQuotesCompanion Function({
       Value<int> id,
       Value<String> quoteText,
+      Value<String?> author,
       Value<DateTime> fetchedAt,
     });
 
@@ -10809,6 +10859,11 @@ class $$CachedQuotesTableFilterComposer
 
   ColumnFilters<String> get quoteText => $composableBuilder(
     column: $table.quoteText,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get author => $composableBuilder(
+    column: $table.author,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -10837,6 +10892,11 @@ class $$CachedQuotesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get author => $composableBuilder(
+    column: $table.author,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get fetchedAt => $composableBuilder(
     column: $table.fetchedAt,
     builder: (column) => ColumnOrderings(column),
@@ -10857,6 +10917,9 @@ class $$CachedQuotesTableAnnotationComposer
 
   GeneratedColumn<String> get quoteText =>
       $composableBuilder(column: $table.quoteText, builder: (column) => column);
+
+  GeneratedColumn<String> get author =>
+      $composableBuilder(column: $table.author, builder: (column) => column);
 
   GeneratedColumn<DateTime> get fetchedAt =>
       $composableBuilder(column: $table.fetchedAt, builder: (column) => column);
@@ -10895,20 +10958,24 @@ class $$CachedQuotesTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 Value<String> quoteText = const Value.absent(),
+                Value<String?> author = const Value.absent(),
                 Value<DateTime> fetchedAt = const Value.absent(),
               }) => CachedQuotesCompanion(
                 id: id,
                 quoteText: quoteText,
+                author: author,
                 fetchedAt: fetchedAt,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 required String quoteText,
+                Value<String?> author = const Value.absent(),
                 Value<DateTime> fetchedAt = const Value.absent(),
               }) => CachedQuotesCompanion.insert(
                 id: id,
                 quoteText: quoteText,
+                author: author,
                 fetchedAt: fetchedAt,
               ),
           withReferenceMapper: (p0) => p0

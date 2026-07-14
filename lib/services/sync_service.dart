@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../config/api_config.dart';
 import '../database/database.dart';
+import '../models/daily_quote.dart';
 import '../database/tables.dart';
 import 'connectivity_service.dart';
 import 'local_reminder_service.dart';
@@ -440,9 +441,9 @@ class SyncService {
         debugPrint('[SyncService] GET /api/sync/daily successful');
 
         await _db.deleteExpiredNotificationEvents();
-        final syncedQuote = _syncedQuoteText(data['quote']);
+        final syncedQuote = _syncedQuote(data['quote']);
         if (syncedQuote != null) {
-          await _db.cacheQuote(syncedQuote);
+          await _db.cacheQuote(syncedQuote.text, author: syncedQuote.author);
         }
 
         // Persist accepted friends first so later notification rows can resolve
@@ -859,14 +860,17 @@ class SyncService {
     _connectivity.dispose();
   }
 
-  String? _syncedQuoteText(Object? value) {
+  DailyQuote? _syncedQuote(Object? value) {
     if (value is String) {
       final trimmed = value.trim();
-      return trimmed.isEmpty ? null : trimmed;
+      return trimmed.isEmpty ? null : DailyQuote(text: trimmed);
     }
     if (value is Map<String, dynamic>) {
       final text = value['text']?.toString().trim();
-      return text == null || text.isEmpty ? null : text;
+      final author = value['author']?.toString().trim();
+      return text == null || text.isEmpty
+          ? null
+          : DailyQuote(text: text, author: author?.isEmpty == true ? null : author);
     }
     return null;
   }

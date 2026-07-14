@@ -444,8 +444,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ],
                           )
                         : quoteAsync.when(
-                            data: (quote) => Text(
-                              quote,
+                            data: (quote) => Text.rich(
+                              TextSpan(
+                                children: [
+                                  TextSpan(text: quote.text),
+                                  if (quote.author != null && quote.author!.isNotEmpty)
+                                    TextSpan(
+                                      text: '\n— ${quote.author}',
+                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                            fontStyle: FontStyle.normal,
+                                            fontWeight: FontWeight.w500,
+                                            color: AppTheme.warmGray,
+                                          ),
+                                    ),
+                                ],
+                              ),
                               style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(
                                     fontStyle: FontStyle.italic,

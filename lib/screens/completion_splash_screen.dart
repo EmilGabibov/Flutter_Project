@@ -152,8 +152,25 @@ class _CompletionSplashScreenState extends ConsumerState<CompletionSplashScreen>
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               quoteAsync.when(
-                                data: (quote) => Text(
-                                  '"$quote"',
+                                data: (quote) => Text.rich(
+                                  TextSpan(
+                                    children: [
+                                      TextSpan(text: '"${quote.text}"'),
+                                      if (quote.author != null &&
+                                          quote.author!.isNotEmpty)
+                                        TextSpan(
+                                          text: '\n— ${quote.author}',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium
+                                              ?.copyWith(
+                                                color: Colors.white70,
+                                                fontWeight: FontWeight.w500,
+                                                fontStyle: FontStyle.normal,
+                                              ),
+                                        ),
+                                    ],
+                                  ),
                                   key: const Key('completion-splash-quote'),
                                   style: Theme.of(context)
                                       .textTheme

@@ -1,4 +1,5 @@
 import '../database/tables.dart';
+import '../models/daily_quote.dart';
 import 'fallback_quotes.dart';
 
 class ReminderCopy {
@@ -44,7 +45,7 @@ class MascotReminderCopyHelper {
     }
   }
 
-  static String quoteForContext(
+  static DailyQuote quoteForContext(
     CopyPersonalizationContext context, {
     DateTime? now,
   }) {
@@ -52,17 +53,18 @@ class MascotReminderCopyHelper {
     final seed = date.year * 1000 + date.month * 100 + date.day;
 
     if (context.hasRecentSkip) {
-      return _recentSkipQuotes[seed % _recentSkipQuotes.length];
+      return DailyQuote(text: _recentSkipQuotes[seed % _recentSkipQuotes.length]);
     }
     if (context.hasSocialMomentum) {
-      return _socialMomentumQuotes[seed % _socialMomentumQuotes.length];
+      return DailyQuote(text: _socialMomentumQuotes[seed % _socialMomentumQuotes.length]);
     }
     if (context.longestStreak >= 7) {
-      return _streakQuotes[seed % _streakQuotes.length];
+      return DailyQuote(text: _streakQuotes[seed % _streakQuotes.length]);
     }
     if (!context.hasActiveHabits) {
-      return _freshStartQuotes[seed % _freshStartQuotes.length];
+      return DailyQuote(text: _freshStartQuotes[seed % _freshStartQuotes.length]);
     }
+
     return fallbackQuoteForSeed(seed);
   }
 
@@ -169,9 +171,9 @@ class MascotReminderCopyHelper {
   ];
 }
 
-String fallbackQuoteForSeed(int seed) {
+DailyQuote fallbackQuoteForSeed(int seed) {
   if (fallbackQuotes.isEmpty) {
-    return 'A small step still counts.';
+    return const DailyQuote(text: 'Small steps every day.');
   }
-  return fallbackQuotes[seed % fallbackQuotes.length];
+  return DailyQuote(text: fallbackQuotes[seed % fallbackQuotes.length]);
 }

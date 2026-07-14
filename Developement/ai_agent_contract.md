@@ -268,7 +268,7 @@ After posting the completion reply:
 1. Remove `engineered`.
 2. Add `proceeded`.
 3. Confirm the issue now has `proceeded`.
-4. Do not update `Task2_Archived.md`; the issue thread is the archive.
+4. Close the issue using `gh issue close <number>`.
 
 **Strict completion rule:** do not apply `proceeded` until the completion reply includes the commit SHA.
 

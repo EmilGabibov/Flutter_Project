@@ -666,7 +666,7 @@ class AppDatabase extends _$AppDatabase {
   // Quote operations
   // ---------------------------------------------------------------------------
 
-  Future<void> cacheQuote(String text) async {
+  Future<void> cacheQuote(String text, {String? author}) async {
     final normalized = text.trim();
     if (normalized.isEmpty) return;
     final now = DateTime.now();
@@ -678,6 +678,7 @@ class AppDatabase extends _$AppDatabase {
       await into(cachedQuotes).insert(
         CachedQuotesCompanion(
           quoteText: Value(normalized),
+          author: Value(author),
           fetchedAt: Value(now),
         ),
       );
