@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hable/models/daily_quote.dart';
 import 'package:hable/providers/quote_provider.dart';
 import 'package:hable/screens/auth_screen.dart';
 import 'package:hable/screens/onboarding/onboarding_slides_screen.dart';
 
-Widget _wrap(Widget child, {Future<String> Function()? quote}) {
+Widget _wrap(Widget child, {Future<DailyQuote> Function()? quote}) {
   return ProviderScope(
     overrides: [
       quoteProvider.overrideWith(
-        (ref) => quote?.call() ?? Future.value('Small steps still count.'),
+        (ref) => quote?.call() ?? Future.value(const DailyQuote(text: 'Small steps still count.')),
       ),
     ],
     child: MaterialApp(home: child),
@@ -51,7 +52,7 @@ void main() {
     await tester.pumpWidget(
       _wrap(
         OnboardingSlidesScreen(onGetStarted: () {}, onLogIn: () {}),
-        quote: () => Future.value('Every day is day one.'),
+        quote: () => Future.value(const DailyQuote(text: 'Every day is day one.')),
       ),
     );
     await tester.pumpAndSettle();

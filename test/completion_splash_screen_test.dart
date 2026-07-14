@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hable/screens/completion_splash_screen.dart';
+import 'package:hable/models/daily_quote.dart';
 import 'package:hable/database/database.dart';
 import 'package:hable/database/tables.dart' show HabitStatus;
 import 'package:hable/models/celebration_feedback.dart';
@@ -30,7 +31,7 @@ void main() {
       ProviderScope(
         overrides: [
           quoteProvider.overrideWith(
-            (ref) => Future.value('Testing is believing.'),
+            (ref) => Future.value(const DailyQuote(text: 'Testing is believing.')),
           ),
         ],
         child: MaterialApp(
@@ -92,7 +93,7 @@ void main() {
       ProviderScope(
         overrides: [
           quoteProvider.overrideWith(
-            (ref) => Future.value('Momentum compounds.'),
+            (ref) => Future.value(const DailyQuote(text: 'Momentum compounds.')),
           ),
         ],
         child: MaterialApp(
