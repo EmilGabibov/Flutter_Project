@@ -33,7 +33,7 @@ class InvitationBanner extends ConsumerWidget {
             }
 
             return Container(
-              margin: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+              margin: const EdgeInsets.fromLTRB(24, 16, 24, 16),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: AppTheme.sageGreen.withValues(alpha: 0.1),
@@ -63,13 +63,17 @@ class InvitationBanner extends ConsumerWidget {
                       children: [
                         Text(
                           'New Habit Partner Request',
-                          style: Theme.of(context).textTheme.titleSmall
-                              ?.copyWith(fontWeight: FontWeight.bold),
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.deepCharcoal,
+                              ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           '$displayUsername wants to partner up!',
-                          style: Theme.of(context).textTheme.bodySmall,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: AppTheme.warmGray,
+                              ),
                         ),
                       ],
                     ),
@@ -90,6 +94,7 @@ class InvitationBanner extends ConsumerWidget {
                           if (userId != null) {
                             await sync.pullDailySync(userId);
                           }
+                          ref.invalidate(pendingInvitationsProvider);
                         },
                         icon: const Icon(
                           Icons.close_rounded,
@@ -109,6 +114,7 @@ class InvitationBanner extends ConsumerWidget {
                           if (userId != null) {
                             await sync.pullDailySync(userId);
                           }
+                          ref.invalidate(pendingInvitationsProvider);
                         },
                         icon: const Icon(
                           Icons.check_rounded,
