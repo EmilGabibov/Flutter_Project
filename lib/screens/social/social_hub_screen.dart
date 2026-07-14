@@ -1155,47 +1155,72 @@ class _ActivityCard extends StatelessWidget {
               : AppTheme.warmGray.withValues(alpha: 0.12),
         ),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: CircleAvatar(
-          backgroundColor: _iconTint(notification.type).withValues(alpha: 0.14),
-          child: Icon(
-            _iconForType(notification.type),
-            color: _iconTint(notification.type),
-          ),
-        ),
-        title: Row(
-          children: [
-            Expanded(
-              child: Text(
-                notification.title,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: isUnread ? FontWeight.w800 : FontWeight.w700,
-                ),
-              ),
-            ),
-            if (isUnread)
-              Container(
-                width: 10,
-                height: 10,
-                decoration: const BoxDecoration(
-                  color: AppTheme.sageGreen,
-                  shape: BoxShape.circle,
-                ),
-              ),
-          ],
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: Text(
-            '${notification.body}\n${_formatTimestamp(context, notification.createdAt)}',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppTheme.warmGray.withValues(alpha: 0.9),
-              height: 1.35,
-            ),
-          ),
-        ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
         onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CircleAvatar(
+                backgroundColor: _iconTint(notification.type).withValues(alpha: 0.14),
+                radius: 22,
+                child: Icon(
+                  _iconForType(notification.type),
+                  color: _iconTint(notification.type),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      notification.title,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: isUnread ? FontWeight.w800 : FontWeight.w600,
+                        color: isUnread ? AppTheme.deepCharcoal : AppTheme.warmGray,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      notification.body,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: isUnread ? AppTheme.deepCharcoal : AppTheme.warmGray.withValues(alpha: 0.9),
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    _formatTimestamp(context, notification.createdAt),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppTheme.warmGray,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (isUnread) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: const BoxDecoration(
+                        color: AppTheme.sageGreen,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
