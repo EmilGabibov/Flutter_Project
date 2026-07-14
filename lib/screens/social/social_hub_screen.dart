@@ -18,6 +18,8 @@ import '../../theme/app_theme.dart';
 import '../../widgets/narrow_layout.dart';
 import '../../widgets/3d/habit_environment_visualizer.dart';
 import '../../widgets/user_avatar.dart';
+import '../../widgets/context_menu/menu_item.dart';
+import '../../widgets/context_menu/hable_context_menu.dart';
 import '../../widgets/leaderboard_card.dart';
 import '../../widgets/skeletons.dart';
 import '../../widgets/usage_tracked_screen.dart';
@@ -479,17 +481,16 @@ class SocialHubScreenState extends ConsumerState<SocialHubScreen>
     required Offset position,
   }) async {
     final loc = AppLocalizations.of(context)!;
-    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
-    final action = await showMenu<String>(
+    final action = await showHableContextMenu<String>(
       context: context,
-      position: RelativeRect.fromRect(
-        Rect.fromLTWH(position.dx, position.dy, 0, 0),
-        Offset.zero & overlay.size,
-      ),
+      position: position,
+      title: friend.username,
       items: [
-        PopupMenuItem<String>(
+        HableMenuItem<String>(
+          label: loc.socialFriendActionsUnfriend,
           value: 'unfriend',
-          child: Text(loc.socialFriendActionsUnfriend),
+          icon: Icons.person_remove_rounded,
+          intent: MenuIntent.destructive,
         ),
       ],
     );

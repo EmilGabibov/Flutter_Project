@@ -5,8 +5,10 @@ import '../database/tables.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import 'user_avatar.dart';
+import 'context_menu/hable_context_menu.dart';
+import 'context_menu/menu_item.dart';
 
-class HabitPartnerRow extends StatefulWidget {
+class HabitPartnerRow extends StatelessWidget {
   final List<PartnerSnapshot> partners;
   final Color habitColor;
   final int maxVisible;
@@ -24,23 +26,93 @@ class HabitPartnerRow extends StatefulWidget {
     this.onNudgeTap,
   });
 
-  @override
-  State<HabitPartnerRow> createState() => _HabitPartnerRowState();
-}
+  void _showPartnerMenu(
+    BuildContext context,
+    PartnerSnapshot partner,
+    Offset position,
+    AppLocalizations loc,
+  ) async {
+    final action = await showHableContextMenu<String>(
+      context: context,
+      position: position,
+      title: partner.username,
+      items: [
+        if (onNudgeTap != null)
+          HableMenuItem<String>(
+            label: loc.partnerNudgeSemantics(partner.username).replaceAll(partner.username, '').trim(), // e.g. "Nudge"
+            value: 'nudge',
+            icon: Icons.back_hand_rounded,
+            intent: MenuIntent.primary,
+          ),
+        if (onProfileTap != null)
+          HableMenuItem<String>(
+            label: loc.partnerProfileSemantics(partner.username, '', '').split(' ').first, // Fallback
+            value: 'profile',
+            icon: Icons.person_rounded,
+            intent: MenuIntent.primary,
+          ),
+      ],
+    );
 
-class _HabitPartnerRowState extends State<HabitPartnerRow> {
-  bool _isExpanded = false;
+    if (action == 'nudge' && onNudgeTap != null) {
+      onNudgeTap!(partner);
+    } else if (action == 'profile' && onProfileTap != null) {
+      onProfileTap!(partner);
+    }
+  }
 
-  void _toggleExpanded() {
-    setState(() {
-      _isExpanded = !_isExpanded;
-    });
+  void _showAllPartners(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        final loc = AppLocalizations.of(context)!;
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  loc.partnerSectionTitle,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: AppTheme.deepCharcoal,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                for (int i = 0; i < partners.length; i++) ...[
+                  _PartnerChip(
+                    partner: partners[i],
+                    habitColor: habitColor,
+                    onProfileTap: onProfileTap == null ? null : () {
+                      Navigator.pop(context);
+                      onProfileTap!(partners[i]);
+                    },
+                    onNudgeTap: onNudgeTap == null ? null : () {
+                      Navigator.pop(context);
+                      onNudgeTap!(partners[i]);
+                    },
+                  ),
+                  if (i != partners.length - 1) const SizedBox(height: 12),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    if (widget.partners.isEmpty) {
+    if (partners.isEmpty) {
       return Semantics(
         label: loc.partnerNoPartnersYet,
         child: Text(
@@ -52,120 +124,61 @@ class _HabitPartnerRowState extends State<HabitPartnerRow> {
       );
     }
 
-    final visiblePartners = widget.partners.take(widget.maxVisible).toList();
-    final overflowCount = widget.partners.length - visiblePartners.length;
-
-    if (!_isExpanded) {
-      return Semantics(
-        label: loc.partnerStackCollapsedSemantics(widget.partners.length),
-        button: true,
-        child: GestureDetector(
-          onLongPress: _toggleExpanded,
-          onTap: _toggleExpanded,
-          behavior: HitTestBehavior.opaque,
-          child: SizedBox(
-            key: const Key('partner-stack-collapsed'),
-            height: 40,
-            width:
-                visiblePartners.length * 24.0 +
-                (overflowCount > 0 ? 44.0 : 16.0),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                for (int i = 0; i < visiblePartners.length; i++)
-                  Positioned(
-                    left: i * 24.0,
-                    top: 2,
-                    child: _PartnerAvatar(
-                      key: Key(
-                        'partner-avatar-${visiblePartners[i].partnerUserId}',
-                      ),
-                      partner: visiblePartners[i],
-                      habitColor: widget.habitColor,
-                    ),
-                  ),
-                if (overflowCount > 0)
-                  Positioned(
-                    left: visiblePartners.length * 24.0,
-                    top: 2,
-                    child: Container(
-                      key: const Key('partner-overflow-badge'),
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: AppTheme.surfaceVariant,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        '+$overflowCount',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.deepCharcoal,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
+    final visiblePartners = partners.take(maxVisible).toList();
+    final overflowCount = partners.length - visiblePartners.length;
 
     return Semantics(
-      label: loc.partnerExpandedSemantics,
-      child: GestureDetector(
-        onLongPress: _toggleExpanded,
-        onTap: _toggleExpanded,
-        behavior: HitTestBehavior.opaque,
-        child: Container(
-          key: const Key('partner-stack-expanded'),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppTheme.surfaceVariant.withValues(alpha: 0.72),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: widget.habitColor.withValues(alpha: 0.2)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    loc.partnerSectionTitle,
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.deepCharcoal,
+      label: loc.partnerStackCollapsedSemantics(partners.length),
+      button: true,
+      child: SizedBox(
+        key: const Key('partner-stack-collapsed'),
+        height: 40,
+        width: visiblePartners.length * 24.0 + (overflowCount > 0 ? 44.0 : 16.0),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            for (int i = 0; i < visiblePartners.length; i++)
+              Positioned(
+                left: i * 24.0,
+                top: 2,
+                child: GestureDetector(
+                  onTapDown: (details) {
+                    _showPartnerMenu(context, visiblePartners[i], details.globalPosition, loc);
+                  },
+                  child: _PartnerAvatar(
+                    key: Key('partner-avatar-${visiblePartners[i].partnerUserId}'),
+                    partner: visiblePartners[i],
+                    habitColor: habitColor,
+                  ),
+                ),
+              ),
+            if (overflowCount > 0)
+              Positioned(
+                left: visiblePartners.length * 24.0,
+                top: 2,
+                child: GestureDetector(
+                  onTap: () => _showAllPartners(context),
+                  child: Container(
+                    key: const Key('partner-overflow-badge'),
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceVariant,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      '+$overflowCount',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppTheme.deepCharcoal,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
-                  const Spacer(),
-                  Text(
-                    loc.partnerTapToCollapse,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: AppTheme.warmGray),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              for (int i = 0; i < widget.partners.length; i++) ...[
-                _PartnerChip(
-                  partner: widget.partners[i],
-                  habitColor: widget.habitColor,
-                  onProfileTap: widget.onProfileTap == null
-                      ? null
-                      : () => widget.onProfileTap!(widget.partners[i]),
-                  onNudgeTap: widget.onNudgeTap == null
-                      ? null
-                      : () => widget.onNudgeTap!(widget.partners[i]),
                 ),
-                if (i != widget.partners.length - 1) const SizedBox(height: 8),
-              ],
-            ],
-          ),
+              ),
+          ],
         ),
       ),
     );
@@ -254,32 +267,32 @@ class _PartnerRingStyle {
     if (partner.hasCompletedToday) {
       return _PartnerRingStyle(
         ringColor: habitColor,
-        fillColor: habitColor.withValues(alpha: 0.18),
-        innerBorderColor: habitColor.withValues(alpha: 0.34),
-        innerBorderWidth: 1.2,
+        fillColor: habitColor,
+        innerBorderColor: Colors.white,
+        innerBorderWidth: 1.5,
       );
     }
     if (wasNudgedRecently) {
       return _PartnerRingStyle(
-        ringColor: habitColor.withValues(alpha: 0.8),
-        fillColor: habitColor.withValues(alpha: 0.1),
-        innerBorderColor: habitColor.withValues(alpha: 0.18),
-        innerBorderWidth: 1.1,
+        ringColor: habitColor.withValues(alpha: 0.5),
+        fillColor: AppTheme.surface,
+        innerBorderColor: Colors.transparent,
+        innerBorderWidth: 0,
       );
     }
     if (partner.role == PartnershipRole.supporter) {
-      return _PartnerRingStyle(
+      return const _PartnerRingStyle(
         ringColor: AppTheme.mutedLavender,
-        fillColor: AppTheme.mutedLavender.withValues(alpha: 0.14),
-        innerBorderColor: AppTheme.mutedLavender.withValues(alpha: 0.2),
-        innerBorderWidth: 1.1,
+        fillColor: AppTheme.surface,
+        innerBorderColor: Colors.transparent,
+        innerBorderWidth: 0,
       );
     }
-    return _PartnerRingStyle(
-      ringColor: AppTheme.warmGray.withValues(alpha: 0.5),
+    return const _PartnerRingStyle(
+      ringColor: AppTheme.surfaceVariant,
       fillColor: AppTheme.surface,
-      innerBorderColor: AppTheme.warmGray.withValues(alpha: 0.12),
-      innerBorderWidth: 1.0,
+      innerBorderColor: Colors.transparent,
+      innerBorderWidth: 0,
     );
   }
 }
