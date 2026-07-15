@@ -179,6 +179,7 @@ class _HabitCardState extends State<HabitCard> {
     final loc = AppLocalizations.of(context)!;
     final habit = widget.habit;
     final habitMeta = standardHabitForTitle(habit.title);
+    final habitIcon = habitMeta?.emoji ?? leadingHabitEmoji(habit.title);
     final habitDescription = habit.description?.trim().isNotEmpty == true
         ? habit.description!.trim()
         : standardHabitDescriptionForTitle(habit.title);
@@ -234,7 +235,7 @@ class _HabitCardState extends State<HabitCard> {
               calculatedDurationMs: widget.calculatedDurationMs,
               visualState: visualState,
               habitColor: habitColor,
-              habitIcon: habitMeta?.emoji,
+              habitIcon: habitIcon,
               visualParameters: HabitVisualParameters.standard,
               hapticsEnabled: widget.hapticsEnabled,
               hapticProfile: widget.hapticProfile,
@@ -314,18 +315,20 @@ class _HabitCardState extends State<HabitCard> {
                           widget.challengeDay,
                           widget.targetDays,
                         ),
+                  key: const Key('habit-card-day-progress'),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppTheme.deepCharcoal.withValues(alpha: 0.7),
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 Text(
                   '🔥 ${widget.streak}',
+                  key: const Key('habit-card-streak'),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: habitColor,
                     fontWeight: FontWeight.w700,
-                    fontSize: 11,
+                    fontSize: 12,
                   ),
                 ),
               ],
@@ -336,7 +339,8 @@ class _HabitCardState extends State<HabitCard> {
               (widget.progressFraction * 100).round(),
             ),
             child: Container(
-              height: 4,
+              key: const Key('habit-card-progress-bar'),
+              height: 6,
               decoration: BoxDecoration(
                 color: habitColor.withValues(alpha: 0.12),
               ),

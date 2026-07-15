@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hable/widgets/mud_long_press_button.dart';
+import 'package:hable/l10n/app_localizations.dart';
 import 'package:hable/models/habit_visual_state.dart';
+import 'package:hable/widgets/mud_long_press_button.dart';
 
 void main() {
   Widget buildTestSubject({
@@ -11,6 +12,8 @@ void main() {
     String? habitIcon,
   }) {
     return MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
         body: Center(
           child: MudLongPressButton(
@@ -93,6 +96,11 @@ void main() {
     expect(find.text('Done!'), findsNothing);
   });
 
+  test('standard ring parameters double after completion', () {
+    expect(HabitVisualParameters.standard.idleRingThickness, 6);
+    expect(HabitVisualParameters.standard.establishedRingThickness, 12);
+  });
+
   // testWidgets('missed and skipped states apply opacity', (tester) async {
   //   await tester.pumpWidget(
   //     buildTestSubject(
@@ -100,14 +108,14 @@ void main() {
   //       visualState: HabitVisualState.missed,
   //     ),
   //   );
-  //   
+  //
   //   // Find the Opacity widget wrapped around the icon content
   //   final opacityFinder = find.descendant(
   //     of: find.byType(Center),
   //     matching: find.byType(Opacity),
   //   );
   //   expect(opacityFinder, findsWidgets); // There might be multiple opacity widgets in the tree
-  //   
+  //
   //   // Verify gestures are ignored for missed state
   //   var completions = 0;
   //   await tester.pumpWidget(
@@ -117,7 +125,7 @@ void main() {
   //       visualState: HabitVisualState.missed,
   //     ),
   //   );
-  //   
+  //
   //   final gesture = await tester.startGesture(
   //     tester.getCenter(find.byType(MudLongPressButton)),
   //   );

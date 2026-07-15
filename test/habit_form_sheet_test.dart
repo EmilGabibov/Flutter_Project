@@ -81,13 +81,13 @@ AcceptedFriend _friend(String id, String name, String avatar) {
   );
 }
 
-Habit _habit() {
+Habit _habit({String title = 'Reading', bool isCustom = false}) {
   return Habit(
     habitId: 'habit-1',
     userId: 'user-1',
-    title: 'Reading',
+    title: title,
     description: 'Read for 20 minutes before bed.',
-    isCustom: false,
+    isCustom: isCustom,
     targetDuration: 33,
     currentDuration: 33,
     status: HabitStatus.active,
@@ -256,4 +256,30 @@ void main() {
     );
     expect(actions.updatedDuration, 33);
   });
+
+  testWidgets(
+    'HabitFormSheet preserves a persisted custom emoji when editing',
+    (tester) async {
+      final actions = _FakeHabitActions();
+
+      await tester.pumpWidget(
+        _buildSheet(
+          existingHabit: _habit(title: '👩‍💻 Sketching', isCustom: true),
+          actions: actions,
+        ),
+      );
+
+      final titleField = tester.widget<TextFormField>(
+        find.byKey(const Key('habit-form-title')),
+      );
+      expect(titleField.controller!.text, 'Sketching');
+      expect(find.text('👩‍💻'), findsOneWidget);
+
+      await tester.ensureVisible(find.byKey(const Key('habit-form-save')));
+      await tester.tap(find.byKey(const Key('habit-form-save')));
+      await tester.pumpAndSettle();
+
+      expect(actions.updatedTitle, '👩‍💻 Sketching');
+    },
+  );
 }

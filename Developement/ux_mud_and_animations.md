@@ -60,6 +60,8 @@ This coefficient linearly maps to the animation controller configuration:
 > [!IMPORTANT]
 > The code below is the **canonical reference implementation** for the Mud long-press completion widget. Do not refactor the `CatmullRomCurve` control points, haptic feedback intervals, or `AnimationController` disposal pattern without updating this spec first. These values are physics-calibrated against the 0.0–1.0 resistance range.
 
+**Habit-card ring and emoji contract:** Custom-habit emoji is persisted as a leading title prefix and must be resolved through the shared habit-title parser anywhere the ring renders; no additional local database or sync field is needed. The standard card uses a `6px` idle ring and a `12px` established ring. Completion feedback may use the brief green success treatment, then settles with an ease-out transition to the configured habit color; when reduced motion is enabled, it settles directly. The footer progress bar is `6px`, and its day/streak labels use `12px` text. Partner avatar rings remain independently habit-colored.
+
 ```dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

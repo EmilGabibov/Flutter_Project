@@ -54,6 +54,7 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
   late Animation<double> _iconOpacityAnimation;
   bool _isHolding = false;
   bool _completedDuringCurrentHold = false;
+  bool _shouldAnimateEstablishedSettle = false;
 
   @override
   void initState() {
@@ -64,6 +65,11 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
   @override
   void didUpdateWidget(covariant MudLongPressButton oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.visualState != widget.visualState) {
+      _shouldAnimateEstablishedSettle =
+          oldWidget.visualState == HabitVisualState.checkInComplete &&
+          widget.visualState == HabitVisualState.established;
+    }
     if (oldWidget.calculatedDurationMs != widget.calculatedDurationMs ||
         oldWidget.resistanceCoefficient != widget.resistanceCoefficient) {
       _controller.dispose();
@@ -159,7 +165,7 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
     }
 
     if (widget.visualState == HabitVisualState.established) {
-      return _buildEstablishedState();
+      return _buildEstablishedState(context);
     }
 
     final isDisabled =
@@ -273,17 +279,36 @@ class _MudLongPressButtonState extends State<MudLongPressButton>
     );
   }
 
-  Widget _buildEstablishedState() {
+  Widget _buildEstablishedState(BuildContext context) {
+    final disableAnimations = MediaQuery.disableAnimationsOf(context);
     return SizedBox(
       width: 180,
       height: 180,
-      child: CustomPaint(
-        painter: _MudButtonPainter(
-          progress: 1.0, // Solid colored ring
-          resistance: 0.0,
-          habitColor: widget.habitColor,
-          ringThickness: widget.visualParameters.idleRingThickness,
+      child: TweenAnimationBuilder<Color?>(
+        tween: ColorTween(
+          begin: disableAnimations
+              ? widget.habitColor
+              : _shouldAnimateEstablishedSettle
+              ? AppTheme.completionGreen
+              : widget.habitColor,
+          end: widget.habitColor,
         ),
+        duration: disableAnimations
+            ? Duration.zero
+            : Duration(milliseconds: widget.visualParameters.completionFlashMs),
+        curve: Curves.easeOutCubic,
+        builder: (context, settledColor, child) {
+          return CustomPaint(
+            painter: _MudButtonPainter(
+              progress: 1.0,
+              resistance: 0.0,
+              habitColor: widget.habitColor,
+              completionColor: settledColor ?? widget.habitColor,
+              ringThickness: widget.visualParameters.establishedRingThickness,
+            ),
+            child: child,
+          );
+        },
         child: Center(
           child: widget.habitIcon != null && widget.habitIcon!.isNotEmpty
               ? Opacity(
@@ -361,6 +386,7 @@ class _MudButtonPainter extends CustomPainter {
   final double progress;
   final double resistance;
   final Color habitColor;
+  final Color? completionColor;
   final double ringThickness;
   final bool isDimmed;
 
@@ -368,6 +394,7 @@ class _MudButtonPainter extends CustomPainter {
     required this.progress,
     required this.resistance,
     this.habitColor = AppTheme.sageGreen,
+    this.completionColor,
     this.ringThickness = 6.0,
     this.isDimmed = false,
   });
@@ -395,10 +422,11 @@ class _MudButtonPainter extends CustomPainter {
     // Ring starts thin and grows thicker under high resistance ("mud" feel).
     final arcThickness = ringThickness + (resistance * 6.0 * (1.0 - progress));
 
-    // Color: lerps from habit pastel → vivid completion green at 100%
+    // Color: lerps from habit pastel to green for completion feedback, unless
+    // an established-state transition supplies its configured settled color.
     final targetColor = isDimmed
         ? AppTheme.deepCharcoal.withValues(alpha: 0.4)
-        : AppTheme.completionGreen;
+        : completionColor ?? AppTheme.completionGreen;
     final progressColor = Color.lerp(baseColor, targetColor, progress)!;
 
     // Soft glow shadow beneath the arc
@@ -427,6 +455,7 @@ class _MudButtonPainter extends CustomPainter {
     return oldDelegate.progress != progress ||
         oldDelegate.resistance != resistance ||
         oldDelegate.habitColor != habitColor ||
+        oldDelegate.completionColor != completionColor ||
         oldDelegate.ringThickness != ringThickness ||
         oldDelegate.isDimmed != isDimmed;
   }

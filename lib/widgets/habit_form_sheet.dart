@@ -108,11 +108,11 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
     final startingTitle =
         widget.existingHabit?.title ?? widget.prefilledTitle ?? '';
     _selectedPreset = standardHabitForTitle(startingTitle);
-    final startingEmoji = _extractLeadingEmoji(startingTitle);
+    final startingEmoji = leadingHabitEmoji(startingTitle);
     _selectedEmoji = startingEmoji ?? _selectedPreset?.emoji ?? '✨';
     _shouldPersistCustomEmoji = startingEmoji != null;
     _titleController = TextEditingController(
-      text: _stripLeadingEmoji(startingTitle),
+      text: stripLeadingHabitEmoji(startingTitle),
     );
     _descriptionController = TextEditingController(
       text:
@@ -234,7 +234,7 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
 
     final cleanTitle = _titleController.text.trim();
     final cleanDescription = _descriptionController.text.trim();
-    final normalizedTitle = _stripLeadingEmoji(cleanTitle);
+    final normalizedTitle = stripLeadingHabitEmoji(cleanTitle);
     final matchedPreset = standardHabitForTitle(normalizedTitle);
     final durationDays = int.parse(_durationController.text.trim());
     final persistedDescription = cleanDescription.isEmpty
@@ -796,24 +796,4 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
     buffer.write(hexString.replaceFirst('#', ''));
     return Color(int.parse(buffer.toString(), radix: 16));
   }
-}
-
-String _stripLeadingEmoji(String title) {
-  return title
-      .replaceFirst(
-        RegExp(
-          r'^\s*[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]+\s*',
-          unicode: true,
-        ),
-        '',
-      )
-      .trim();
-}
-
-String? _extractLeadingEmoji(String title) {
-  final match = RegExp(
-    r'^\s*([\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]+)',
-    unicode: true,
-  ).firstMatch(title);
-  return match?.group(1);
 }

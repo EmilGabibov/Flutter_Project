@@ -36,8 +36,8 @@ class HabitVisualParameters {
   /// Ring thickness when progressing
   final double progressingRingThickness;
 
-  /// Whether the ring color should change to green on completion
-  final bool useGreenOnCompletion;
+  /// Ring thickness after a completed check-in has settled.
+  final double establishedRingThickness;
 
   const HabitVisualParameters({
     this.idleIconScale = 1.0,
@@ -48,7 +48,7 @@ class HabitVisualParameters {
     this.completionFlashMs = 200,
     this.idleRingThickness = 6.0,
     this.progressingRingThickness = 12.0,
-    this.useGreenOnCompletion = false,
+    this.establishedRingThickness = 12.0,
   });
 
   /// Default parameters for most habits
@@ -58,6 +58,7 @@ class HabitVisualParameters {
   static const HabitVisualParameters highDifficulty = HabitVisualParameters(
     idleRingThickness: 8.0,
     progressingRingThickness: 14.0,
+    establishedRingThickness: 16.0,
     iconAnimationMs: 300,
   );
 
@@ -65,6 +66,7 @@ class HabitVisualParameters {
   static const HabitVisualParameters lowDifficulty = HabitVisualParameters(
     idleRingThickness: 4.0,
     progressingRingThickness: 10.0,
+    establishedRingThickness: 8.0,
     iconAnimationMs: 500,
   );
 }

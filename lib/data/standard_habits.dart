@@ -65,18 +65,31 @@ StandardHabit? standardHabitForTitle(String title) {
   return null;
 }
 
-String _normalizeHabitTitle(String title) {
-  return title
-      .replaceFirst(
-        RegExp(
-          r'^\s*[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]+\s*',
-          unicode: true,
-        ),
-        '',
-      )
-      .trim()
-      .toLowerCase();
+/// Returns the emoji prefix Hable persists for a custom habit title.
+///
+/// The form stores custom emoji with the title so the existing Drift and sync
+/// payloads can round-trip it without a separate field. Keep parsing here so
+/// every surface interprets that persisted representation identically.
+String? leadingHabitEmoji(String title) {
+  final match = _leadingHabitEmoji.firstMatch(title);
+  return match?.group(1);
 }
+
+/// Removes a persisted custom-habit emoji prefix from a user-facing title.
+String stripLeadingHabitEmoji(String title) {
+  return title.replaceFirst(_leadingHabitEmoji, '').trim();
+}
+
+String _normalizeHabitTitle(String title) {
+  return stripLeadingHabitEmoji(title).toLowerCase();
+}
+
+// Supports the picker’s regular, keycap, flag, skin-tone, and ZWJ emoji
+// sequences while remaining deliberately limited to a leading title prefix.
+final _leadingHabitEmoji = RegExp(
+  r'^\s*((?:[#*0-9]\u{FE0F}?\u{20E3}|[\u{1F1E6}-\u{1F1FF}]{2}|[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]\u{FE0F}?[\u{1F3FB}-\u{1F3FF}]?(?:\u{200D}[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]\u{FE0F}?[\u{1F3FB}-\u{1F3FF}]?)*))\s*',
+  unicode: true,
+);
 
 String? standardHabitDescriptionForTitle(String title) {
   return standardHabitForTitle(title)?.subtitle;

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hable/database/database.dart';
 import 'package:hable/database/tables.dart';
+import 'package:hable/l10n/app_localizations.dart';
 import 'package:hable/providers/mud_tuning_provider.dart';
 import 'package:hable/theme/app_theme.dart';
 import 'package:hable/widgets/habit_card.dart';
@@ -13,6 +14,23 @@ Habit _habit() {
     title: 'Hydration',
     userId: 'user-1',
     isCustom: false,
+    status: HabitStatus.active,
+    colorHex: 'FF9CAF88',
+    createdAt: now,
+    updatedAt: now,
+    isSynced: true,
+    targetDuration: 21,
+    currentDuration: 17,
+  );
+}
+
+Habit _customHabit() {
+  final now = DateTime(2026, 7, 13, 9);
+  return Habit(
+    habitId: 'custom-habit-1',
+    title: '👩‍💻 Sketching',
+    userId: 'user-1',
+    isCustom: true,
     status: HabitStatus.active,
     colorHex: 'FF9CAF88',
     createdAt: now,
@@ -51,6 +69,8 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.lightTheme,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: HabitCardShell(
             semanticsLabel: 'Hydration shared shell',
@@ -88,6 +108,8 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.lightTheme,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: HabitCard(
             habit: _habit(),
@@ -124,5 +146,63 @@ void main() {
     expect(find.text('Nudge queued for Blair'), findsOneWidget);
     expect(find.text('Day 4 of 21'), findsOneWidget);
     expect(find.text('🔥 5'), findsOneWidget);
+  });
+
+  testWidgets('HabitCard renders a persisted custom emoji in its ring', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: HabitCard(
+            habit: _customHabit(),
+            userId: 'user-1',
+            challengeDay: 4,
+            targetDays: 21,
+            progressFraction: 0.25,
+            isContinuous: false,
+            isCompletedToday: true,
+            isSkippedToday: false,
+            viewerRole: PartnershipRole.owner,
+            recentNudge: null,
+            streak: 5,
+            resistanceCoefficient: 0.4,
+            calculatedDurationMs: 600,
+            partners: const [],
+            hapticsEnabled: false,
+            hapticProfile: MudHapticProfile.standard,
+            onCompletion: () {},
+            onSkip: () {},
+            onNudgeTap: (_) async {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('👩‍💻'), findsOneWidget);
+    expect(
+      tester
+          .widget<Container>(find.byKey(const Key('habit-card-progress-bar')))
+          .constraints
+          ?.maxHeight,
+      6,
+    );
+    expect(
+      tester
+          .widget<Text>(find.byKey(const Key('habit-card-day-progress')))
+          .style
+          ?.fontSize,
+      12,
+    );
+    expect(
+      tester
+          .widget<Text>(find.byKey(const Key('habit-card-streak')))
+          .style
+          ?.fontSize,
+      12,
+    );
   });
 }
