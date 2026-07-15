@@ -71,10 +71,9 @@ class SyncService {
   /// Get the standard auth headers
   Future<Map<String, String>> _getAuthHeaders() async {
     final headers = {'Content-Type': 'application/json'};
-    final token =
-        _tokenProvider != null
-            ? await _tokenProvider()
-            : await _storage.read(key: 'jwt_token');
+    final token = _tokenProvider != null
+        ? await _tokenProvider()
+        : await _storage.read(key: 'jwt_token');
     if (token != null) {
       headers['Authorization'] = 'Bearer $token';
     }
@@ -862,15 +861,13 @@ class SyncService {
 
   DailyQuote? _syncedQuote(Object? value) {
     if (value is String) {
-      final trimmed = value.trim();
-      return trimmed.isEmpty ? null : DailyQuote(text: trimmed);
+      final text = normalizeDailyQuoteText(value);
+      return text == null ? null : DailyQuote(text: text);
     }
     if (value is Map<String, dynamic>) {
-      final text = value['text']?.toString().trim();
-      final author = value['author']?.toString().trim();
-      return text == null || text.isEmpty
-          ? null
-          : DailyQuote(text: text, author: author?.isEmpty == true ? null : author);
+      final text = normalizeDailyQuoteText(value['text']?.toString());
+      final author = normalizeDailyQuoteAuthor(value['author']?.toString());
+      return text == null ? null : DailyQuote(text: text, author: author);
     }
     return null;
   }

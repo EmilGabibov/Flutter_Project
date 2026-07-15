@@ -9,29 +9,47 @@ final quotableServiceProvider = Provider<QuotableService>((ref) {
 
 class QuotableService {
   final http.Client _client;
-  
+
   QuotableService({http.Client? client}) : _client = client ?? http.Client();
 
-  /// Fetches quotes from api.quotable.io. 
+  /// Fetches quotes from api.quotable.io.
   /// Uses limit=50 as suggested, then picks one randomly.
   Future<DailyQuote?> fetchInspirationalQuote({int limit = 50}) async {
     try {
-      final uri = Uri.parse('https://api.quotable.io/quotes?tags=inspirational&limit=$limit');
-      final response = await _client.get(uri).timeout(const Duration(seconds: 5));
-      
+      final uri = Uri.parse(
+        'https://api.quotable.io/quotes?tags=inspirational&limit=$limit',
+      );
+      final response = await _client
+          .get(uri)
+          .timeout(const Duration(seconds: 5));
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final results = data['results'] as List<dynamic>?;
-        
+
         if (results != null && results.isNotEmpty) {
-          // Shuffle or pick random to rotate if we fetch 50
-          results.shuffle();
-          final selected = results.first;
-          
-          final content = selected['content']?.toString().trim();
-          final author = selected['author']?.toString().trim();
-          
-          if (content != null && content.isNotEmpty) {
+          final candidates = results
+              .whereType<Map<String, dynamic>>()
+              .where(
+                (candidate) =>
+                    normalizeDailyQuoteText(candidate['content']?.toString()) !=
+                    null,
+              )
+              .toList();
+          if (candidates.isEmpty) return null;
+
+          // Shuffle or pick random to rotate if we fetch 50.
+          candidates.shuffle();
+          final selected = candidates.first;
+
+          final content = normalizeDailyQuoteText(
+            selected['content']?.toString(),
+          );
+          final author = normalizeDailyQuoteAuthor(
+            selected['author']?.toString(),
+          );
+
+          if (content != null) {
             return DailyQuote(text: content, author: author);
           }
         }

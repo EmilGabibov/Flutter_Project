@@ -8,6 +8,7 @@ import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hable/database/database.dart';
 import 'package:hable/database/tables.dart';
+import 'package:hable/models/daily_quote.dart';
 import 'package:hable/services/connectivity_service.dart';
 import 'package:hable/services/sync_service.dart';
 import 'package:http/http.dart' as http;
@@ -225,6 +226,51 @@ void main() {
       await syncService.pullDailySync('user-1');
     },
   );
+
+  test('daily sync does not cache an overlong quote', () async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+
+    final syncService = SyncService(
+      db: db,
+      connectivity: ConnectivityService(),
+      storage: const FlutterSecureStorage(),
+      client: MockClient((request) async {
+        return http.Response(
+          jsonEncode(
+            _dailySyncPayload(
+              quote: {
+                'text': 'x' * (maxDailyQuoteTextLength + 1),
+                'author': 'Too Long Author',
+              },
+            ),
+          ),
+          200,
+        );
+      }),
+      apiBaseUrlOverride: 'http://offline.test',
+    );
+    addTearDown(syncService.dispose);
+
+    await syncService.pullDailySync('user-1');
+
+    expect(await db.getTodaysQuote(), isNull);
+  });
+
+  test('legacy overlong cached quotes are ignored by the daily read', () async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+
+    await db
+        .into(db.cachedQuotes)
+        .insert(
+          CachedQuotesCompanion.insert(
+            quoteText: 'x' * (maxDailyQuoteTextLength + 1),
+          ),
+        );
+
+    expect(await db.getTodaysQuote(), isNull);
+  });
 }
 
 Map<String, dynamic> _dailySyncPayload({

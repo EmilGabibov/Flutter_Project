@@ -31,7 +31,12 @@ void main() {
       ProviderScope(
         overrides: [
           quoteProvider.overrideWith(
-            (ref) => Future.value(const DailyQuote(text: 'Testing is believing.')),
+            (ref) => Future.value(
+              const DailyQuote(
+                text: 'Testing is believing.',
+                author: 'Test Author',
+              ),
+            ),
           ),
         ],
         child: MaterialApp(
@@ -56,10 +61,11 @@ void main() {
     // Wait for quote future to resolve
     await tester.pumpAndSettle();
 
-    final quoteFinder = find.text('"Testing is believing."');
+    final quoteFinder = find.textContaining('"Testing is believing."');
     final headlineFinder = find.text('Great job!');
 
     expect(quoteFinder, findsOneWidget);
+    expect(find.textContaining('Test Author'), findsOneWidget);
     expect(
       tester.getTopLeft(quoteFinder).dy,
       lessThan(tester.getTopLeft(headlineFinder).dy),
@@ -93,7 +99,8 @@ void main() {
       ProviderScope(
         overrides: [
           quoteProvider.overrideWith(
-            (ref) => Future.value(const DailyQuote(text: 'Momentum compounds.')),
+            (ref) =>
+                Future.value(const DailyQuote(text: 'Momentum compounds.')),
           ),
         ],
         child: MaterialApp(

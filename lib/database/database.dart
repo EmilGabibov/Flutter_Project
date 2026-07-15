@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
 import 'database_connection.dart';
+import '../models/daily_quote.dart';
 import 'tables.dart';
 
 part 'database.g.dart';
@@ -667,8 +668,9 @@ class AppDatabase extends _$AppDatabase {
   // ---------------------------------------------------------------------------
 
   Future<void> cacheQuote(String text, {String? author}) async {
-    final normalized = text.trim();
-    if (normalized.isEmpty) return;
+    final normalized = normalizeDailyQuoteText(text);
+    if (normalized == null) return;
+    final normalizedAuthor = normalizeDailyQuoteAuthor(author);
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day);
     await transaction(() async {
@@ -678,23 +680,28 @@ class AppDatabase extends _$AppDatabase {
       await into(cachedQuotes).insert(
         CachedQuotesCompanion(
           quoteText: Value(normalized),
-          author: Value(author),
+          author: Value(normalizedAuthor),
           fetchedAt: Value(now),
         ),
       );
     });
   }
 
-  Future<CachedQuote?> getTodaysQuote() {
+  Future<CachedQuote?> getTodaysQuote() async {
     final startOfDay = DateTime(
       DateTime.now().year,
       DateTime.now().month,
       DateTime.now().day,
     );
-    return (select(cachedQuotes)
-          ..where((q) => q.fetchedAt.isBiggerOrEqualValue(startOfDay))
-          ..limit(1))
-        .getSingleOrNull();
+    final cached =
+        await (select(cachedQuotes)
+              ..where((q) => q.fetchedAt.isBiggerOrEqualValue(startOfDay))
+              ..limit(1))
+            .getSingleOrNull();
+    if (cached == null || normalizeDailyQuoteText(cached.quoteText) == null) {
+      return null;
+    }
+    return cached;
   }
 
   // ---------------------------------------------------------------------------

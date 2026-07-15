@@ -63,6 +63,7 @@ const levelTiers = [
   { id: 'legend', name: 'Legend', minPoints: 1000 },
 ] as const
 const quotableDailyQuoteUrl = 'https://api.quotable.io/quotes/random?tags=inspirational'
+const maxDailyQuoteTextLength = 180
 const cloudflareEmailRequestTimeoutMs = 4500
 
 // --- Helpers ---
@@ -117,6 +118,14 @@ function normalizeOptionalString(value: unknown): string | null {
   return normalized.length === 0 ? null : normalized
 }
 
+function normalizeDailyQuoteText(value: unknown): string | null {
+  const normalized = normalizeOptionalString(value)
+  if (!normalized || Array.from(normalized).length > maxDailyQuoteTextLength) {
+    return null
+  }
+  return normalized
+}
+
 function todayUtcKey(now = new Date()): string {
   return now.toISOString().slice(0, 10)
 }
@@ -125,7 +134,7 @@ function normalizeQuotableQuotePayload(value: unknown): DailyQuotePayload | null
   const candidate = Array.isArray(value) ? value[0] : value
   if (!candidate || typeof candidate !== 'object') return null
   const record = candidate as Record<string, unknown>
-  const text = normalizeOptionalString(record.content)
+  const text = normalizeDailyQuoteText(record.content)
   if (!text) return null
   const author = normalizeOptionalString(record.author) ?? undefined
   return {
@@ -159,8 +168,15 @@ async function getDailyQuote(env: Bindings): Promise<DailyQuotePayload | null> {
   if (cached) {
     try {
       const parsed = JSON.parse(cached) as DailyQuotePayload
-      if (normalizeOptionalString(parsed.text)) {
-        return { ...parsed, source: 'cache' }
+      const text = normalizeDailyQuoteText(parsed.text)
+      const author = normalizeOptionalString(parsed.author)
+      if (text) {
+        return {
+          ...parsed,
+          text,
+          author: author ?? undefined,
+          source: 'cache',
+        }
       }
     } catch {}
   }

@@ -8,7 +8,6 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
-import 'package:hable/models/daily_quote.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -42,7 +41,9 @@ void main() {
 
       // Cache an old quote from "yesterday"
       final yesterday = DateTime.now().subtract(const Duration(days: 1));
-      await db.into(db.cachedQuotes).insert(
+      await db
+          .into(db.cachedQuotes)
+          .insert(
             CachedQuotesCompanion.insert(
               quoteText: 'Old Quote',
               author: const drift.Value('Old Author'),
