@@ -41,6 +41,19 @@ cd /Flutter/hable/backend && \
 npx wrangler pages deploy public --project-name=hable
 ```
 
+## CI Parity
+Run the same Flutter quality gate used in GitHub Actions:
+```bash
+cd /Flutter/hable && \
+flutter pub get && \
+flutter analyze --no-fatal-infos --fatal-warnings && \
+flutter test --coverage && \
+flutter build web --release --base-href / --dart-define=HABLE_APP_ENV=production
+```
+
+This policy keeps informational analyzer diagnostics visible in the log while
+still failing CI on warnings and errors.
+
 ## Build Android APKs
 Build the **primary** Android APK:
 ```bash

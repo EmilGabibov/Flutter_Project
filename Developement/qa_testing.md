@@ -2,6 +2,19 @@
 
 **Target Stack:** Flutter / ADB / Integration Tests
 
+## CI Parity
+
+Use this when a dependency PR or release-prep change needs to match the shared
+GitHub Actions Flutter gate exactly:
+
+1. `flutter pub get`
+2. `flutter analyze --no-fatal-infos --fatal-warnings`
+3. `flutter test --coverage`
+4. `flutter build web --release --base-href / --dart-define=HABLE_APP_ENV=production`
+
+The analyzer policy is intentional: informational diagnostics stay visible for
+cleanup, but only warnings and errors block the shared Flutter job.
+
 ## 0. Android Online Connectivity Preflight
 
 Use this before any presentation Android build. The goal is to confirm the APK can reach the deployed backend directly, not through local development plumbing.

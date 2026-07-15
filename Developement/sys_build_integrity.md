@@ -23,6 +23,9 @@ When a cross-platform or general dependency update causes build failures, always
 ## 2. Web Build Investigation Workflow
 
 **Constraint:** The web build is tightly coupled to Cloudflare Pages.
+- **Analyzer gate:** `flutter analyze --no-fatal-infos --fatal-warnings`
+- **Analyzer policy:** Informational diagnostics remain visible in CI logs, but
+  only warnings and errors fail the shared Flutter job.
 - **Command:** `flutter build web --release --base-href / --dart-define=HABLE_APP_ENV=production` (or another explicit environment override when intentionally targeting non-production).
 - **Workflow:** 
   1. Run the build command.
@@ -91,7 +94,7 @@ Hable maintains a structured CI/CD matrix using GitHub Actions to prevent cross-
 
 ### Matrix Scope
 The automated build matrix covers the following required platforms on every `main` branch push and PR:
-* **Web:** Uses `ubuntu-latest` runner to compile the Flutter Web build and deploys to Cloudflare Pages branch previews.
+* **Web:** Uses `ubuntu-latest` runner to run `flutter analyze --no-fatal-infos --fatal-warnings`, `flutter test --coverage`, and the production-targeted Flutter web build for Cloudflare Pages branch previews.
 * **Android:** Uses `ubuntu-latest` runner to build the `primary` and `friend` APK/AppBundle flavors. Runs unit and widget tests.
 * **iOS / macOS:** Uses `macos-latest` runner to verify compilation without code signing. Production distribution and notarization steps remain intentionally manual for now.
 * **Windows:** Uses `windows-latest` runner to verify Windows desktop compilation.
