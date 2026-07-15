@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hable/widgets/leaderboard_card.dart';
 
+import 'test_harness.dart';
+
 void main() {
   test('LeaderboardEntry parses API rows', () {
     final entry = LeaderboardEntry.fromJson({
@@ -36,7 +38,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(
+      buildHableTestApp(
         theme: ThemeData(splashFactory: NoSplash.splashFactory),
         home: Scaffold(
           body: SingleChildScrollView(

@@ -449,10 +449,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               TextSpan(
                                 children: [
                                   TextSpan(text: quote.text),
-                                  if (quote.author != null && quote.author!.isNotEmpty)
+                                  if (quote.author != null &&
+                                      quote.author!.isNotEmpty)
                                     TextSpan(
                                       text: '\n— ${quote.author}',
-                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
                                             fontStyle: FontStyle.normal,
                                             fontWeight: FontWeight.w500,
                                             color: AppTheme.warmGray,
@@ -495,22 +499,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         // Habit cards
         if (habits.isEmpty)
           SliverFillRemaining(
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    l10n.homeNoHabits,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () => HabitFormSheet.show(context),
-                    icon: const Icon(Icons.add_rounded),
-                    label: Text(l10n.homeAddHabit),
-                  ),
-                ],
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      l10n.homeNoHabits,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: () => HabitFormSheet.show(context),
+                      icon: const Icon(Icons.add_rounded),
+                      label: Text(l10n.homeAddHabit),
+                    ),
+                  ],
+                ),
               ),
             ),
           )

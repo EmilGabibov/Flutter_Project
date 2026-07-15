@@ -190,9 +190,16 @@ class LocalReminderService {
 
   Future<String?> getInitialPayload() async {
     if (!supportsScheduling) return null;
-    final details = await _plugin.getNotificationAppLaunchDetails();
-    if (details != null && details.didNotificationLaunchApp) {
-      return details.notificationResponse?.payload;
+    await initialize();
+    if (!_pluginAvailable || !_initialized) return null;
+
+    try {
+      final details = await _plugin.getNotificationAppLaunchDetails();
+      if (details != null && details.didNotificationLaunchApp) {
+        return details.notificationResponse?.payload;
+      }
+    } catch (_) {
+      return null;
     }
     return null;
   }

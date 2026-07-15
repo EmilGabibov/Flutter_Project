@@ -5,6 +5,8 @@ import 'package:hable/database/tables.dart';
 import 'package:hable/theme/app_theme.dart';
 import 'package:hable/widgets/habit_partner_row.dart';
 
+import 'test_harness.dart';
+
 PartnerSnapshot _partner({
   required String id,
   required String name,
@@ -28,7 +30,7 @@ PartnerSnapshot _partner({
 
 void main() {
   testWidgets(
-    'HabitPartnerRow caps visible partners and expands on long press',
+    'HabitPartnerRow caps visible partners and opens the overflow sheet',
     (tester) async {
       final partners = [
         _partner(
@@ -64,7 +66,7 @@ void main() {
       ];
 
       await tester.pumpWidget(
-        MaterialApp(
+        buildHableTestApp(
           theme: AppTheme.lightTheme.copyWith(
             splashFactory: NoSplash.splashFactory,
           ),
@@ -85,10 +87,10 @@ void main() {
       expect(find.text('Alex'), findsNothing);
       expect(find.text('Elliot'), findsNothing);
 
-      await tester.longPress(find.byType(HabitPartnerRow));
+      await tester.tap(find.byKey(const Key('partner-overflow-badge')));
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('partner-stack-expanded')), findsOneWidget);
+      expect(find.text('Partners'), findsOneWidget);
       expect(find.text('Alex'), findsOneWidget);
       expect(find.text('Blair'), findsOneWidget);
       expect(find.text('Casey'), findsOneWidget);
@@ -111,7 +113,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(
+      buildHableTestApp(
         theme: AppTheme.lightTheme.copyWith(
           splashFactory: NoSplash.splashFactory,
         ),
@@ -133,17 +135,28 @@ void main() {
       ),
     );
 
-    await tester.longPress(find.byType(HabitPartnerRow));
+    await tester.tap(find.byKey(const Key('partner-avatar-p1')));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('partner-profile-p1')));
-    await tester.pump();
+    await tester.tap(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is PopupMenuItem<String> && widget.value == 'profile',
+      ),
+    );
+    await tester.pumpAndSettle();
 
     expect(openedProfileFor, 'p1');
     expect(nudgedPartner, isEmpty);
 
-    await tester.tap(find.byKey(const Key('partner-nudge-p1')));
-    await tester.pump();
+    await tester.tap(find.byKey(const Key('partner-avatar-p1')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byWidgetPredicate(
+        (widget) => widget is PopupMenuItem<String> && widget.value == 'nudge',
+      ),
+    );
+    await tester.pumpAndSettle();
 
     expect(openedProfileFor, 'p1');
     expect(nudgedPartner, 'p1');
@@ -161,7 +174,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(
+      buildHableTestApp(
         theme: AppTheme.lightTheme.copyWith(
           splashFactory: NoSplash.splashFactory,
         ),
@@ -177,11 +190,13 @@ void main() {
       ),
     );
 
-    await tester.longPress(find.byType(HabitPartnerRow));
-    await tester.pumpAndSettle();
+    final ring = tester.widget<Container>(
+      find.byKey(const Key('partner-status-ring-p1')),
+    );
+    final decoration = ring.decoration! as BoxDecoration;
+    final border = decoration.border! as Border;
 
-    expect(find.text('partner • nudged'), findsOneWidget);
-    expect(find.byKey(const Key('partner-status-ring-p1')), findsOneWidget);
+    expect(border.top.color, AppTheme.sageGreen.withValues(alpha: 0.5));
   });
 
   testWidgets('HabitPartnerRow completed ring uses the habit color', (
@@ -196,7 +211,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(
+      buildHableTestApp(
         theme: AppTheme.lightTheme,
         home: Scaffold(
           body: HabitPartnerRow(partners: [partner], habitColor: habitColor),
@@ -209,12 +224,14 @@ void main() {
     );
     final decoration = ring.decoration! as BoxDecoration;
     final border = decoration.border! as Border;
-    final size = tester.getSize(find.byKey(const Key('partner-status-ring-p1')));
+    final size = tester.getSize(
+      find.byKey(const Key('partner-status-ring-p1')),
+    );
 
     expect(size.width, 36);
     expect(size.height, 36);
     expect(border.top.color, habitColor);
-    expect(decoration.color, habitColor.withValues(alpha: 0.18));
+    expect(decoration.color, habitColor);
     expect(border.top.color, isNot(AppTheme.completionGreen));
   });
 
@@ -222,7 +239,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
+      buildHableTestApp(
         theme: AppTheme.lightTheme.copyWith(
           splashFactory: NoSplash.splashFactory,
         ),
@@ -242,7 +259,7 @@ void main() {
   });
 
   testWidgets(
-    'HabitPartnerRow expanded state still reveals names in compactMode',
+    'HabitPartnerRow keeps compact mode as a collapsed avatar stack',
     (tester) async {
       final partners = [
         _partner(
@@ -260,7 +277,7 @@ void main() {
       ];
 
       await tester.pumpWidget(
-        MaterialApp(
+        buildHableTestApp(
           theme: AppTheme.lightTheme.copyWith(
             splashFactory: NoSplash.splashFactory,
           ),
@@ -277,13 +294,11 @@ void main() {
         ),
       );
 
-      await tester.longPress(find.byType(HabitPartnerRow));
-      await tester.pumpAndSettle();
-
-      expect(find.text('CompactAlex'), findsOneWidget);
-      expect(find.text('CompactBlair'), findsOneWidget);
-      expect(find.byKey(const Key('partner-profile-p1')), findsOneWidget);
-      expect(find.byKey(const Key('partner-profile-p2')), findsOneWidget);
+      expect(find.byKey(const Key('partner-stack-collapsed')), findsOneWidget);
+      expect(find.byKey(const Key('partner-avatar-p1')), findsOneWidget);
+      expect(find.byKey(const Key('partner-avatar-p2')), findsOneWidget);
+      expect(find.text('CompactAlex'), findsNothing);
+      expect(find.text('CompactBlair'), findsNothing);
     },
   );
 
@@ -313,18 +328,19 @@ void main() {
       ];
 
       await tester.pumpWidget(
-        MaterialApp(
+        buildHableTestApp(
           theme: AppTheme.lightTheme,
           home: Scaffold(
             body: HabitPartnerRow(
               partners: partners,
               habitColor: AppTheme.sageGreen,
+              maxVisible: 2,
             ),
           ),
         ),
       );
 
-      await tester.longPress(find.byType(HabitPartnerRow));
+      await tester.tap(find.byKey(const Key('partner-overflow-badge')));
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('partner-state-complete')), findsOneWidget);

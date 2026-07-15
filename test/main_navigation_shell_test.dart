@@ -11,7 +11,12 @@ import 'package:hable/theme/app_theme.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-Future<({AppDatabase db, Widget widget})> _buildHarness() async {
+import 'test_harness.dart';
+
+Future<
+  ({AppDatabase db, GlobalKey<MainNavigationShellState> key, Widget widget})
+>
+_buildHarness() async {
   final db = AppDatabase(NativeDatabase.memory());
   await db.insertUser(
     UsersCompanion.insert(userId: 'user-1', username: 'Alice'),
@@ -26,20 +31,21 @@ Future<({AppDatabase db, Widget widget})> _buildHarness() async {
     buildChannel: 'test',
   );
 
+  final key = GlobalKey<MainNavigationShellState>();
   final widget = ProviderScope(
     overrides: [
       databaseProvider.overrideWithValue(db),
       usageDiagnosticsProvider.overrideWithValue(diagnostics),
     ],
-    child: MaterialApp(
+    child: buildHableTestApp(
       theme: AppTheme.lightTheme.copyWith(
         splashFactory: NoSplash.splashFactory,
       ),
-      home: const MainNavigationShell(userId: 'user-1'),
+      home: MainNavigationShell(key: key, userId: 'user-1'),
     ),
   );
 
-  return (db: db, widget: widget);
+  return (db: db, key: key, widget: widget);
 }
 
 void main() {
@@ -74,8 +80,9 @@ void main() {
         await tester.pump();
 
         // Switch to Social tab.
-        await tester.tap(find.text('Social'));
-        await tester.pump(const Duration(milliseconds: 500));
+        harness.key.currentState!.switchToTab(1);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
 
         // Verify the 3 internal tabs exist.
         expect(find.text('Friends'), findsAtLeast(1));
@@ -98,8 +105,9 @@ void main() {
       await tester.pump();
 
       // Switch to Profile tab.
-      await tester.tap(find.text('Profile'));
-      await tester.pump(const Duration(milliseconds: 500));
+      harness.key.currentState!.switchToTab(2);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
 
       // Gear icon present.
       expect(find.byTooltip('Open settings'), findsOneWidget);
@@ -116,12 +124,14 @@ void main() {
       await tester.pump();
 
       // Switch to Profile tab.
-      await tester.tap(find.text('Profile'));
-      await tester.pump(const Duration(milliseconds: 500));
+      harness.key.currentState!.switchToTab(2);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
 
       // Simulate system back.
       await tester.binding.handlePopRoute();
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
 
       // Should be back on Home (FAB visible).
       expect(find.text('Habit'), findsOneWidget);

@@ -6,14 +6,18 @@ import 'package:hable/providers/quote_provider.dart';
 import 'package:hable/screens/auth_screen.dart';
 import 'package:hable/screens/onboarding/onboarding_slides_screen.dart';
 
+import 'test_harness.dart';
+
 Widget _wrap(Widget child, {Future<DailyQuote> Function()? quote}) {
   return ProviderScope(
     overrides: [
       quoteProvider.overrideWith(
-        (ref) => quote?.call() ?? Future.value(const DailyQuote(text: 'Small steps still count.')),
+        (ref) =>
+            quote?.call() ??
+            Future.value(const DailyQuote(text: 'Small steps still count.')),
       ),
     ],
-    child: MaterialApp(home: child),
+    child: buildHableTestApp(home: child),
   );
 }
 
@@ -52,7 +56,8 @@ void main() {
     await tester.pumpWidget(
       _wrap(
         OnboardingSlidesScreen(onGetStarted: () {}, onLogIn: () {}),
-        quote: () => Future.value(const DailyQuote(text: 'Every day is day one.')),
+        quote: () =>
+            Future.value(const DailyQuote(text: 'Every day is day one.')),
       ),
     );
     await tester.pumpAndSettle();

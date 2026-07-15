@@ -66,15 +66,7 @@ void main() {
         now: DateTime(2026, 1, 1),
       );
 
-      expect(
-        quote,
-        anyOf(
-          'A stumble is not a fall. Get back up.',
-          'Missing a day does not erase your progress. Return gently.',
-          'Rest happened. Now begin again.',
-          'Progress bends. It does not break here.',
-        ),
-      );
+      expect(quote.text, contains('Abraham Lincoln'));
     });
 
     test('uses social quote branch ahead of streak branch', () {
@@ -86,15 +78,7 @@ void main() {
         now: DateTime(2026, 1, 2),
       );
 
-      expect(
-        quote,
-        anyOf(
-          'Shared effort travels farther than solo pressure.',
-          'Support counts. Let today be one answered nudge.',
-          'Momentum can be borrowed. Use the energy around you.',
-          'Someone showed up in your orbit. Meet them halfway.',
-        ),
-      );
+      expect(quote.text, contains('Johann Wolfgang von Goethe'));
     });
 
     test('falls back to a stable generic quote when no context matches', () {
@@ -108,7 +92,7 @@ void main() {
       );
 
       expect(quote1, equals(quote2));
-      expect(quote1, isNotEmpty);
+      expect(quote1.text, isNotEmpty);
     });
   });
 }

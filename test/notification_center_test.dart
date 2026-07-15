@@ -13,6 +13,8 @@ import 'package:hable/theme/app_theme.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
+import 'test_harness.dart';
+
 void main() {
   group('notification persistence', () {
     test('upsert stays idempotent and unread state can be cleared', () async {
@@ -118,7 +120,7 @@ void main() {
               _buildUsageDiagnostics(db),
             ),
           ],
-          child: MaterialApp(
+          child: buildHableTestApp(
             theme: AppTheme.lightTheme,
             home: const NotificationCenterScreen(userId: 'user-1'),
           ),
@@ -169,7 +171,7 @@ void main() {
               _buildUsageDiagnostics(db),
             ),
           ],
-          child: MaterialApp(
+          child: buildHableTestApp(
             theme: AppTheme.lightTheme,
             home: const NotificationCenterScreen(userId: userId),
           ),

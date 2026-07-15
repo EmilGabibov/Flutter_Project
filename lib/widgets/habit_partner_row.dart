@@ -39,14 +39,17 @@ class HabitPartnerRow extends StatelessWidget {
       items: [
         if (onNudgeTap != null)
           HableMenuItem<String>(
-            label: loc.partnerNudgeSemantics(partner.username).replaceAll(partner.username, '').trim(), // e.g. "Nudge"
+            label: loc.partnerNudgeSemantics(partner.username).split(' ').first,
             value: 'nudge',
             icon: Icons.back_hand_rounded,
             intent: MenuIntent.primary,
           ),
         if (onProfileTap != null)
           HableMenuItem<String>(
-            label: loc.partnerProfileSemantics(partner.username, '', '').split(' ').first, // Fallback
+            label: loc
+                .partnerProfileSemantics(partner.username, '', '')
+                .split(',')
+                .first,
             value: 'profile',
             icon: Icons.person_rounded,
             intent: MenuIntent.primary,
@@ -90,14 +93,18 @@ class HabitPartnerRow extends StatelessWidget {
                   _PartnerChip(
                     partner: partners[i],
                     habitColor: habitColor,
-                    onProfileTap: onProfileTap == null ? null : () {
-                      Navigator.pop(context);
-                      onProfileTap!(partners[i]);
-                    },
-                    onNudgeTap: onNudgeTap == null ? null : () {
-                      Navigator.pop(context);
-                      onNudgeTap!(partners[i]);
-                    },
+                    onProfileTap: onProfileTap == null
+                        ? null
+                        : () {
+                            Navigator.pop(context);
+                            onProfileTap!(partners[i]);
+                          },
+                    onNudgeTap: onNudgeTap == null
+                        ? null
+                        : () {
+                            Navigator.pop(context);
+                            onNudgeTap!(partners[i]);
+                          },
                   ),
                   if (i != partners.length - 1) const SizedBox(height: 12),
                 ],
@@ -133,7 +140,8 @@ class HabitPartnerRow extends StatelessWidget {
       child: SizedBox(
         key: const Key('partner-stack-collapsed'),
         height: 40,
-        width: visiblePartners.length * 24.0 + (overflowCount > 0 ? 44.0 : 16.0),
+        width:
+            visiblePartners.length * 24.0 + (overflowCount > 0 ? 44.0 : 16.0),
         child: Stack(
           clipBehavior: Clip.none,
           children: [
@@ -143,10 +151,17 @@ class HabitPartnerRow extends StatelessWidget {
                 top: 2,
                 child: GestureDetector(
                   onTapDown: (details) {
-                    _showPartnerMenu(context, visiblePartners[i], details.globalPosition, loc);
+                    _showPartnerMenu(
+                      context,
+                      visiblePartners[i],
+                      details.globalPosition,
+                      loc,
+                    );
                   },
                   child: _PartnerAvatar(
-                    key: Key('partner-avatar-${visiblePartners[i].partnerUserId}'),
+                    key: Key(
+                      'partner-avatar-${visiblePartners[i].partnerUserId}',
+                    ),
                     partner: visiblePartners[i],
                     habitColor: habitColor,
                   ),
