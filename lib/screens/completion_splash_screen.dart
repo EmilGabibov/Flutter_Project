@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hable/database/database.dart';
 import 'package:hable/models/celebration_feedback.dart';
 import 'package:hable/providers/quote_provider.dart';
+import 'package:hable/l10n/app_localizations.dart';
 
 /// A dynamic typographic splash screen triggered upon final habit completion.
 /// It displays a dynamic congratulation message and the 'Quote of the Day'
@@ -297,7 +298,11 @@ class _CompletionSplashScreenState extends ConsumerState<CompletionSplashScreen>
                                         .titleMedium
                                         ?.copyWith(fontWeight: FontWeight.w800),
                                   ),
-                                  child: const Text('Continue'),
+                                  child: Text(
+                                    AppLocalizations.of(
+                                      context,
+                                    )!.completionContinue,
+                                  ),
                                 ),
                               ),
                             ],

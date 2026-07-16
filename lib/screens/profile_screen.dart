@@ -1619,8 +1619,8 @@ class _WebPushReminderOptInState extends ConsumerState<_WebPushReminderOptIn> {
       SnackBar(
         content: Text(
           enabled
-              ? 'Web reminders enabled for this browser.'
-              : 'Web reminders are unavailable or permission was denied.',
+              ? AppLocalizations.of(context)!.webPushEnabled
+              : AppLocalizations.of(context)!.webPushUnavailable,
         ),
       ),
     );
@@ -1635,10 +1635,10 @@ class _WebPushReminderOptInState extends ConsumerState<_WebPushReminderOptIn> {
         icon: Icon(_enabled ? Icons.notifications_active : Icons.notifications),
         label: Text(
           _busy
-              ? 'Enabling web reminders…'
+              ? AppLocalizations.of(context)!.webPushEnabling
               : _enabled
-              ? 'Web reminders enabled'
-              : 'Enable web reminders',
+              ? AppLocalizations.of(context)!.webPushEnabled
+              : AppLocalizations.of(context)!.webPushEnable,
         ),
       ),
     );

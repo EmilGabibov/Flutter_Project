@@ -398,5 +398,11 @@
   "accessibilityHighContrastTitle": "High Contrast",
   "accessibilityHighContrastBody": "Increase color contrast for better readability",
   "accessibilityLargerTextTitle": "Larger Text",
-  "accessibilityLargerTextBody": "Increase the global text scale"
+  "accessibilityLargerTextBody": "عالمی متن کا سائز بڑھائیں",
+  "webPushEnabled": "اس براؤزر کے لیے ویب یاد دہانیاں فعال ہیں۔",
+  "webPushUnavailable": "ویب یاد دہانیاں دستیاب نہیں یا اجازت مسترد کر دی گئی ہے۔",
+  "webPushEnabling": "ویب یاد دہانیاں فعال کی جا رہی ہیں...",
+  "webPushEnable": "ویب یاد دہانیاں فعال کریں",
+  "socialJointCompletion": "اس مشترکہ عادت کی مشترکہ تکمیل درج ہو گئی ہے۔",
+  "completionContinue": "جاری رکھیں"
 }

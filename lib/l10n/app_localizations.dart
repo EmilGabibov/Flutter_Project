@@ -2313,6 +2313,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Increase the global text scale'**
   String get accessibilityLargerTextBody;
+
+  /// No description provided for @webPushEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Web reminders enabled for this browser.'**
+  String get webPushEnabled;
+
+  /// No description provided for @webPushUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Web reminders are unavailable or permission was denied.'**
+  String get webPushUnavailable;
+
+  /// No description provided for @webPushEnabling.
+  ///
+  /// In en, this message translates to:
+  /// **'Enabling web reminders...'**
+  String get webPushEnabling;
+
+  /// No description provided for @webPushEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable web reminders'**
+  String get webPushEnable;
+
+  /// No description provided for @socialJointCompletion.
+  ///
+  /// In en, this message translates to:
+  /// **'Joint completion registered for this shared habit.'**
+  String get socialJointCompletion;
+
+  /// No description provided for @completionContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get completionContinue;
 }
 
 class _AppLocalizationsDelegate

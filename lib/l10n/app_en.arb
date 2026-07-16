@@ -512,5 +512,11 @@
   "accessibilityHighContrastTitle": "High Contrast",
   "accessibilityHighContrastBody": "Increase color contrast for better readability",
   "accessibilityLargerTextTitle": "Larger Text",
-  "accessibilityLargerTextBody": "Increase the global text scale"
+  "accessibilityLargerTextBody": "Increase the global text scale",
+  "webPushEnabled": "Web reminders enabled for this browser.",
+  "webPushUnavailable": "Web reminders are unavailable or permission was denied.",
+  "webPushEnabling": "Enabling web reminders...",
+  "webPushEnable": "Enable web reminders",
+  "socialJointCompletion": "Joint completion registered for this shared habit.",
+  "completionContinue": "Continue"
 }

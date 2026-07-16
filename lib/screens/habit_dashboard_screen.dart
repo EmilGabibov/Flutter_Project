@@ -566,8 +566,8 @@ class _DashboardHabitTileState extends ConsumerState<_DashboardHabitTile> {
 
       if (sharedBonusEarned && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Joint completion registered for this shared habit.'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.socialJointCompletion),
             behavior: SnackBarBehavior.floating,
           ),
         );

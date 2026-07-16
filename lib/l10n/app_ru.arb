@@ -398,5 +398,11 @@
   "accessibilityHighContrastTitle": "High Contrast",
   "accessibilityHighContrastBody": "Increase color contrast for better readability",
   "accessibilityLargerTextTitle": "Larger Text",
-  "accessibilityLargerTextBody": "Increase the global text scale"
+  "accessibilityLargerTextBody": "Увеличить масштаб текста",
+  "webPushEnabled": "Веб-напоминания включены для этого браузера.",
+  "webPushUnavailable": "Веб-напоминания недоступны или разрешение отклонено.",
+  "webPushEnabling": "Включение веб-напоминаний...",
+  "webPushEnable": "Включить веб-напоминания",
+  "socialJointCompletion": "Совместное выполнение этой привычки зарегистрировано.",
+  "completionContinue": "Продолжить"
 }

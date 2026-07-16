@@ -7,6 +7,7 @@ import 'package:hable/database/database.dart';
 import 'package:hable/database/tables.dart' show HabitStatus;
 import 'package:hable/models/celebration_feedback.dart';
 import 'package:hable/providers/quote_provider.dart';
+import 'package:hable/l10n/app_localizations.dart';
 
 void main() {
   testWidgets('CompletionSplashScreen renders habit info and daily quote', (
@@ -40,6 +41,8 @@ void main() {
           ),
         ],
         child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: CompletionSplashScreen(
             habit: testHabit,
             emoji: '🧘‍♂️',
@@ -104,6 +107,8 @@ void main() {
           ),
         ],
         child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: CompletionSplashScreen(
             habit: testHabit,
             celebration: celebration,

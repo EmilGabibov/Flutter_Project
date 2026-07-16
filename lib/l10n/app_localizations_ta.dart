@@ -1253,5 +1253,26 @@ class AppLocalizationsTa extends AppLocalizations {
   String get accessibilityLargerTextTitle => 'Larger Text';
 
   @override
-  String get accessibilityLargerTextBody => 'Increase the global text scale';
+  String get accessibilityLargerTextBody => 'உலகளாவிய உரை அளவை அதிகரிக்கவும்';
+
+  @override
+  String get webPushEnabled =>
+      'இந்த உலாவிக்கு இணைய நினைவூட்டல்கள் இயக்கப்பட்டன.';
+
+  @override
+  String get webPushUnavailable =>
+      'இணைய நினைவூட்டல்கள் கிடைக்கவில்லை அல்லது அனுமதி மறுக்கப்பட்டது.';
+
+  @override
+  String get webPushEnabling => 'இணைய நினைவூட்டல்கள் இயக்கப்படுகின்றன...';
+
+  @override
+  String get webPushEnable => 'இணைய நினைவூட்டல்களை இயக்கவும்';
+
+  @override
+  String get socialJointCompletion =>
+      'இந்தப் பகிரப்பட்ட பழக்கத்தின் கூட்டு நிறைவு பதிவு செய்யப்பட்டது.';
+
+  @override
+  String get completionContinue => 'தொடரவும்';
 }

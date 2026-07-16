@@ -1250,5 +1250,24 @@ class AppLocalizationsFa extends AppLocalizations {
   String get accessibilityLargerTextTitle => 'Larger Text';
 
   @override
-  String get accessibilityLargerTextBody => 'Increase the global text scale';
+  String get accessibilityLargerTextBody => 'مقیاس کلی متن را افزایش دهید';
+
+  @override
+  String get webPushEnabled => 'یادآورهای وب برای این مرورگر فعال شد.';
+
+  @override
+  String get webPushUnavailable =>
+      'یادآورهای وب در دسترس نیستند یا اجازه رد شده است.';
+
+  @override
+  String get webPushEnabling => 'در حال فعال‌سازی یادآورهای وب...';
+
+  @override
+  String get webPushEnable => 'فعال‌سازی یادآورهای وب';
+
+  @override
+  String get socialJointCompletion => 'تکمیل مشترک این عادت مشترک ثبت شد.';
+
+  @override
+  String get completionContinue => 'ادامه';
 }

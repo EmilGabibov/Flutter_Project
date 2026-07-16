@@ -1250,5 +1250,25 @@ class AppLocalizationsUr extends AppLocalizations {
   String get accessibilityLargerTextTitle => 'Larger Text';
 
   @override
-  String get accessibilityLargerTextBody => 'Increase the global text scale';
+  String get accessibilityLargerTextBody => 'عالمی متن کا سائز بڑھائیں';
+
+  @override
+  String get webPushEnabled => 'اس براؤزر کے لیے ویب یاد دہانیاں فعال ہیں۔';
+
+  @override
+  String get webPushUnavailable =>
+      'ویب یاد دہانیاں دستیاب نہیں یا اجازت مسترد کر دی گئی ہے۔';
+
+  @override
+  String get webPushEnabling => 'ویب یاد دہانیاں فعال کی جا رہی ہیں...';
+
+  @override
+  String get webPushEnable => 'ویب یاد دہانیاں فعال کریں';
+
+  @override
+  String get socialJointCompletion =>
+      'اس مشترکہ عادت کی مشترکہ تکمیل درج ہو گئی ہے۔';
+
+  @override
+  String get completionContinue => 'جاری رکھیں';
 }

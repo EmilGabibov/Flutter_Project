@@ -1251,4 +1251,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accessibilityLargerTextBody => 'Increase the global text scale';
+
+  @override
+  String get webPushEnabled => 'Web reminders enabled for this browser.';
+
+  @override
+  String get webPushUnavailable =>
+      'Web reminders are unavailable or permission was denied.';
+
+  @override
+  String get webPushEnabling => 'Enabling web reminders...';
+
+  @override
+  String get webPushEnable => 'Enable web reminders';
+
+  @override
+  String get socialJointCompletion =>
+      'Joint completion registered for this shared habit.';
+
+  @override
+  String get completionContinue => 'Continue';
 }

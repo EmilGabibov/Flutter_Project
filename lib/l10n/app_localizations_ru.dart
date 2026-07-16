@@ -1250,5 +1250,25 @@ class AppLocalizationsRu extends AppLocalizations {
   String get accessibilityLargerTextTitle => 'Larger Text';
 
   @override
-  String get accessibilityLargerTextBody => 'Increase the global text scale';
+  String get accessibilityLargerTextBody => 'Увеличить масштаб текста';
+
+  @override
+  String get webPushEnabled => 'Веб-напоминания включены для этого браузера.';
+
+  @override
+  String get webPushUnavailable =>
+      'Веб-напоминания недоступны или разрешение отклонено.';
+
+  @override
+  String get webPushEnabling => 'Включение веб-напоминаний...';
+
+  @override
+  String get webPushEnable => 'Включить веб-напоминания';
+
+  @override
+  String get socialJointCompletion =>
+      'Совместное выполнение этой привычки зарегистрировано.';
+
+  @override
+  String get completionContinue => 'Продолжить';
 }

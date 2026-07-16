@@ -1250,5 +1250,26 @@ class AppLocalizationsDe extends AppLocalizations {
   String get accessibilityLargerTextTitle => 'Larger Text';
 
   @override
-  String get accessibilityLargerTextBody => 'Increase the global text scale';
+  String get accessibilityLargerTextBody => 'Globale Textgroesse erhoehen';
+
+  @override
+  String get webPushEnabled =>
+      'Web-Erinnerungen sind fuer diesen Browser aktiviert.';
+
+  @override
+  String get webPushUnavailable =>
+      'Web-Erinnerungen sind nicht verfuegbar oder die Berechtigung wurde verweigert.';
+
+  @override
+  String get webPushEnabling => 'Web-Erinnerungen werden aktiviert...';
+
+  @override
+  String get webPushEnable => 'Web-Erinnerungen aktivieren';
+
+  @override
+  String get socialJointCompletion =>
+      'Gemeinsamer Abschluss fuer diese gemeinsame Gewohnheit registriert.';
+
+  @override
+  String get completionContinue => 'Weiter';
 }

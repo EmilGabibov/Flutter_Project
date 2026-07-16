@@ -398,5 +398,11 @@
   "accessibilityHighContrastTitle": "High Contrast",
   "accessibilityHighContrastBody": "Increase color contrast for better readability",
   "accessibilityLargerTextTitle": "Larger Text",
-  "accessibilityLargerTextBody": "Increase the global text scale"
+  "accessibilityLargerTextBody": "Globale Textgroesse erhoehen",
+  "webPushEnabled": "Web-Erinnerungen sind fuer diesen Browser aktiviert.",
+  "webPushUnavailable": "Web-Erinnerungen sind nicht verfuegbar oder die Berechtigung wurde verweigert.",
+  "webPushEnabling": "Web-Erinnerungen werden aktiviert...",
+  "webPushEnable": "Web-Erinnerungen aktivieren",
+  "socialJointCompletion": "Gemeinsamer Abschluss fuer diese gemeinsame Gewohnheit registriert.",
+  "completionContinue": "Weiter"
 }

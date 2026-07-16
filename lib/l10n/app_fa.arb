@@ -398,5 +398,11 @@
   "accessibilityHighContrastTitle": "High Contrast",
   "accessibilityHighContrastBody": "Increase color contrast for better readability",
   "accessibilityLargerTextTitle": "Larger Text",
-  "accessibilityLargerTextBody": "Increase the global text scale"
+  "accessibilityLargerTextBody": "مقیاس کلی متن را افزایش دهید",
+  "webPushEnabled": "یادآورهای وب برای این مرورگر فعال شد.",
+  "webPushUnavailable": "یادآورهای وب در دسترس نیستند یا اجازه رد شده است.",
+  "webPushEnabling": "در حال فعال‌سازی یادآورهای وب...",
+  "webPushEnable": "فعال‌سازی یادآورهای وب",
+  "socialJointCompletion": "تکمیل مشترک این عادت مشترک ثبت شد.",
+  "completionContinue": "ادامه"
 }
