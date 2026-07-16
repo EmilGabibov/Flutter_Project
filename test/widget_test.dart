@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
-import 'package:hable/main.dart';
+import 'package:hable/app/hable_app.dart';
 
 void main() {
   testWidgets('App launches without error', (WidgetTester tester) async {
