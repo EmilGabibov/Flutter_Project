@@ -107,7 +107,7 @@ To combat regressions without manual Android ADB passes, there is an automated P
    ```
 This test covers friend requests, shared habit invites, mutual completion holds, nudges, and score validation.
 The current harness also includes a third isolated browser user so invite acceptance, nudge visibility, and friend-profile `Follow` flows can be exercised without reusing one of the partner sessions.
-True remote push delivery is still out of scope for this local/web harness. Current automated notification coverage validates the offline-first local notification/deep-link contract and reconnect reconciliation rather than claiming APNs/FCM/browser push parity.
+True native APNs/FCM delivery remains out of scope for this local/web harness. For PWA Web Push, deploy VAPID secrets (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`) and the dispatch token, open Profile → reminders in a supported HTTPS browser, grant permission from the explicit web-reminder button, verify the subscription upsert, send a bounded test reminder through the protected dispatch route, and click the notification to return to Home or Social. Verify denied/unsupported permission leaves local reminder settings intact and that 404/410 endpoints are removed.
 
 
 ## 2. ADB Smoke Test Execution Log

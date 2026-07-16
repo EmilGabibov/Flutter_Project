@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +13,7 @@ import '../providers/habit_providers.dart';
 import '../providers/sync_provider.dart';
 import '../services/app_error.dart';
 import '../services/local_reminder_service.dart';
+import '../services/web_push_client.dart';
 import '../services/client_reset_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/habit_form_sheet.dart';
@@ -813,16 +815,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                           child: Wrap(
                             spacing: 10,
                             runSpacing: 10,
-                            children: achievements.map<Widget>((rawAchievement) {
-                              final achievement =
-                                  Map<String, dynamic>.from(
-                                    rawAchievement as Map? ?? const {},
-                                  );
+                            children: achievements.map<Widget>((
+                              rawAchievement,
+                            ) {
+                              final achievement = Map<String, dynamic>.from(
+                                rawAchievement as Map? ?? const {},
+                              );
                               final achievementId =
                                   achievement['achievement_id']?.toString() ??
                                   '';
-                              final unlockedAt =
-                                  achievement['unlocked_at']?.toString();
+                              final unlockedAt = achievement['unlocked_at']
+                                  ?.toString();
                               final chip = Chip(
                                 avatar: const Icon(
                                   Icons.workspace_premium_rounded,
@@ -832,10 +835,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                 label: Text(
                                   achievementId.isEmpty
                                       ? l10n.dashboardAchievementUnlocked
-                                      : _achievementLabel(
-                                          l10n,
-                                          achievementId,
-                                        ),
+                                      : _achievementLabel(l10n, achievementId),
                                 ),
                                 backgroundColor: AppTheme.surfaceVariant,
                                 side: BorderSide(
@@ -1418,6 +1418,7 @@ class _DailyReminderCard extends ConsumerWidget {
                     color: AppTheme.warmGray.withValues(alpha: 0.9),
                   ),
                 ),
+                if (kIsWeb) const _WebPushReminderOptIn(),
                 if (!supportsScheduling) ...[
                   const SizedBox(height: 12),
                   _ReminderNotice(
@@ -1591,6 +1592,58 @@ class _DailyReminderCard extends ConsumerWidget {
   }
 }
 
+class _WebPushReminderOptIn extends ConsumerStatefulWidget {
+  const _WebPushReminderOptIn();
+
+  @override
+  ConsumerState<_WebPushReminderOptIn> createState() =>
+      _WebPushReminderOptInState();
+}
+
+class _WebPushReminderOptInState extends ConsumerState<_WebPushReminderOptIn> {
+  bool _busy = false;
+  bool _enabled = false;
+
+  Future<void> _enable() async {
+    final token = ref.read(authProvider).token;
+    if (token == null || _busy) return;
+    setState(() => _busy = true);
+    final enabled = await WebPushClient().subscribe(token: token);
+    if (!mounted) return;
+    setState(() {
+      _busy = false;
+      _enabled = enabled;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          enabled
+              ? 'Web reminders enabled for this browser.'
+              : 'Web reminders are unavailable or permission was denied.',
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: OutlinedButton.icon(
+        onPressed: _enabled ? null : _enable,
+        icon: Icon(_enabled ? Icons.notifications_active : Icons.notifications),
+        label: Text(
+          _busy
+              ? 'Enabling web reminders…'
+              : _enabled
+              ? 'Web reminders enabled'
+              : 'Enable web reminders',
+        ),
+      ),
+    );
+  }
+}
+
 class _StatusPill extends StatelessWidget {
   final String label;
   final Color color;
@@ -1669,7 +1722,8 @@ class _FriendHabitListTile extends ConsumerWidget {
     final description = habitData['description'] as String?;
     final habitId = habitData['id']?.toString();
     final duration = habitData['target_duration'] as int? ?? 10;
-    final currentDuration = (habitData['current_duration'] as num?)?.toInt() ?? 0;
+    final currentDuration =
+        (habitData['current_duration'] as num?)?.toInt() ?? 0;
     final role = _partnershipRoleFromWire(habitData['role']?.toString());
     final habitColor = _tileColor(habitData['color_hex'] as String?);
     final habitMeta = standardHabitForTitle(title);
@@ -1712,10 +1766,7 @@ class _FriendHabitListTile extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 12),
-            Text(
-              progressLabel,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            Text(progressLabel, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 6),
             Text(
               _roleLabel(loc, role),

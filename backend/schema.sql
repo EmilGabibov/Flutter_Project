@@ -12,6 +12,21 @@ CREATE INDEX IF NOT EXISTS idx_users_score ON users(total_score DESC);
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+    user_id TEXT NOT NULL,
+    device_token TEXT NOT NULL,
+    platform TEXT NOT NULL,
+    endpoint_url TEXT NOT NULL,
+    auth_keys TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    quiet_hours_enabled INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (user_id, device_token)
+);
+
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_endpoint
+ON push_subscriptions(endpoint_url);
+
 CREATE TABLE IF NOT EXISTS auth_pins (
     email TEXT PRIMARY KEY,
     pin_hash TEXT NOT NULL,

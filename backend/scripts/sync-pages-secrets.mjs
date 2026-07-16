@@ -11,6 +11,13 @@ const requiredKeys = [
   'PRIVATE_CLOUDFLARE_EMAIL_API_TOKEN',
   'PRIVATE_EMAIL_SENDER_HABLE',
 ]
+const optionalKeys = [
+  'VAPID_PUBLIC_KEY',
+  'VAPID_PRIVATE_KEY',
+  'VAPID_SUBJECT',
+  'PUSH_DISPATCH_TOKEN',
+]
+const allowedKeys = new Set([...requiredKeys, ...optionalKeys])
 
 const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hable-pages-secrets-'))
 const secretsFile = path.join(tempDir, 'pages-secrets.env')
@@ -49,7 +56,7 @@ const entries = contents
       value: line.slice(separatorIndex + 1),
     }
   })
-  .filter((entry) => entry && requiredKeys.includes(entry.key))
+  .filter((entry) => entry && allowedKeys.has(entry.key))
 
 const missing = requiredKeys.filter((key) => !entries.some((entry) => entry?.key === key))
 if (missing.length > 0) {

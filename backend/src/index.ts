@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { jwt, sign } from 'hono/jwt'
+import webpush from 'web-push'
 
 type Bindings = {
   DB: D1Database
@@ -24,6 +25,10 @@ type Bindings = {
   CLOUDFLARE_ACCOUNT_ID?: string
   PRIVATE_CLOUDFLARE_EMAIL_API_TOKEN?: string
   PRIVATE_EMAIL_SENDER_HABLE?: string
+  VAPID_PUBLIC_KEY?: string
+  VAPID_PRIVATE_KEY?: string
+  VAPID_SUBJECT?: string
+  PUSH_DISPATCH_TOKEN?: string
 }
 
 type Variables = {
@@ -424,6 +429,7 @@ let ensureAuthSchemaPromise: Promise<void> | null = null
 let ensureUsageDiagnosticsSchemaPromise: Promise<void> | null = null
 let ensureFriendRequestSchemaPromise: Promise<void> | null = null
 let ensureHabitDescriptionSchemaPromise: Promise<void> | null = null
+let ensurePushSubscriptionSchemaPromise: Promise<void> | null = null
 
 function normalizeRole(value: unknown): PartnershipRole {
   if (typeof value === 'string' && partnershipRoles.includes(value as PartnershipRole)) {
@@ -589,6 +595,65 @@ async function ensureUsageDiagnosticsSchema(env: Bindings): Promise<void> {
   }
 
   await ensureUsageDiagnosticsSchemaPromise
+}
+
+async function ensurePushSubscriptionSchema(env: Bindings): Promise<void> {
+  if (!ensurePushSubscriptionSchemaPromise) {
+    ensurePushSubscriptionSchemaPromise = (async () => {
+      await env.DB.prepare(`
+        CREATE TABLE IF NOT EXISTS push_subscriptions (
+          user_id TEXT NOT NULL,
+          device_token TEXT NOT NULL,
+          platform TEXT NOT NULL,
+          endpoint_url TEXT NOT NULL,
+          auth_keys TEXT NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          quiet_hours_enabled INTEGER NOT NULL DEFAULT 0,
+          PRIMARY KEY (user_id, device_token)
+        )
+      `).run()
+      await env.DB.prepare(`
+        CREATE INDEX IF NOT EXISTS idx_push_subscriptions_endpoint
+        ON push_subscriptions(endpoint_url)
+      `).run()
+    })().catch((error) => {
+      ensurePushSubscriptionSchemaPromise = null
+      throw error
+    })
+  }
+
+  await ensurePushSubscriptionSchemaPromise
+}
+
+function normalizePushSubscription(value: unknown): {
+  endpoint: string
+  p256dh: string
+  auth: string
+  expirationTime: number | null
+} | null {
+  if (!value || typeof value !== 'object') return null
+  const candidate = value as Record<string, unknown>
+  const endpoint = String(candidate.endpoint ?? '').trim()
+  const keys = candidate.keys
+  if (!endpoint.startsWith('https://') || !keys || typeof keys !== 'object') return null
+  const keyRecord = keys as Record<string, unknown>
+  const p256dh = String(keyRecord.p256dh ?? '').trim()
+  const auth = String(keyRecord.auth ?? '').trim()
+  if (!p256dh || !auth || endpoint.length > 2048 || p256dh.length > 512 || auth.length > 512) {
+    return null
+  }
+  const expiration = candidate.expirationTime
+  return {
+    endpoint,
+    p256dh,
+    auth,
+    expirationTime: typeof expiration === 'number' && Number.isFinite(expiration) ? expiration : null,
+  }
+}
+
+function webPushConfigured(env: Bindings): boolean {
+  return Boolean(env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY && env.VAPID_SUBJECT)
 }
 
 async function ensureFriendRequestSchema(env: Bindings): Promise<void> {
@@ -1458,6 +1523,118 @@ app.post('/api/user/calendar-feed/rotate', async (c) => {
   return c.json({
     feed_url: new URL(c.req.url).origin + `/calendar/${newToken}.ics`
   })
+})
+
+app.use('/api/push/*', async (c, next) => {
+  const secret = c.env.JWT_SECRET || 'fallback_local_secret'
+  const jwtMiddleware = jwt({ secret, alg: 'HS256' })
+  return jwtMiddleware(c, next)
+})
+
+app.get('/api/push/config', async (c) => {
+  if (!c.env.VAPID_PUBLIC_KEY) {
+    return jsonError(c, 503, 'push_unconfigured', 'Web Push is not configured for this deployment.')
+  }
+  return c.json({ public_key: c.env.VAPID_PUBLIC_KEY })
+})
+
+app.post('/api/push/subscribe', async (c) => {
+  await ensurePushSubscriptionSchema(c.env)
+  const payload = c.get('jwtPayload')
+  const body = await c.req.json().catch(() => ({})) as {
+    subscription?: unknown
+    quiet_hours_enabled?: unknown
+  }
+  const subscription = normalizePushSubscription(body.subscription)
+  if (!subscription) {
+    return jsonError(c, 400, 'push_invalid_subscription', 'Provide a valid Web Push subscription.')
+  }
+
+  const authKeys = JSON.stringify({
+    p256dh: subscription.p256dh,
+    auth: subscription.auth,
+    ...(subscription.expirationTime == null ? {} : { expirationTime: subscription.expirationTime }),
+  })
+  await c.env.DB.prepare(`
+    INSERT INTO push_subscriptions
+      (user_id, device_token, platform, endpoint_url, auth_keys, quiet_hours_enabled, updated_at)
+    VALUES (?, ?, 'web', ?, ?, ?, CURRENT_TIMESTAMP)
+    ON CONFLICT(user_id, device_token) DO UPDATE SET
+      endpoint_url = excluded.endpoint_url,
+      auth_keys = excluded.auth_keys,
+      quiet_hours_enabled = excluded.quiet_hours_enabled,
+      updated_at = CURRENT_TIMESTAMP
+  `).bind(
+    payload.id,
+    subscription.endpoint,
+    subscription.endpoint,
+    authKeys,
+    body.quiet_hours_enabled === true ? 1 : 0,
+  ).run()
+
+  return c.json({ success: true })
+})
+
+app.delete('/api/push/subscribe', async (c) => {
+  await ensurePushSubscriptionSchema(c.env)
+  const payload = c.get('jwtPayload')
+  const body = await c.req.json().catch(() => ({})) as { endpoint?: unknown }
+  const endpoint = String(body.endpoint ?? '').trim()
+  if (!endpoint.startsWith('https://') || endpoint.length > 2048) {
+    return jsonError(c, 400, 'push_invalid_endpoint', 'Provide a valid Web Push endpoint.')
+  }
+  await c.env.DB.prepare(
+    'DELETE FROM push_subscriptions WHERE user_id = ? AND device_token = ?'
+  ).bind(payload.id, endpoint).run()
+  return c.json({ success: true })
+})
+
+app.post('/api/push/reminders/send', async (c) => {
+  if (!webPushConfigured(c.env)) {
+    return jsonError(c, 503, 'push_unconfigured', 'Web Push is not configured for this deployment.')
+  }
+  const dispatchToken = c.req.header('X-Push-Dispatch-Token')
+  if (!c.env.PUSH_DISPATCH_TOKEN || dispatchToken !== c.env.PUSH_DISPATCH_TOKEN) {
+    return jsonError(c, 403, 'push_dispatch_forbidden', 'Push dispatch is restricted.')
+  }
+  await ensurePushSubscriptionSchema(c.env)
+  const body = await c.req.json().catch(() => ({})) as {
+    user_id?: unknown
+    title?: unknown
+    body?: unknown
+    route?: unknown
+  }
+  const userId = String(body.user_id ?? '').trim()
+  const title = String(body.title ?? 'Hable reminder').trim().slice(0, 80)
+  const message = String(body.body ?? 'Your Hable habits are waiting.').trim().slice(0, 180)
+  if (!userId || !title || !message) {
+    return jsonError(c, 400, 'push_invalid_message', 'A user, title, and body are required.')
+  }
+  const rows = await c.env.DB.prepare(
+    'SELECT device_token, endpoint_url, auth_keys FROM push_subscriptions WHERE user_id = ? LIMIT 20'
+  ).bind(userId).all<{ device_token: string; endpoint_url: string; auth_keys: string }>()
+  webpush.setVapidDetails(c.env.VAPID_SUBJECT!, c.env.VAPID_PUBLIC_KEY!, c.env.VAPID_PRIVATE_KEY!)
+  let sent = 0
+  let removed = 0
+  for (const row of rows.results ?? []) {
+    try {
+      const keys = JSON.parse(row.auth_keys) as { p256dh: string; auth: string }
+      await webpush.sendNotification(
+        { endpoint: row.endpoint_url, keys },
+        JSON.stringify({ title, body: message, route: body.route === 'social' ? '/social' : '/' }),
+      )
+      sent += 1
+    } catch (error) {
+      const statusCode = (error as { statusCode?: number }).statusCode
+      if (statusCode === 404 || statusCode === 410) {
+        await c.env.DB.prepare(
+          'DELETE FROM push_subscriptions WHERE user_id = ? AND device_token = ?'
+        ).bind(userId, row.device_token).run()
+        removed += 1
+      }
+    }
+  }
+  return c.json({ sent, removed })
 })
 
 // Apply JWT middleware to all protected routes
