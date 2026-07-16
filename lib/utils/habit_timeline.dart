@@ -1,7 +1,14 @@
 import '../database/database.dart';
 
-DateTime _localDate(DateTime value) =>
-    DateTime(value.year, value.month, value.day);
+DateTime _localDate(DateTime value) {
+  final local = value.isUtc ? value.toLocal() : value;
+  return DateTime(local.year, local.month, local.day);
+}
+
+Duration timeUntilNextLocalDay(DateTime now) {
+  final tomorrow = DateTime(now.year, now.month, now.day + 1);
+  return tomorrow.difference(now);
+}
 
 int challengeTimelineDay(Habit habit, {DateTime? now}) {
   final total = habit.targetDuration > 0 ? habit.targetDuration : 1;

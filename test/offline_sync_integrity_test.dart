@@ -256,6 +256,51 @@ void main() {
     },
   );
 
+  test('daily sync preserves a shared habit challenge start date', () async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    await db.insertUser(
+      UsersCompanion.insert(userId: 'user-1', username: 'Alice'),
+    );
+
+    final syncService = SyncService(
+      db: db,
+      connectivity: ConnectivityService(),
+      storage: const FlutterSecureStorage(),
+      client: MockClient((request) async {
+        return http.Response(
+          jsonEncode(
+            _dailySyncPayload(
+              partners: [
+                {
+                  'habit_id': 'habit-1',
+                  'partner_id': 'friend-1',
+                  'username': 'Bob',
+                  'title': 'Hydration',
+                  'target_duration': 21,
+                  'viewer_remaining_days': 20,
+                  'status': 'active',
+                  'role': 'partner',
+                  'created_at': '2026-07-15T08:30:00.000Z',
+                },
+              ],
+            ),
+          ),
+          200,
+        );
+      }),
+      apiBaseUrlOverride: 'http://offline.test',
+    );
+    addTearDown(syncService.dispose);
+
+    await syncService.pullDailySync('user-1');
+
+    final habit = await db.getHabit('habit-1');
+    expect(habit, isNotNull);
+    expect(habit!.createdAt.toUtc(), DateTime.utc(2026, 7, 15, 8, 30));
+    expect(habit.currentDuration, 20);
+  });
+
   test('deterministic nudge 403 is consumed instead of retried', () async {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
@@ -390,11 +435,12 @@ Map<String, dynamic> _dailySyncPayload({
   List<Map<String, dynamic>> invitations = const [],
   List<Map<String, dynamic>> friendRequests = const [],
   List<Map<String, dynamic>> nudges = const [],
+  List<Map<String, dynamic>> partners = const [],
   Map<String, dynamic>? quote,
 }) {
   return {
     'accepted_friends': <Map<String, dynamic>>[],
-    'partners': <Map<String, dynamic>>[],
+    'partners': partners,
     'nudges': nudges,
     'messages': <Map<String, dynamic>>[],
     'invitations': invitations,

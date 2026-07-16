@@ -58,6 +58,28 @@ void main() {
     expect(challengeTimelineDay(sameDay, now: DateTime(2026, 7, 11, 0, 1)), 2);
   });
 
+  test('timeline converts a synced UTC start timestamp to the local day', () {
+    final localStart = DateTime(2026, 7, 10, 23, 30);
+    final habit = _habit(
+      createdAt: localStart.toUtc(),
+      targetDuration: 7,
+      currentDuration: 7,
+    );
+
+    expect(challengeTimelineDay(habit, now: localStart), 1);
+  });
+
+  test('day-boundary refresh delay targets the next local midnight', () {
+    expect(
+      timeUntilNextLocalDay(DateTime(2026, 7, 10, 23, 59, 30)),
+      const Duration(seconds: 30),
+    );
+    expect(
+      timeUntilNextLocalDay(DateTime(2026, 7, 10, 8, 15)),
+      const Duration(hours: 15, minutes: 45),
+    );
+  });
+
   test('progress fraction stays tied to earned completion count', () {
     final habit = _habit(
       createdAt: DateTime(2026, 7, 10, 8, 30),

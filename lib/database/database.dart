@@ -308,6 +308,7 @@ class AppDatabase extends _$AppDatabase {
             'target_duration': targetDuration,
             'color_hex': colorHex,
             'status': 'active',
+            'created_at': now.toIso8601String(),
             'updated_at': now.toIso8601String(),
           }),
         ),

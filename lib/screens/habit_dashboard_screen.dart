@@ -15,6 +15,7 @@ import '../l10n/app_localizations.dart';
 import '../providers/celebration_provider.dart';
 import '../providers/database_provider.dart';
 import '../providers/habit_providers.dart';
+import '../providers/local_day_provider.dart';
 import '../providers/mud_tuning_provider.dart';
 import '../providers/quote_provider.dart';
 import '../providers/resistance_provider.dart';
@@ -396,7 +397,8 @@ class _DashboardHabitTileState extends ConsumerState<_DashboardHabitTile> {
     final streakAsync = ref.watch(streakProvider(habit.habitId));
     final partnersAsync = ref.watch(habitPartnersProvider(habit.habitId));
 
-    final challengeDay = challengeTimelineDay(habit);
+    final localDay = ref.watch(localDayProvider).value ?? DateTime.now();
+    final challengeDay = challengeTimelineDay(habit, now: localDay);
     final progressDay = challengeProgressDay(habit);
     final targetDays = habit.targetDuration > 0 ? habit.targetDuration : 1;
     final progressFraction = challengeProgressFraction(habit);

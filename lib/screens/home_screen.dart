@@ -10,6 +10,7 @@ import '../database/database.dart';
 import '../database/tables.dart' show LogStatus, PartnershipRole, SyncAction;
 import '../providers/database_provider.dart';
 import '../providers/habit_providers.dart';
+import '../providers/local_day_provider.dart';
 import '../providers/resistance_provider.dart';
 import '../providers/quote_provider.dart';
 import '../providers/social_providers.dart';
@@ -712,7 +713,8 @@ class _HabitCardState extends ConsumerState<_HabitCard> {
     final partnersAsync = ref.watch(habitPartnersProvider(habit.habitId));
 
     final isContinuous = habit.targetDuration <= 0;
-    final challengeDay = challengeTimelineDay(habit);
+    final localDay = ref.watch(localDayProvider).value ?? DateTime.now();
+    final challengeDay = challengeTimelineDay(habit, now: localDay);
     final progressDay = challengeProgressDay(habit);
     final progressFraction = challengeProgressFraction(habit);
     final targetDays = habit.targetDuration > 0 ? habit.targetDuration : 1;

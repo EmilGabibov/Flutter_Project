@@ -514,6 +514,9 @@ class SyncService {
           final hasCompletedToday =
               partner['has_completed_today'] == true ||
               partner['has_completed_today'] == 1;
+          final challengeCreatedAt = DateTime.tryParse(
+            partner['created_at']?.toString() ?? '',
+          );
 
           await _db.upsertPartnerSnapshot(
             PartnerSnapshotsCompanion(
@@ -575,6 +578,9 @@ class SyncService {
                   colorHex: Value(
                     partner['color_hex']?.toString() ?? 'FF9CAF88',
                   ),
+                  createdAt: challengeCreatedAt == null
+                      ? const Value.absent()
+                      : Value(challengeCreatedAt),
                   updatedAt: Value(DateTime.now()),
                   isSynced: const Value(true),
                 ),

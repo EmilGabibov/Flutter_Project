@@ -2276,6 +2276,7 @@ app.get('/api/sync/daily', async (c) => {
       h.color_hex,
       h.target_duration,
       h.status,
+      h.created_at,
       MAX(h.target_duration - COALESCE(vhp.current_duration, 0), 0) as viewer_remaining_days,
       p.habit_id,
       p.partner_id,
