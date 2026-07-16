@@ -3,9 +3,5 @@
     <!-- Drift data may be restored for explicit-login reconciliation. -->
     <include domain="database" path="." />
 
-    <!-- JWT credentials and presentation state must never be restored silently. -->
-    <exclude domain="sharedpref" path="." />
-    <exclude domain="file" path="." />
-    <exclude domain="root" path="." />
-    <exclude domain="external" path="." />
+    <!-- With an include allowlist, all other domains are implicitly excluded. -->
 </full-backup-content>

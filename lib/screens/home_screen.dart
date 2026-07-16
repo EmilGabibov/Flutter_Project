@@ -413,10 +413,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               child: Row(
                 children: [
-                  Text(
-                    encouragement.emoji,
-                    style: const TextStyle(fontSize: 36),
-                  ),
+                  if (allEmpty)
+                    Text(
+                      encouragement.emoji,
+                      style: const TextStyle(fontSize: 36),
+                    )
+                  else
+                    Image.asset(
+                      'Developement/Resources/Quote icon.png',
+                      width: 54,
+                      height: 64,
+                      fit: BoxFit.contain,
+                      excludeFromSemantics: true,
+                    ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: allEmpty

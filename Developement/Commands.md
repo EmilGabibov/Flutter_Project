@@ -178,6 +178,40 @@ particular emulator:
 scripts/android_smoke.sh --flavor primary --env local --device <device-id> \
   --seed-user-id local-user-1 --seed-username Alice
 ```
+
+## Android Emulator
+On this machine, the Android SDK is installed at:
+```bash
+/Users/h.ettefagh/Library/Android/sdk
+```
+
+The available Android emulator ID is:
+```bash
+Pixel_9
+```
+
+The running device serial for that emulator is:
+```bash
+emulator-5554
+```
+
+Launch the emulator with Flutter:
+```bash
+flutter emulators --launch Pixel_9
+```
+
+If you need the direct Android SDK path, the emulator binary is:
+```bash
+/Users/h.ettefagh/Library/Android/sdk/emulator/emulator
+```
+
+Once the emulator is booted, install the debug APKs with ADB:
+```bash
+/Users/h.ettefagh/Library/Android/sdk/platform-tools/adb -s emulator-5554 \
+  install -r -t build/app/outputs/flutter-apk/app-primary-debug.apk
+
+/Users/h.ettefagh/Library/Android/sdk/platform-tools/adb -s emulator-5554 \
+  install -r -t build/app/outputs/flutter-apk/app-friend-debug.apk
 ```
 
 ## Build & Install on iOS via USB

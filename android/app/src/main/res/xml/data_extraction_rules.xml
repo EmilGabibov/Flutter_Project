@@ -3,16 +3,10 @@
     <cloud-backup disableIfNoEncryptionCapabilities="true">
         <!-- Local Drift rows can be reconciled after the user explicitly logs in. -->
         <include domain="database" path="." />
-        <exclude domain="sharedpref" path="." />
-        <exclude domain="file" path="." />
-        <exclude domain="root" path="." />
-        <exclude domain="external" path="." />
+        <!-- The database include is an allowlist; credentials and preferences are excluded. -->
     </cloud-backup>
     <device-transfer>
         <include domain="database" path="." />
-        <exclude domain="sharedpref" path="." />
-        <exclude domain="file" path="." />
-        <exclude domain="root" path="." />
-        <exclude domain="external" path="." />
+        <!-- The database include is an allowlist; credentials and preferences are excluded. -->
     </device-transfer>
 </data-extraction-rules>
