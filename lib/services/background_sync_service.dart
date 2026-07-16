@@ -8,7 +8,6 @@ import '../database/database.dart';
 import '../database/tables.dart';
 import 'connectivity_service.dart';
 import 'sync_service.dart';
-import 'local_reminder_service.dart';
 import 'usage_diagnostics_service.dart';
 
 @pragma('vm:entry-point')
@@ -31,9 +30,6 @@ void callbackDispatcher() {
       const storage = FlutterSecureStorage(
         mOptions: MacOsOptions(usesDataProtectionKeychain: false),
       );
-      final localReminderService = LocalReminderService();
-      await localReminderService.initialize();
-
       final diagnostics = UsageDiagnosticsService(
         db: db,
         client: http.Client(),
@@ -47,7 +43,6 @@ void callbackDispatcher() {
         db: db,
         connectivity: connectivity,
         storage: storage,
-        localReminderService: localReminderService,
       );
 
       // Record Telemetry

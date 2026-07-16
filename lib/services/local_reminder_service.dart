@@ -12,6 +12,10 @@ import '../database/tables.dart';
 
 class LocalReminderService {
   static const int _slotFamilyMultiplier = 1000;
+  // Builds before the daily-reminder split used this ID for a social recap
+  // with a daily recurrence. Cancel it at startup so upgrading immediately
+  // stops the old repeating sound.
+  static const int _legacyRecurringSocialRecapNotificationId = 299;
   final FlutterLocalNotificationsPlugin _plugin;
   bool _initialized = false;
   bool _pluginAvailable = true;
@@ -88,6 +92,8 @@ class LocalReminderService {
               playSound: true,
             ),
           );
+
+      await _plugin.cancel(id: _legacyRecurringSocialRecapNotificationId);
     }
 
     _initialized = true;
@@ -178,7 +184,12 @@ class LocalReminderService {
     return await openAppSettings();
   }
 
-  Future<void> scheduleReminder({
+  /// Schedules a reminder at one explicit local time each day.
+  ///
+  /// This is intentionally the only repeating notification API. Ad-hoc
+  /// notifications must use a separate one-shot API so they cannot inherit a
+  /// daily recurrence by accident.
+  Future<void> scheduleDailyReminder({
     required int notificationId,
     required String userId,
     required ReminderType type,

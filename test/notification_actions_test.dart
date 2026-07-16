@@ -24,7 +24,7 @@ class FakeLocalReminderService extends LocalReminderService {
   Future<bool> checkPermission() async => permissionGranted;
 
   @override
-  Future<void> scheduleReminder({
+  Future<void> scheduleDailyReminder({
     required int notificationId,
     required String userId,
     required ReminderType type,

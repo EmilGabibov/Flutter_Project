@@ -65,17 +65,21 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "Developement/Resources/AppIcon - Hable.png"
+  # The paired light/dark mascot artwork is the canonical launcher source.
+  image_path: "Developement/Resources/Hable-iOS-Default.png"
+  image_path_android: "Developement/Resources/Hable-iOS-Default.png"
+  image_path_ios: "Developement/Resources/Hable-iOS-Default.png"
+  image_path_ios_dark_transparent: "Developement/Resources/Hable-iOS-Dark.png"
   remove_alpha_ios: true
   web:
     generate: true
-    image_path: "Developement/Resources/AppIcon - Hable.png"
+    image_path: "Developement/Resources/Hable-iOS-Default.png"
     background_color: "#FFFFFF"
     theme_color: "#0175C2"
   windows:
     generate: true
-    image_path: "Developement/Resources/AppIcon - Hable.png"
+    image_path: "Developement/Resources/Hable-iOS-Default.png"
     icon_size: 256
   macos:
     generate: true
-    image_path: "Developement/Resources/AppIcon - Hable.png"
+    image_path: "Developement/Resources/Hable-iOS-Default.png"

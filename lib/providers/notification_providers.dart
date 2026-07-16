@@ -121,7 +121,7 @@ class NotificationActions {
       ReminderType.dailyHabit,
       context: await _copyContext(userId),
     );
-    await _reminders.scheduleReminder(
+    await _reminders.scheduleDailyReminder(
       notificationId: notificationId,
       userId: userId,
       type: ReminderType.dailyHabit,
@@ -180,7 +180,7 @@ class NotificationActions {
           ReminderType.dailyHabit,
           context: await _copyContext(setting.userId),
         );
-        await _reminders.scheduleReminder(
+        await _reminders.scheduleDailyReminder(
           notificationId: notificationId,
           userId: setting.userId,
           type: ReminderType.dailyHabit,
@@ -291,7 +291,7 @@ class NotificationActions {
           ReminderType.dailyHabit,
           context: await _copyContext(userId),
         );
-        await _reminders.scheduleReminder(
+        await _reminders.scheduleDailyReminder(
           notificationId: notificationId,
           userId: userId,
           type: ReminderType.dailyHabit,

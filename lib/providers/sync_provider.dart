@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../services/connectivity_service.dart';
-import '../services/local_reminder_service.dart';
 import '../services/sync_service.dart';
 import 'auth_provider.dart';
 import 'database_provider.dart';
@@ -19,14 +18,11 @@ final syncServiceProvider = Provider<SyncService>((ref) {
   const storage = FlutterSecureStorage(
     mOptions: MacOsOptions(usesDataProtectionKeychain: false),
   );
-  final localReminderService = ref.watch(localReminderServiceProvider);
-
   final service = SyncService(
     db: db,
     connectivity: connectivity,
     storage: storage,
     tokenProvider: () async => ref.read(authProvider).token,
-    localReminderService: localReminderService,
   );
   service.init();
 
@@ -58,9 +54,10 @@ class ForegroundSyncController extends Notifier<bool> {
 
   Future<void> syncNow(String userId) async {
     if (state) return; // Already syncing
-    
+
     final now = DateTime.now();
-    if (_lastSyncAt != null && now.difference(_lastSyncAt!) < const Duration(seconds: 5)) {
+    if (_lastSyncAt != null &&
+        now.difference(_lastSyncAt!) < const Duration(seconds: 5)) {
       return; // Debounce
     }
 
@@ -92,5 +89,5 @@ class ForegroundSyncController extends Notifier<bool> {
 
 final foregroundSyncControllerProvider =
     NotifierProvider<ForegroundSyncController, bool>(
-  ForegroundSyncController.new,
-);
+      ForegroundSyncController.new,
+    );

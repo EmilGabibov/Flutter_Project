@@ -10,7 +10,6 @@ import '../database/database.dart';
 import '../models/daily_quote.dart';
 import '../database/tables.dart';
 import 'connectivity_service.dart';
-import 'local_reminder_service.dart';
 
 class SocialRecapPlan {
   const SocialRecapPlan({
@@ -50,7 +49,6 @@ class SyncService {
   final ConnectivityService _connectivity;
   final FlutterSecureStorage _storage;
   final Future<String?> Function()? _tokenProvider;
-  final LocalReminderService? _localReminderService;
   final http.Client _client;
   final String _apiBaseUrl;
 
@@ -59,14 +57,12 @@ class SyncService {
     required ConnectivityService connectivity,
     required FlutterSecureStorage storage,
     Future<String?> Function()? tokenProvider,
-    LocalReminderService? localReminderService,
     http.Client? client,
     String? apiBaseUrlOverride,
   }) : _db = db,
        _connectivity = connectivity,
        _storage = storage,
        _tokenProvider = tokenProvider,
-       _localReminderService = localReminderService,
        _client = client ?? http.Client(),
        _apiBaseUrl = apiBaseUrlOverride ?? apiBaseUrl;
 
@@ -250,34 +246,6 @@ class SyncService {
       payload: payload,
       latestActivityAt: latestActivityAt,
     );
-  }
-
-  /// Evaluates local social state to build a recap payload and schedules it.
-  Future<void> coalesceAndScheduleSocialRecap(String userId) async {
-    if (_localReminderService == null ||
-        !_localReminderService.supportsScheduling) {
-      return;
-    }
-
-    final recapPlan = await buildSocialRecapPlan(userId);
-    if (recapPlan == null) return;
-
-    final now = DateTime.now();
-    final scheduleMinute = now.minute + 1 >= 60 ? 0 : now.minute + 1;
-    final scheduleHour = now.minute + 1 >= 60 ? (now.hour + 1) % 24 : now.hour;
-
-    await _localReminderService.scheduleReminder(
-      notificationId: 299, // Social recap
-      userId: userId,
-      type:
-          ReminderType.dailyHabit, // Reusing slot type for now, but explicit ID
-      hour: scheduleHour,
-      minute: scheduleMinute,
-      title: recapPlan.title,
-      body: recapPlan.body,
-      payload: recapPlan.payload,
-    );
-    debugPrint('[SyncService] Scheduled social recap → "${recapPlan.body}"');
   }
 
   Future<List<PartnerSnapshot>> _recentPartnerCheckIns() async {
@@ -866,8 +834,10 @@ class SyncService {
         );
       }
 
-      // After syncing social data, refresh the recap reminder from local state.
-      await coalesceAndScheduleSocialRecap(userId);
+      // Social activity stays in Hable's in-app notification center. Do not
+      // turn every background sync into an operating-system notification:
+      // older builds did this through the recurring daily-reminder scheduler,
+      // which could produce repeated audible alerts.
     } catch (e) {
       debugPrint('[SyncService] Pull Daily Sync Failed: $e');
     }
