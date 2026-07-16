@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hable/database/database.dart';
@@ -103,6 +104,9 @@ void main() {
   testWidgets('HabitPartnerRow separates profile and nudge actions', (
     tester,
   ) async {
+    // Exercise the anchored dropdown branch explicitly; Flutter widget tests
+    // default to a mobile target on this host.
+    debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
     var openedProfileFor = '';
     var nudgedPartner = '';
     final partner = _partner(
@@ -148,7 +152,9 @@ void main() {
 
     expect(openedProfileFor, 'p1');
     expect(nudgedPartner, isEmpty);
+    debugDefaultTargetPlatformOverride = null;
 
+    debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
     await tester.tap(find.byKey(const Key('partner-avatar-p1')));
     await tester.pumpAndSettle();
     await tester.tap(
@@ -160,6 +166,7 @@ void main() {
 
     expect(openedProfileFor, 'p1');
     expect(nudgedPartner, 'p1');
+    debugDefaultTargetPlatformOverride = null;
   });
 
   testWidgets('HabitPartnerRow surfaces a recent received nudge', (

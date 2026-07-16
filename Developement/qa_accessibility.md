@@ -12,7 +12,8 @@ The unified context menu system implements the following keyboard interactions:
 
 ## Platform Context
 - **Desktop/Web:** Context menus open as traditional dropdowns anchored to the interaction point (right-click or pointer click).
-- **Mobile (iOS/Android):** Context menus adapt natively to bottom sheets triggered by long-presses, providing a touch-friendly target space.
+- **Mobile (iOS/Android):** Context menus adapt to bottom sheets triggered by long-presses, providing a touch-friendly target space. Android and iOS share this centralized Flutter adapter; no feature widget owns a platform branch.
+- **Desktop/Web verification:** macOS and web use the anchored dropdown path locally. Windows remains host-limited from the macOS development environment and must be covered by the CI/build matrix before release.
 
 ## Screen Reader Semantics
 - Menu items use explicit `intent` labels. Destructive actions must be clearly communicated.
