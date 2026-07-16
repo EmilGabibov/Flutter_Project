@@ -1,4 +1,4 @@
-# Future Split Guidance
+## Future Split Guidance
 
 *Updated from proceeded GitHub issues through 2026-07-16 07:55 CEST.*
 *Last future-guidance prompt extracted from the issue ledger: 2026-07-16 07:55 CEST (`Unblock Flutter CI analyzer gate for Dependabot PRs`, issue `#141`).*

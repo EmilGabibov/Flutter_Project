@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">Hable</title>
+  <desc id="desc">Hable's theme-aware app icon.</desc>
+  <style>
+    :root { --icon-background: #f7f5ef; }
+    .background { fill: var(--icon-background); transition: fill 180ms ease; }
+    @media (prefers-color-scheme: dark) {
+      :root { --icon-background: #111922; }
+    }
+  </style>
+
+  <!-- Full-bleed theme background; the new artwork is kept inside the central safe area. -->
+  <rect class="background" width="1024" height="1024" />
+  <image href="Icon-512.png" x="102" y="102" width="820" height="820" preserveAspectRatio="xMidYMid meet" />
+</svg>
