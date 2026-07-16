@@ -32,6 +32,7 @@ Deploy the web version of the Flutter app to Cloudflare Pages:
 ```bash
 cd /Flutter/hable && \
 flutter build web --release --base-href / --dart-define=HABLE_APP_ENV=production && \
+node scripts/prepare_web_service_worker.mjs && \
 cd backend && \
 npx wrangler pages deploy ../build/web --project-name=hable
 ```
@@ -54,7 +55,8 @@ cd /Flutter/hable && \
 flutter pub get && \
 flutter analyze --no-fatal-infos --fatal-warnings && \
 flutter test --coverage && \
-flutter build web --release --base-href / --dart-define=HABLE_APP_ENV=production
+flutter build web --release --base-href / --dart-define=HABLE_APP_ENV=production && \
+node scripts/prepare_web_service_worker.mjs
 ```
 
 This policy keeps informational analyzer diagnostics visible in the log while

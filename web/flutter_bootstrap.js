@@ -8,6 +8,7 @@ window.localStorage.setItem(
 
 _flutter.loader.load({
   serviceWorkerSettings: {
-    serviceWorkerVersion: {{flutter_service_worker_version}}
+    serviceWorkerVersion: {{flutter_service_worker_version}},
+    serviceWorkerUrl: 'push_service_worker.js?v=' + {{flutter_service_worker_version}}
   }
 });

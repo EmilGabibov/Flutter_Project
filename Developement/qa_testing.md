@@ -11,6 +11,7 @@ GitHub Actions Flutter gate exactly:
 2. `flutter analyze --no-fatal-infos --fatal-warnings`
 3. `flutter test --coverage`
 4. `flutter build web --release --base-href / --dart-define=HABLE_APP_ENV=production`
+5. `node scripts/prepare_web_service_worker.mjs`
 
 The analyzer policy is intentional: informational diagnostics stay visible for
 cleanup, but only warnings and errors block the shared Flutter job.
@@ -328,7 +329,7 @@ True native APNs/FCM delivery remains out of scope for this local/web harness. F
 **Target:** `https://hable.pages.dev`
 
 **Build/Deploy:**
-1. Built the web bundle from the repo root with `flutter build web --release --base-href /`.
+1. Built the web bundle from the repo root with `flutter build web --release --base-href /` and prepared the finite shell list with `node scripts/prepare_web_service_worker.mjs`.
 2. Deployed from `backend/` with `wrangler pages deploy ../build/web --project-name hable --branch main --commit-dirty=true --cwd backend`.
 3. Confirmed the live production alias eventually served the new deployment after propagation.
 
