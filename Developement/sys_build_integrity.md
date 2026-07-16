@@ -116,21 +116,21 @@ truth. As verified on `2026-07-16`, `.github/workflows/ci.yml` contains:
   `flutter test --coverage`, and the production Web release build.
 - **Backend / Ubuntu:** `npm ci` and `npx tsc --noEmit` on Node.js 22.
 
-It does **not** currently compile Android, iOS, macOS, or Windows, publish a
-Pages preview, inject Android signing material, or validate Apple signing. The
-native matrix previously described here was a target design, not implemented
-behavior. Restoring that matrix and commit-traceable artifacts is tracked in
-[#172](https://github.com/EmilGabibov/HABLE_Project/issues/172).
+The workflow compiles Android, iOS, macOS, and Windows on appropriate runners;
+distribution signing/publishing remains conditional on protected secrets. Web
+deployment is guarded to one `build/web` artifact root and every uploaded
+artifact carries bounded commit/version/target/environment/toolchain/hash
+provenance.
 
-### Target matrix
+### Executed CI matrix
 
-| Target | Required runner and bounded gate | Signing/publishing boundary |
+| Target | Runner and bounded gate | Signing/publishing boundary |
 |---|---|---|
-| Web/PWA | Ubuntu: analyzer, unit/widget tests, production web build, deterministic isolated smoke | Publish one `build/web` artifact only after required gates; record source/deployment revision |
-| Android | Ubuntu: compile primary and friend release artifacts, inspect package identity and certificate | Inject production keystore only in protected release jobs; fail closed when absent |
-| iOS | macOS: pin Xcode/platform, compile primary and friend without signing, run deterministic simulator smoke | Archive/export only in protected jobs or operator workflow with profiles |
-| macOS | macOS: release compile, entitlement/signature inspection, fixture smoke | Developer ID/App Store signing and notarization remain secret-gated |
-| Windows | Windows: release compile and bounded smoke | Installer signing remains secret-gated |
+| Web/PWA | Ubuntu: analyzer, unit/widget tests, production web build, service-worker preparation, canonical-root guard, artifact upload | One `build/web` zip; deployment remains a separate protected operation |
+| Android | Ubuntu matrix: primary/friend debug compile with local environment and provenance | Protected release job runs only with `ANDROID_KEY_PROPERTIES` |
+| iOS | macOS matrix: primary/friend unsigned release compile | Signing/archive remains protected/operator-only; simulator runtime availability is explicit evidence |
+| macOS | macOS matrix: debug compile and provenance | Protected archive/verifier job runs only with signing secrets |
+| Windows | Windows: release compile and provenance | Installer signing remains secret-gated |
 
 ### Environment and artifact contract
 

@@ -62,10 +62,12 @@ node scripts/prepare_web_service_worker.mjs
 This policy keeps informational analyzer diagnostics visible in the log while
 still failing CI on warnings and errors.
 
-This is the entire current Flutter GitHub Actions gate. Android, iOS, macOS,
-and Windows compile jobs are not present yet; do not describe local native
-builds as CI passes. The target native matrix and artifact provenance work is
-tracked in [#172](https://github.com/EmilGabibov/HABLE_Project/issues/172).
+The workflow now runs the web/analyzer/test/backend gates plus Android,
+iOS/macOS, and Windows compile jobs on appropriate runners. Native signing and
+publishing jobs are conditional on protected secrets and are never implied by
+a compile pass. Each produced artifact has a bounded JSON provenance record
+with commit, version, target/flavor, environment, toolchain, hash, and signing
+boundary.
 
 ## Build Android APKs
 Build the **primary** Android APK for local development:

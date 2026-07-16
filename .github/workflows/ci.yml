@@ -8,20 +8,38 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: 3.44.4
+
 jobs:
-  flutter:
-    name: Flutter checks
+  web:
+    name: Web, analyzer, tests, and provenance
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: 3.44.4
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
       - run: flutter pub get
       - run: flutter analyze --no-fatal-infos --fatal-warnings
       - run: flutter test --coverage
       - run: flutter build web --release --base-href / --dart-define=HABLE_APP_ENV=production
+      - run: node scripts/prepare_web_service_worker.mjs
+      - run: node scripts/assert_web_artifact_root.mjs build/web
+      - run: mkdir -p build/provenance && zip -qr build/hable-web.zip build/web
+      - run: node scripts/write_build_provenance.mjs --target web --environment production --artifact build/hable-web.zip --output build/provenance/web.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hable-web-${{ github.sha }}
+          path: |
+            build/hable-web.zip
+            build/provenance/web.json
+          retention-days: 14
 
   backend:
     name: Backend checks
@@ -38,3 +56,129 @@ jobs:
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
       - run: npx tsc --noEmit
+
+  android:
+    name: Android ${{ matrix.flavor }} compile
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        flavor: [primary, friend]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get
+      - run: flutter build apk --debug --flavor ${{ matrix.flavor }} -t lib/main.dart --dart-define=HABLE_APP_ENV=local
+      - run: mkdir -p build/provenance && node scripts/write_build_provenance.mjs --target android --flavor ${{ matrix.flavor }} --environment local --artifact build/app/outputs/flutter-apk/app-${{ matrix.flavor }}-debug.apk --output build/provenance/android-${{ matrix.flavor }}.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hable-android-${{ matrix.flavor }}-${{ github.sha }}
+          path: build/provenance/android-${{ matrix.flavor }}.json
+          retention-days: 14
+
+  apple:
+    name: Apple ${{ matrix.target }} compile
+    runs-on: macos-15
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [ios, macos]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get
+      - name: Build iOS unsigned flavors
+        if: matrix.target == 'ios'
+        run: |
+          flutter build ios --release --no-codesign --flavor primary -t lib/main.dart --dart-define=HABLE_APP_ENV=production
+          flutter build ios --release --no-codesign --flavor friend -t lib/main.dart --dart-define=HABLE_APP_ENV=production
+      - name: Build macOS debug compile artifact
+        if: matrix.target == 'macos'
+        run: flutter build macos --debug --dart-define=HABLE_APP_ENV=local
+      - name: Package Apple compile artifact
+        run: |
+          mkdir -p build/provenance
+          if [[ "${{ matrix.target }}" == "ios" ]]; then
+            ditto -c -k --sequesterRsrc --keepParent build/ios/iphoneos/Runner.app build/hable-ios-unsigned.zip
+          else
+            ditto -c -k --sequesterRsrc --keepParent build/macos/Build/Products/Debug/Hable.app build/hable-macos-debug.zip
+          fi
+      - run: node scripts/write_build_provenance.mjs --target ${{ matrix.target }} --environment ${{ matrix.target == 'macos' && 'local' || 'production' }} --artifact build/hable-${{ matrix.target }}-${{ matrix.target == 'macos' && 'debug' || 'unsigned' }}.zip --output build/provenance/${{ matrix.target }}.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hable-${{ matrix.target }}-${{ github.sha }}
+          path: |
+            build/hable-*.zip
+            build/provenance/${{ matrix.target }}.json
+          retention-days: 14
+
+  windows:
+    name: Windows compile
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get
+      - run: flutter build windows --release --dart-define=HABLE_APP_ENV=production
+      - shell: bash
+        run: |
+          mkdir -p build/provenance
+          7z a -tzip build/hable-windows.zip build/windows/runner/Release/*
+          node scripts/write_build_provenance.mjs --target windows --environment production --artifact build/hable-windows.zip --output build/provenance/windows.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hable-windows-${{ github.sha }}
+          path: |
+            build/hable-windows.zip
+            build/provenance/windows.json
+          retention-days: 14
+
+  android-distribution:
+    name: Android protected distribution
+    if: ${{ github.event_name == 'push' && secrets.ANDROID_KEY_PROPERTIES != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: printf '%s' "$ANDROID_KEY_PROPERTIES" > android/key.properties
+        env:
+          ANDROID_KEY_PROPERTIES: ${{ secrets.ANDROID_KEY_PROPERTIES }}
+      - run: flutter pub get
+      - run: scripts/build_android_release.sh --flavor primary --env production
+      - run: scripts/build_android_release.sh --flavor friend --env production
+      - run: scripts/verify_android_release_signing.sh build/app/outputs/flutter-apk/app-primary-release.apk build/app/outputs/flutter-apk/app-friend-release.apk
+
+  macos-distribution:
+    name: macOS protected distribution
+    if: ${{ github.event_name == 'push' && secrets.MACOS_DEVELOPMENT_TEAM != '' && secrets.MACOS_CODE_SIGN_IDENTITY != '' }}
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get
+      - run: |
+          xcodebuild -workspace macos/Runner.xcworkspace -scheme Runner -configuration Release \
+            -archivePath build/macos/archive/Hable.xcarchive archive \
+            MACOS_DEVELOPMENT_TEAM="$MACOS_DEVELOPMENT_TEAM" \
+            MACOS_CODE_SIGN_IDENTITY="$MACOS_CODE_SIGN_IDENTITY" \
+            MACOS_PROVISIONING_PROFILE_SPECIFIER="$MACOS_PROVISIONING_PROFILE_SPECIFIER"
+        env:
+          MACOS_DEVELOPMENT_TEAM: ${{ secrets.MACOS_DEVELOPMENT_TEAM }}
+          MACOS_CODE_SIGN_IDENTITY: ${{ secrets.MACOS_CODE_SIGN_IDENTITY }}
+          MACOS_PROVISIONING_PROFILE_SPECIFIER: ${{ secrets.MACOS_PROVISIONING_PROFILE_SPECIFIER }}
+      - run: scripts/verify_macos_distribution.sh --app build/macos/archive/Hable.xcarchive/Products/Applications/Hable.app --channel developer-id --require-staple
