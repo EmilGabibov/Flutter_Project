@@ -47,9 +47,9 @@ All Flutter builds should resolve backend targets through the central `lib/confi
 
 **Do NOT attempt to fix all platforms in a single "omnibus" execution step.**
 
-- **Web-First Stabilization:** Once the web build is stabilized and compiles successfully, **STOP**. Record the fix in the current task (e.g., `[Verify Web Build Integrity](Task1_Engineered.md#verify-web-build-integrity)`).
+- **Web-First Stabilization:** Once the web build is stabilized and compiles successfully, **STOP**. Record the evidence in the current GitHub issue and leave native gaps in focused child issues.
 - **Separation of Concerns:** If a single dependency change (e.g., upgrading a package to fix the web build) breaks Android or iOS, **DO NOT** fix the Android/iOS failure in the same task *unless* the fix is trivially shared (like bumping a core Dart package version). 
-- **Branching:** If a platform requires specific native adjustments (e.g., changing Android SDK targets, updating Podfiles), log those findings and open or transition to the dedicated platform task in `Task1_Engineered.md` (e.g., `Verify Android Build Integrity`).
+- **Branching:** If a platform requires specific native adjustments (for example, Android SDK targets or iOS Pod/Xcode settings), record the finding and open a focused raw GitHub child issue under `Developement/ai_agent_contract.md`.
 - **Host Limitations:** If the host environment does not support building a platform (e.g., compiling Windows from macOS), explicitly document this host limitation in the task notes and mark the task as "Blocked on Environment" rather than indefinitely retrying impossible commands.
 
 ## 4. Platform-Specific Constraints & Evidence Capture
@@ -68,22 +68,22 @@ When investigating and fixing platform builds, agents must adhere to Hable-speci
 ### Android
 - **Constraints:** Hable uses a multi-flavor architecture (`primary` and `friend`).
 - **Verification Commands:** 
-  - `flutter build apk --flavor primary -t lib/main.dart --dart-define=HABLE_APP_ENV=production`
-  - `flutter build apk --flavor friend -t lib/main.dart --dart-define=HABLE_APP_ENV=production`
-- **Evidence:** Record success/failure logs for both flavors. Address any signing or keystore issues if release builds are requested.
+  - `flutter build apk --release --flavor primary -t lib/main.dart --dart-define=HABLE_APP_ENV=production`
+  - `flutter build apk --release --flavor friend -t lib/main.dart --dart-define=HABLE_APP_ENV=production`
+- **Evidence:** Record success/failure logs and artifact hashes for both flavors. Inspect both certificates with `apksigner`; a release APK signed by `Android Debug` is a failed distribution gate even when compilation succeeds.
 - **Built-in Kotlin audit (2026-07-16):** Both release flavors build successfully with AGP `9.2.1`, Kotlin `2.3.20`, and Gradle `9.6.1`, but Flutter still warns that `flutter_timezone 5.1.0` and `workmanager_android 0.9.0+2` apply KGP. `flutter pub outdated` reports no newer compatible releases, so `android.builtInKotlin` remains `false` and an upstream plugin report is required before enabling it.
 - **Local smoke note:** For local Wrangler testing keep `HABLE_APP_ENV=local` and use `HABLE_API_BASE_URL` only when the device cannot reach `127.0.0.1:8787` directly (for example Android emulator `10.0.2.2`).
 
 ### iOS
 - **Constraints:** iOS builds depend on CocoaPods and Xcode. `sql_wasm` does not apply here; it uses the native `sqlite3` plugin.
-- **Verification Commands:** `flutter build ios --no-codesign --flavor primary -t lib/main.dart` (Note: `--no-codesign` allows testing compilation without provisioning profiles on the local agent host).
-- **Evidence:** Record `pod install` output if dependencies are updated. Document any Xcode/Swift version incompatibility.
+- **Verification Commands:** `flutter build ios --release --no-codesign --flavor primary -t lib/main.dart --dart-define=HABLE_APP_ENV=production` and the matching `friend` command. `--no-codesign` verifies compilation only; it does not prove archive identity or distribution signing.
+- **Evidence:** Record Xcode version, installed platform/simulator runtimes, eligible destination, flavor identity, and `pod install` output when dependencies change. No eligible destination is `blocked`, not `pass`.
 
 ### macOS
-- **Constraints:** macOS relies on desktop entitlements and pods. Local ad-hoc signing (`-`) does not support the `keychain-access-groups` entitlement present in `Release.entitlements`.
-- **Verification Commands:** `flutter build macos` (uses debug). For release performance testing locally, prefer `flutter build macos --profile`.
-- **Evidence:** Document any permission/entitlement failures. Ensure local SQLite binaries link correctly.
-- **Local Release Builds:** If a local operator strictly requires `flutter build macos --release` without a valid Apple Development Certificate, they must temporarily remove the `keychain-access-groups` key from `macos/Runner/Release.entitlements` during compilation and avoid committing that change. Production distribution requires this entitlement.
+- **Constraints:** macOS relies on desktop entitlements, pods, configuration-specific signing, and notarization. Current auth is intentionally process-local and must not access Keychain or credential autofill; every new process starts signed out.
+- **Verification Commands:** `flutter build macos --release --dart-define=HABLE_APP_ENV=production`, followed by entitlement inspection, `codesign --verify --deep --strict --verbose=4`, and `spctl -a -vv` against the built app.
+- **Evidence:** Record bundle/version, executable hash, effective entitlements, signature/team identity, Gatekeeper result, launch/relaunch behavior, and any permission failure. Compilation with an ad-hoc signature is only a local build pass.
+- **Local Release Builds:** Do not edit entitlements temporarily to force a pass. Preserve the real project configuration and report missing identities, invalid nested code, Gatekeeper rejection, or notarization limits as release blockers.
 
 ### Windows
 - **Constraints:** Cannot be compiled from a macOS host.
@@ -91,29 +91,51 @@ When investigating and fixing platform builds, agents must adhere to Hable-speci
 - **Evidence:** If running on a Mac host, document the OS mismatch. Do not attempt to run this command.
 
 ## 5. Documenting Fixes
-When checking off one of the pre-engineered tasks from `Developement/Task1_Engineered.md` (e.g. `Verify iOS Build Integrity`), update the **Completion notes** with:
+For current work, record each platform failure in a focused GitHub child issue
+under `Developement/ai_agent_contract.md`; do not append new work to the legacy
+`Task1_Engineered.md` ledger. The engineered issue completion reply must include:
 1. The exact command run.
 2. A summary of the failure (if any).
 3. The exact file changes made to fix it (e.g., `android/app/build.gradle` SDK version bump).
 4. The confirmation of the successful build log.
-5. Notes on whether this fix might impact downstream platforms (which should prompt the start of the next platform's task).
+5. Notes on downstream platform impact and any new focused raw child issue.
 
-## 6. Release Automation Matrix (CI/CD)
+## 6. Current CI Gate And Target Release Matrix
 
-Hable maintains a structured CI/CD matrix using GitHub Actions to prevent cross-platform build drift and secure release pipelines.
+Do not infer automation from this document. The workflow file is the source of
+truth. As verified on `2026-07-16`, `.github/workflows/ci.yml` contains:
 
-### Matrix Scope
-The automated build matrix covers the following required platforms on every `main` branch push and PR:
-* **Web:** Uses `ubuntu-latest` runner to run `flutter analyze --no-fatal-infos --fatal-warnings`, `flutter test --coverage`, and the production-targeted Flutter web build for Cloudflare Pages branch previews.
-* **Android:** Uses `ubuntu-latest` runner to build the `primary` and `friend` APK/AppBundle flavors. Runs unit and widget tests.
-* **iOS / macOS:** Uses `macos-latest` runner to verify compilation without code signing. Production distribution and notarization steps remain intentionally manual for now.
-* **Windows:** Uses `windows-latest` runner to verify Windows desktop compilation.
+- **Flutter / Ubuntu:** `flutter pub get`, analyzer with fatal warnings,
+  `flutter test --coverage`, and the production Web release build.
+- **Backend / Ubuntu:** `npm ci` and `npx tsc --noEmit` on Node.js 22.
 
-### Environment and Secret Injection
-Instead of relying on fragile local `.env` files for production builds, the CI/CD pipeline securely injects environment variables:
-* **API Config:** The matrix dynamically injects `--dart-define=HABLE_APP_ENV=production` or `staging` depending on the target branch.
-* **Cloudflare Credentials:** Stored securely as repository secrets to enable automatic Wrangler publishing and Pages deployments.
-* **Signing Keys:** Android keystores are base64-encoded as GitHub Secrets and injected during the release build matrix job.
+It does **not** currently compile Android, iOS, macOS, or Windows, publish a
+Pages preview, inject Android signing material, or validate Apple signing. The
+native matrix previously described here was a target design, not implemented
+behavior. Restoring that matrix and commit-traceable artifacts is tracked in
+[#172](https://github.com/EmilGabibov/HABLE_Project/issues/172).
+
+### Target matrix
+
+| Target | Required runner and bounded gate | Signing/publishing boundary |
+|---|---|---|
+| Web/PWA | Ubuntu: analyzer, unit/widget tests, production web build, deterministic isolated smoke | Publish one `build/web` artifact only after required gates; record source/deployment revision |
+| Android | Ubuntu: compile primary and friend release artifacts, inspect package identity and certificate | Inject production keystore only in protected release jobs; fail closed when absent |
+| iOS | macOS: pin Xcode/platform, compile primary and friend without signing, run deterministic simulator smoke | Archive/export only in protected jobs or operator workflow with profiles |
+| macOS | macOS: release compile, entitlement/signature inspection, fixture smoke | Developer ID/App Store signing and notarization remain secret-gated |
+| Windows | Windows: release compile and bounded smoke | Installer signing remains secret-gated |
+
+### Environment and artifact contract
+
+- Every release build passes an explicit `HABLE_APP_ENV`; unusual endpoints use
+  the central override contract and must be recorded in sanitized evidence.
+- Production deployment uses exactly one Flutter artifact root. Do not deploy
+  stale `backend/public` assets as the client release.
+- Record commit SHA, version/build number, artifact hash, toolchain/runtime,
+  flavor, target environment, and signing result. Never record secrets,
+  passwords, tokens, keystores, certificates, or provisioning profiles.
+- Local build success and CI success are separate evidence fields. A platform
+  with no runner/destination remains `blocked` or `not run`.
 
 ### Backend Toolchain Dependency Updates
 The backend Cloudflare toolchain keeps `wrangler` and
@@ -123,7 +145,7 @@ matching Workers type ranges, and split PRs can fail `npm ci` before backend
 type-checking begins.
 
 ### Excluded Scope (Future Splits)
-The following are intentionally excluded from this foundational automation matrix and remain manual or handled by future split tracks:
+The following remain manual or handled by focused follow-up tracks:
 1. Automated App Store Connect or Google Play Console submission.
 2. macOS developer certificate notarization.
 3. Complex end-to-end device farm UI testing.

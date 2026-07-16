@@ -1,6 +1,6 @@
 # 08: Testing Procedures & Smoke Tests
 
-**Target Stack:** Flutter / ADB / Integration Tests
+**Target Stack:** Flutter / Browser / ADB / Xcode / Integration Tests
 
 ## CI Parity
 
@@ -14,6 +14,131 @@ GitHub Actions Flutter gate exactly:
 
 The analyzer policy is intentional: informational diagnostics stay visible for
 cleanup, but only warnings and errors block the shared Flutter job.
+
+## Cross-Platform Parity And Release Gate (Issue #159)
+
+This is the fixed release-readiness matrix for Web/PWA, Android, iOS, and
+macOS. Web/PWA is the product baseline, but a baseline defect is still a gate
+failure rather than behavior for native clients to copy.
+
+### Audit identity and decision
+
+- Test date: `2026-07-16` (Europe/Berlin)
+- Clean audit source: `5949de52701879cc9fd5d4c4da6ec15a0023ae78`
+- Follow-up macOS auth change: `77900a37301b42fff358a19eeadbce8cccd8b4e5`
+- App version: `1.0.0+1`
+- Flutter/Dart: `3.44.4` / `3.12.2`
+- Node.js: `22.22.3`
+- Apple host: macOS `26.5.2`, Xcode `26.6` (`17F113`)
+- Target environment: explicit `--dart-define=HABLE_APP_ENV=production`,
+  resolved by `lib/config/api_config.dart` to `https://hable.pages.dev`
+- Result: **FAIL — keep #159 open.** Android passed the bounded signed-out
+  runtime smoke, but the shared analyzer/test gates are red, Web/PWA has no
+  functioning service-worker/offline path, iOS cannot compile on the available
+  runtime, and macOS is not distribution-signed or fully UI-smoked.
+
+The audit re-read `sys_authentication.md`, `sys_offline_architecture.md`,
+`sys_error_handling.md`, `qa_accessibility.md`, `macos_distribution.md`, and
+`windows_distribution.md` as governing contracts. The local-first Drift model,
+safe-error rules, and accessibility expectations remain unchanged. Windows is
+not one of #159's four runtime targets; it appears only where the inaccurate CI
+matrix claim also required correction.
+
+Status meanings:
+
+- `PASS`: exercised with sanitized evidence on the named build.
+- `PARTIAL`: a bounded portion passed, but the full row was not exercised.
+- `FAIL`: a concrete failure was reproduced.
+- `BLOCKED`: the host/toolchain cannot currently execute the check.
+- `NOT RUN`: safe fixture or target-specific harness is not yet available.
+
+### Target build evidence
+
+| Target | Build identifier and configuration | Build result | Runtime/recovery evidence | Release gate |
+|---|---|---|---|---|
+| Web/PWA | Local source `5949de5`; production Pages source `5c8ebac`, deployment `c09ff989`; production environment | Release build `PASS`; analyzer `FAIL` on removed `dart:js_util`; full tests `FAIL` on friend-profile expectation | Online onboarding rendered; service-worker readiness timed out; zero registrations/controller; offline reload failed; browser-owned Quotable request failed | `FAIL`: [#161](https://github.com/EmilGabibov/HABLE_Project/issues/161), [#162](https://github.com/EmilGabibov/HABLE_Project/issues/162), [#172](https://github.com/EmilGabibov/HABLE_Project/issues/172), [#173](https://github.com/EmilGabibov/HABLE_Project/issues/173) |
+| Android primary/friend | Source `5949de5`; APK SHA-256 primary `8cf071e9…5047`, friend `b61e59a3…b58c`; target SDK 36; production environment | Both release flavor APKs `PASS` compilation | Pixel 9 / Android 17 primary fresh install reached onboarding, invalid login returned a safe backend message, cold relaunch passed with no `adb reverse`; authenticated/offline flows not run | `FAIL`: both release artifacts use the Android Debug certificate; [#164](https://github.com/EmilGabibov/HABLE_Project/issues/164)-[#166](https://github.com/EmilGabibov/HABLE_Project/issues/166), [#174](https://github.com/EmilGabibov/HABLE_Project/issues/174) |
+| iOS primary/friend | Source `5949de5`; production environment; Xcode reports required iOS 26.5 platform unavailable | Primary `BLOCKED`: no simulator runtimes and every destination ineligible; friend build not run after the shared destination blocker | No runtime smoke; bundle IDs/display names are placeholders and no signing identity/profile is installed | `FAIL`: [#167](https://github.com/EmilGabibov/HABLE_Project/issues/167)-[#169](https://github.com/EmilGabibov/HABLE_Project/issues/169), [#174](https://github.com/EmilGabibov/HABLE_Project/issues/174) |
+| macOS | Source `77900a3`; executable SHA-256 `02ab5da7…50fe`; `com.hable.app.macos`; production environment | Release build `PASS` compilation | Auth/flag tests prove zero macOS secure-storage access; launch process stayed stable with no Keychain error log. Direct UI inspection was blocked by the locked host | `FAIL`: ad-hoc signature, no team ID, Gatekeeper/nested-code validation failure; reminder and direct UI gates open in [#160](https://github.com/EmilGabibov/HABLE_Project/issues/160), [#170](https://github.com/EmilGabibov/HABLE_Project/issues/170), [#171](https://github.com/EmilGabibov/HABLE_Project/issues/171), [#174](https://github.com/EmilGabibov/HABLE_Project/issues/174) |
+
+Production Web Push binding names were present during the audit. An
+unauthenticated `/api/push/config` request correctly returned `401`; do not
+reopen the stale missing-secret finding without an authenticated check.
+
+### Representative flow matrix
+
+| Flow | Web/PWA baseline | Android | iOS | macOS |
+|---|---|---|---|---|
+| Launch / startup recovery | `PARTIAL`: online onboarding loads; service-worker wait exceeds 4 s | `PASS`: fresh cold launch reached usable onboarding in 2360 ms | `BLOCKED`: no eligible destination | `PARTIAL`: release process stable after #160; visible UI check blocked by locked host |
+| Authentication | `NOT RUN`: no production credentials/account mutation | `PARTIAL`: invalid login reached production and showed actionable error | `BLOCKED` | `PARTIAL`: process-local session policy and no-Keychain tests pass; explicit release login not run |
+| Primary navigation | `NOT RUN`: authenticated shell fixture missing | `NOT RUN` | `BLOCKED` | `NOT RUN` |
+| Core data read | `NOT RUN`: authenticated fixture missing | `NOT RUN` | `BLOCKED` | `NOT RUN` |
+| Core write / repeated action | `NOT RUN`: mutable production E2E intentionally skipped | `NOT RUN` | `BLOCKED` | `NOT RUN` |
+| Loading and empty states | `PARTIAL`: onboarding/initial shell only | `PARTIAL`: onboarding only | `BLOCKED` | `PARTIAL`: startup widgets tested; release window not inspected |
+| Actionable error state | `FAIL`: Quotable certificate failure and PWA readiness are not user-recoverable | `PASS` for invalid credentials only | `BLOCKED` | `PARTIAL`: auth failures are normalized in tests; runtime path not exercised |
+| Offline startup | `FAIL`: reload returns `ERR_INTERNET_DISCONNECTED` | `NOT RUN` | `BLOCKED` | `NOT RUN` |
+| Retry / reconnect | `FAIL`: no bounded PWA shell recovery | `NOT RUN` | `BLOCKED` | `NOT RUN` |
+| Logout | `NOT RUN` | `NOT RUN` | `BLOCKED` | `PARTIAL`: state/storage unit coverage only |
+| Session restoration | `NOT RUN` | `NOT RUN`; backup policy undefined | `BLOCKED` | `PARTIAL`: policy/unit tests prove restoration is disabled; direct visible signed-out relaunch remains open in #160 |
+| Relaunch | `PARTIAL`: online fresh browser load only | `PASS`: signed-out cold relaunch in 615 ms | `BLOCKED` | `PARTIAL`: process launch stable; visible signed-out screen pending |
+| Visible copy / accessibility | `PARTIAL`: onboarding semantics visible | `PARTIAL`: onboarding semantics visible | `BLOCKED` | `PARTIAL`: widget coverage only |
+
+Rows marked `NOT RUN`, `PARTIAL`, `FAIL`, or `BLOCKED` must be rerun through
+the deterministic fixture tracked in
+[#174](https://github.com/EmilGabibov/HABLE_Project/issues/174). A successful
+compile never upgrades a runtime row to `PASS`.
+
+### Intentional platform differences
+
+| Difference | Reason and expected behavior |
+|---|---|
+| Local database | Web uses Drift's browser/SQL-Wasm executor; native targets use SQLite. All UI still reads through the same Riverpod/Drift model and sync contract. |
+| Session persistence | Android, iOS, and Web retain their existing persisted-session behavior. macOS deliberately keeps auth in memory only, disables credential autofill, and requires explicit login after every app process launch ([#160](https://github.com/EmilGabibov/HABLE_Project/issues/160)). |
+| Notifications | Web uses VAPID plus one app-scope service worker. Native targets use OS notification scheduling and lifecycle adapters. Every tap must still resolve once through the shared shell ([#163](https://github.com/EmilGabibov/HABLE_Project/issues/163)). |
+| Background recap prefetch | Android may use Workmanager. The current iOS delayed-task assumption is unsafe and must be disabled or redesigned; macOS does not run Workmanager prefetch ([#169](https://github.com/EmilGabibov/HABLE_Project/issues/169)). |
+| Back/navigation conventions | Android system back returns secondary tabs to Home before exit. Web paths require an auth-gated browser adapter. Apple targets retain native window/lifecycle conventions. |
+| Flavor/package identity | Android and iOS retain `primary` and `friend` variants for the twin-app harness. macOS and Web ship one client identity. Flavor behavior must not fork backend contracts. |
+| Release packaging | APK/AAB signing, Apple archive/notarization, and PWA deployment have different evidence, but every artifact must be traceable to one commit and explicit environment. |
+
+### Child blocker ledger
+
+| Issue | Lifecycle | Blocking scope |
+|---|---|---|
+| [#160](https://github.com/EmilGabibov/HABLE_Project/issues/160) | `engineered`; commit `77900a3`; direct UI smoke pending | macOS auto-login, Keychain prompts, and credential autofill |
+| [#161](https://github.com/EmilGabibov/HABLE_Project/issues/161) | `raw` | PWA service-worker ownership, supported interop, offline shell |
+| [#162](https://github.com/EmilGabibov/HABLE_Project/issues/162) | `raw` | Browser-owned Quotable fallback |
+| [#163](https://github.com/EmilGabibov/HABLE_Project/issues/163) | `raw` | Exact-once notification/deep-link routing |
+| [#164](https://github.com/EmilGabibov/HABLE_Project/issues/164) | `raw` | Android production signing fail-closed gate |
+| [#165](https://github.com/EmilGabibov/HABLE_Project/issues/165) | `raw` | Android backup/auth/local-data restore policy |
+| [#166](https://github.com/EmilGabibov/HABLE_Project/issues/166) | `raw` | Portable Android build/device/smoke tooling |
+| [#167](https://github.com/EmilGabibov/HABLE_Project/issues/167) | `raw` | Reproducible iOS runtime/destination smoke |
+| [#168](https://github.com/EmilGabibov/HABLE_Project/issues/168) | `raw` | iOS flavor identity, Keychain group, archive validation |
+| [#169](https://github.com/EmilGabibov/HABLE_Project/issues/169) | `raw` | Safe iOS reminder prefetch scheduling |
+| [#170](https://github.com/EmilGabibov/HABLE_Project/issues/170) | `raw` | macOS reminder permission/delivery adapter |
+| [#171](https://github.com/EmilGabibov/HABLE_Project/issues/171) | `raw` | macOS entitlement separation, signing, Gatekeeper/notarization |
+| [#172](https://github.com/EmilGabibov/HABLE_Project/issues/172) | `raw` | Native CI matrix and revision-traceable release artifacts |
+| [#173](https://github.com/EmilGabibov/HABLE_Project/issues/173) | `raw` | Friend-profile regression test failure |
+| [#174](https://github.com/EmilGabibov/HABLE_Project/issues/174) | `raw` | Deterministic authenticated cross-platform smoke fixture |
+
+### Evidence record for every rerun
+
+Record these fields in #159 or its child before changing a matrix status:
+
+1. Commit SHA, app version/build number, target/flavor, and artifact hash.
+2. Flutter/Dart plus native toolchain/runtime/device identifiers.
+3. Explicit `HABLE_APP_ENV` and sanitized configuration source; never log
+   tokens, passwords, VAPID private material, certificates, or profiles.
+4. Exact build and smoke commands, timestamps, pass/fail result, and the
+   smallest relevant sanitized log/screenshot reference.
+5. Offline/retry setup, fixture identity, cleanup result, and whether the test
+   changed backend data.
+6. Signing identity/team or an explicit `blocked`/ad-hoc result.
+
+Do not mark #159 complete until every child is resolved or explicitly accepted,
+all four targets compile from a clean checkout, every required flow row is
+`PASS` (or a documented intentional difference with its own passing expected
+behavior), and no verified path retains a crash, hang, blank state, infinite
+loading state, data-loss risk, or unrecoverable authentication failure.
 
 ## 0. Android Online Connectivity Preflight
 
@@ -74,7 +199,7 @@ Because Hable involves mutual habit tracking and a offline-first sync engine, it
 - **Leaderboard & Score Coherence:** Complete at least one habit, pull `/api/sync/daily`, then open Profile, a friend profile, and Social → Leaderboard. Verify the backend-owned point totals stay coherent across all three surfaces and that replaying the same `log_id` does not increase score again.
 - **Friend Profile Safe Visibility:** Open an accepted friend's profile and verify it shows only safe active-habit summaries, lifetime score/level, and compact backend-owned achievements. Confirm a non-friend cannot load the same payload, and verify the profile never exposes journal text, raw habit logs, or unrestricted third-party social graph data.
 - **Daily Reminder:** From Profile, add two daily reminder times, grant OS permission, restart the app, and verify both settings persist locally and both schedules restore without another prompt. Delete one reminder and verify the remaining reminder still exists and still fires on its own schedule. Then disable the remaining reminder and verify its schedule is canceled.
-- **macOS Keychain Prompt Stability:** On macOS, sign in once, relaunch the app, and verify snapshot-based session restore does not trigger a repeated keychain prompt loop. If keychain access is denied, confirm the app does not keep re-prompting during the same restored session or repeated foreground sync polling.
+- **macOS Signed-Out Relaunch And Credential Isolation:** On macOS, verify launch starts signed out without a Keychain prompt, auth fields do not offer platform credential autofill, and explicit login remains usable for the current process. Quit and relaunch, then verify the app returns to signed-out onboarding/login with no restored token, no credential prompt, and local Drift data still intact.
 - **Safe Error Copy:** Trigger one backend validation error and one network-style failure. Verify the UI does not show raw `Exception(...)`, raw JSON bodies, `Failed to fetch`, backend URLs, stack traces, or route-specific server wording directly.
 - **Localization Coverage:** Switch between English, German, Urdu, Russian, Tamil, and Persian/Farsi from Settings, then revisit Social → Friends/Activity/Leaderboard, Profile, friend profiles, reminder settings, accessibility settings, and habit-history sheets. Verify section headers, snackbars, tooltips, dialog buttons, semantics-backed labels, and relative-time copy re-render through `AppLocalizations` without obvious first-party English-only islands. For Urdu and Persian/Farsi, confirm mixed-direction rows stay readable and action chips/buttons do not overflow.
 - **Localization batch:** Verify the completion, shared-completion, and Web Push reminder strings load from generated ARB localizations in English and RTL test coverage.
@@ -135,7 +260,7 @@ True native APNs/FCM delivery remains out of scope for this local/web harness. F
    - Clicked "Accept", and the API successfully changed the friend request status to `accepted` in the database.
 
 **Failures Encountered & Resolved:**
-- **Auto-Backup Issue:** Android auto-backup restored production tokens causing a `401 Unauthorized` loop. Resolved by adding logic to `AuthProvider` to wipe secure storage and Drift DB when `kDebugMode` is true.
+- **Historical Auto-Backup Finding (unresolved release policy):** This run observed Android backup restoring production tokens into a `401 Unauthorized` loop and reported a debug-only wipe as a workaround. The 2026-07-16 audit found no explicit manifest backup/data-extraction policy and no current release-safe reconciliation contract. Do not treat the old workaround as resolution evidence; verify [#165](https://github.com/EmilGabibov/HABLE_Project/issues/165) before enabling release backup.
 - **D1 Schema Mismatch:** The local D1 state was missing the `total_score` column added in a recent task. Resolved by manually applying the ALTER TABLE statement to the local `.wrangler` state files.
 
 - The `.gitignore` was missing `backend/.wrangler/` and `.env`. These have been appended to prevent committing local database states and environment variables.

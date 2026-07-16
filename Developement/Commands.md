@@ -36,15 +36,15 @@ cd backend && \
 npx wrangler pages deploy ../build/web --project-name=hable
 ```
 
-```bash
-cd /Flutter/hable/backend && \
-npx wrangler pages deploy public --project-name=hable
-```
+`build/web` is the only release artifact root. Do not deploy
+`backend/public`: it is not guaranteed to contain the current Flutter shell,
+push worker, or source revision and can roll production back to a stale client.
+After deployment, record the Pages deployment and source commit in the parity
+evidence:
 
-Deploy only the backend from the existing `backend/public` output:
 ```bash
 cd /Flutter/hable/backend && \
-npx wrangler pages deploy public --project-name=hable
+npx wrangler pages deployment list --project-name=hable
 ```
 
 ## CI Parity
@@ -60,15 +60,22 @@ flutter build web --release --base-href / --dart-define=HABLE_APP_ENV=production
 This policy keeps informational analyzer diagnostics visible in the log while
 still failing CI on warnings and errors.
 
+This is the entire current Flutter GitHub Actions gate. Android, iOS, macOS,
+and Windows compile jobs are not present yet; do not describe local native
+builds as CI passes. The target native matrix and artifact provenance work is
+tracked in [#172](https://github.com/EmilGabibov/HABLE_Project/issues/172).
+
 ## Build Android APKs
-Build the **primary** Android APK:
+Build the **primary** Android APK for local development:
 ```bash
-flutter build apk --flavor primary -t lib/main.dart
+flutter build apk --debug --flavor primary -t lib/main.dart \
+  --dart-define=HABLE_APP_ENV=local
 ```
 
-Build the **partner/friend** Android APK:
+Build the **partner/friend** Android APK for local development:
 ```bash
-flutter build apk --flavor friend -t lib/main.dart
+flutter build apk --debug --flavor friend -t lib/main.dart \
+  --dart-define=HABLE_APP_ENV=local
 ```
 
 For local backend testing, debug builds now default to `http://127.0.0.1:8787`.
@@ -93,6 +100,17 @@ Build the **primary** Android APK for the online presentation backend:
 flutter build apk --release --flavor primary -t lib/main.dart \
   --dart-define=HABLE_APP_ENV=production
 ```
+
+Build the **partner/friend** Android APK for the same production target:
+```bash
+flutter build apk --release --flavor friend -t lib/main.dart \
+  --dart-define=HABLE_APP_ENV=production
+```
+
+A production release artifact must not use the Android Debug certificate.
+Until [#164](https://github.com/EmilGabibov/HABLE_Project/issues/164) makes the
+task fail closed, always inspect both flavor certificates before treating the
+build as distribution-ready.
 
 Run the **primary** Android flavor against the online backend on a connected device:
 ```bash
@@ -126,23 +144,37 @@ Install the **partner/friend** APK on a connected USB device:
 ## Build & Install on iOS via USB
 To build and install the **primary** flavor directly to a connected iOS device:
 ```bash
-flutter run --release --flavor primary -t lib/main.dart
+flutter run --release --flavor primary -t lib/main.dart \
+  --dart-define=HABLE_APP_ENV=production
 ```
 ```bash
-flutter build ios --no-codesign --flavor primary -t lib/main.dart
+flutter build ios --release --no-codesign --flavor primary -t lib/main.dart \
+  --dart-define=HABLE_APP_ENV=production
 ```
 To build for iOS simulator:
 ```bash
-flutter build ios --simulator --flavor primary -t lib/main.dart
+flutter build ios --simulator --flavor primary -t lib/main.dart \
+  --dart-define=HABLE_APP_ENV=production
 ```
 
 
 To build and install the **partner/friend** flavor to a connected iOS device:
 ```bash
-flutter run --release --flavor friend -t lib/main.dart
+flutter run --release --flavor friend -t lib/main.dart \
+  --dart-define=HABLE_APP_ENV=production
+```
+
+Compile the friend flavor without signing:
+```bash
+flutter build ios --release --no-codesign --flavor friend -t lib/main.dart \
+  --dart-define=HABLE_APP_ENV=production
 ```
 
 *(Note: For iOS, `flutter run --release` is the most reliable way to compile and transfer the app to your device over USB in one step. If you only want to install an already-built iOS app without running it, you can simply use `flutter install`.)*
+
+Run `xcrun simctl list runtimes` and `xcodebuild -version` first. A compile
+attempt with no eligible runtime/destination is `blocked`, not a passing iOS
+gate; see [#167](https://github.com/EmilGabibov/HABLE_Project/issues/167).
 
 ## macOS
 ### Clean
@@ -155,12 +187,12 @@ rm -rf build/macos
 ### Build
 Build a local debug macOS app:
 ```bash
-flutter build macos --debug
+flutter build macos --debug --dart-define=HABLE_APP_ENV=local
 ```
 
 Build a release macOS app:
 ```bash
-flutter build macos --release
+flutter build macos --release --dart-define=HABLE_APP_ENV=production
 ```
 
 ### Run
@@ -175,6 +207,48 @@ Verify the built release bundle on macOS:
 ```bash
 codesign -dvvv --entitlements :- "build/macos/Build/Products/Release/Hable.app"
 spctl -a -vv "build/macos/Build/Products/Release/Hable.app"
+```
+
+The current macOS auth policy is intentionally process-local: every new app
+process starts signed out, and auth fields do not participate in credential
+autofill. A release smoke must verify that explicit login works for the current
+process and that relaunch returns to the signed-out screen without a Keychain
+prompt.
+
+## Release Evidence Capture
+
+Capture these alongside the parity result; never paste secrets, tokens,
+passwords, certificates, or provisioning profiles:
+
+```bash
+git rev-parse HEAD
+git show -s --format=%cI HEAD
+flutter --version
+```
+
+```bash
+shasum -a 256 build/app/outputs/flutter-apk/app-primary-release.apk
+shasum -a 256 build/app/outputs/flutter-apk/app-friend-release.apk
+APKSIGNER="$ANDROID_SDK_ROOT/build-tools/36.1.0/apksigner"
+"$APKSIGNER" verify --print-certs build/app/outputs/flutter-apk/app-primary-release.apk
+"$APKSIGNER" verify --print-certs build/app/outputs/flutter-apk/app-friend-release.apk
+```
+
+If build-tools `36.1.0` is not installed, set `APKSIGNER` to the `apksigner`
+inside the build-tools version selected by the current Android build. Do not
+commit a developer-specific SDK path.
+
+```bash
+xcodebuild -version
+xcrun simctl list runtimes
+xcodebuild -workspace ios/Runner.xcworkspace -scheme primary -showdestinations
+```
+
+```bash
+shasum -a 256 build/macos/Build/Products/Release/Hable.app/Contents/MacOS/Hable
+codesign -dvvv --entitlements :- build/macos/Build/Products/Release/Hable.app
+codesign --verify --deep --strict --verbose=4 build/macos/Build/Products/Release/Hable.app
+spctl -a -vv build/macos/Build/Products/Release/Hable.app
 ```
 
 ---
