@@ -20,4 +20,12 @@ void main() {
     expect(decision!.tabIndex, 0);
     expect(decision.homeHabitId, 'habit-42');
   });
+
+  test('unsupported and malformed notification routes are ignored', () {
+    expect(resolveNotificationNavigation(actionRoute: 'settings'), isNull);
+    expect(
+      resolveNotificationNavigation(actionPayloadJson: '{not-json'),
+      isNull,
+    );
+  });
 }

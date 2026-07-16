@@ -1,8 +1,6 @@
-import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hable/l10n/app_localizations.dart';
-
 
 import '../theme/app_theme.dart';
 import '../widgets/usage_tracked_screen.dart';
@@ -11,7 +9,6 @@ import 'profile_screen.dart';
 import 'social/social_hub_screen.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../services/local_reminder_service.dart';
 
 class NotificationNavigationDecision {
   const NotificationNavigationDecision({
@@ -100,7 +97,6 @@ class MainNavigationShellState extends ConsumerState<MainNavigationShell> {
   int _selectedIndex = 0;
   late final PageController _pageController;
   late final List<Widget?> _destinations = List<Widget?>.filled(3, null);
-  StreamSubscription<String?>? _payloadSubscription;
   String? _homeFocusHabitId;
   int _homeFocusRequestId = 0;
 
@@ -110,19 +106,10 @@ class MainNavigationShellState extends ConsumerState<MainNavigationShell> {
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _selectedIndex);
-
-    _payloadSubscription = ref
-        .read(localReminderServiceProvider)
-        .onPayloadTapped
-        .listen((payload) {
-          if (!mounted || payload == null) return;
-          handleNotificationPayload(payload);
-        });
   }
 
   @override
   void dispose() {
-    _payloadSubscription?.cancel();
     _pageController.dispose();
     super.dispose();
   }
@@ -280,7 +267,8 @@ class MainNavigationShellState extends ConsumerState<MainNavigationShell> {
                       color: AppTheme.sageGreen,
                     ),
                     label: loc?.socialTabTitle ?? 'Social',
-                    tooltip: loc?.socialTabTooltip ?? 'Social — friends & partners',
+                    tooltip:
+                        loc?.socialTabTooltip ?? 'Social — friends & partners',
                   ),
                   NavigationDestination(
                     icon: const Icon(Icons.person_outline_rounded),
@@ -289,7 +277,9 @@ class MainNavigationShellState extends ConsumerState<MainNavigationShell> {
                       color: AppTheme.sageGreen,
                     ),
                     label: loc?.profileTabTitle ?? 'Profile',
-                    tooltip: loc?.profileTabTooltip ?? 'Profile — history & settings',
+                    tooltip:
+                        loc?.profileTabTooltip ??
+                        'Profile — history & settings',
                   ),
                 ],
               ),

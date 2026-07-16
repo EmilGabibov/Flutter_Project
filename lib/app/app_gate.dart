@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hable/l10n/app_localizations.dart';
@@ -32,6 +34,10 @@ class _AppGateState extends ConsumerState<AppGate> with WidgetsBindingObserver {
   final GlobalKey<MainNavigationShellState> _shellKey =
       GlobalKey<MainNavigationShellState>();
   StreamSubscription<String?>? _payloadSub;
+  String? _pendingPayload;
+  String? _lastPayloadKey;
+  DateTime? _lastPayloadAt;
+  bool _pendingPayloadFlushScheduled = false;
   WebVersionGateAction _webVersionGateAction = WebVersionGateAction.allow;
   String? _webVersionGateMessage;
   bool _isCheckingFirstRunQuote = false;
@@ -44,6 +50,12 @@ class _AppGateState extends ConsumerState<AppGate> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    if (kIsWeb) {
+      final pathSegments = Uri.base.pathSegments;
+      if (pathSegments.isNotEmpty && pathSegments.last == 'social') {
+        _pendingPayload = 'social';
+      }
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_runStartupGuards());
     });
@@ -112,16 +124,67 @@ class _AppGateState extends ConsumerState<AppGate> with WidgetsBindingObserver {
 
     final initialPayload = await localReminder.getInitialPayload();
     if (initialPayload != null) {
-      _handlePayload(initialPayload);
+      _queueOrDeliverPayload(initialPayload);
     }
 
     _payloadSub = localReminder.onPayloadTapped.listen((payload) {
-      if (payload != null) _handlePayload(payload);
+      if (payload != null) _queueOrDeliverPayload(payload);
     });
   }
 
-  void _handlePayload(String payloadStr) {
-    _shellKey.currentState?.handleNotificationPayload(payloadStr);
+  bool _isSupportedPayload(String payload) {
+    final trimmed = payload.trim();
+    if (trimmed == 'home' || trimmed == 'social' || trimmed == 'profile') {
+      return true;
+    }
+    try {
+      final decoded = jsonDecode(trimmed);
+      if (decoded is! Map<String, dynamic>) return false;
+      return resolveNotificationNavigation(actionPayload: decoded) != null;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  void _queueOrDeliverPayload(String payload) {
+    final trimmed = payload.trim();
+    if (trimmed.isEmpty || !_isSupportedPayload(trimmed)) return;
+
+    final now = DateTime.now();
+    if (_lastPayloadKey == trimmed &&
+        _lastPayloadAt != null &&
+        now.difference(_lastPayloadAt!) < const Duration(seconds: 2)) {
+      return;
+    }
+    _lastPayloadKey = trimmed;
+    _lastPayloadAt = now;
+
+    final shell = _shellKey.currentState;
+    if (shell == null) {
+      _pendingPayload ??= trimmed;
+      return;
+    }
+    shell.handleNotificationPayload(trimmed);
+  }
+
+  void _schedulePendingPayloadFlush() {
+    if (_pendingPayload == null || _pendingPayloadFlushScheduled) return;
+    _pendingPayloadFlushScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _pendingPayloadFlushScheduled = false;
+      if (!mounted || _pendingPayload == null) return;
+      final shell = _shellKey.currentState;
+      if (shell == null) return;
+      final payload = _pendingPayload;
+      _pendingPayload = null;
+      if (payload != null) shell.handleNotificationPayload(payload);
+    });
+  }
+
+  void _clearPendingNotificationRoute() {
+    _pendingPayload = null;
+    _lastPayloadKey = null;
+    _lastPayloadAt = null;
   }
 
   @override
@@ -201,12 +264,16 @@ class _AppGateState extends ConsumerState<AppGate> with WidgetsBindingObserver {
     _signalStartupReadyIfPossible(authState);
 
     ref.listen(authProvider, (previous, next) {
+      if (previous != null && previous.userId != next.userId) {
+        _clearPendingNotificationRoute();
+      }
       if ((previous == null || !previous.isAuthenticated) &&
           next.isAuthenticated &&
           next.userId != null) {
         _checkAndStartSync();
       } else if ((previous != null && previous.isAuthenticated) &&
           !next.isAuthenticated) {
+        _clearPendingNotificationRoute();
         ref.read(foregroundSyncControllerProvider.notifier).stopPolling();
         if (mounted) {
           setState(() {
@@ -297,6 +364,7 @@ class _AppGateState extends ConsumerState<AppGate> with WidgetsBindingObserver {
             onContinue: () => _dismissFirstRunQuoteSplash(userId),
           );
         }
+        _schedulePendingPayloadFlush();
         return MainNavigationShell(key: _shellKey, userId: userId);
       },
       loading: () => Scaffold(
