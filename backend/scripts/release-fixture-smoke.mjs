@@ -60,12 +60,55 @@ async function profile(token) {
   );
 }
 
-async function removeFixture(token) {
+async function resetFixture(token, label = 'fixture reset') {
   await expectStatus(
-    'fixture reset',
+    label,
     `/api/sync/habit/${habitId}`,
     { method: 'DELETE', headers: authHeaders(token) },
   );
+  const resetProfile = await profile(token);
+  assert(
+    !resetProfile.habits?.some((habit) => habit.id === habitId),
+    `${label} left owned data behind`,
+    resetProfile.habits,
+  );
+}
+
+async function runCycle(token, cycle) {
+  await resetFixture(token, `fixture reset before cycle ${cycle}`);
+
+  await expectStatus(`fixture habit write cycle ${cycle}`, '/api/sync/habit', {
+    method: 'POST',
+    headers: authHeaders(token),
+    body: JSON.stringify({
+      habit_id: habitId,
+      title: 'Release Smoke Habit',
+      description: 'Bounded fixture-owned release smoke data.',
+      target_duration: 3,
+      color_hex: 'FF9CAF88',
+      status: 'active',
+    }),
+  });
+
+  const writtenProfile = await profile(token);
+  const writtenHabit = writtenProfile.habits?.find((habit) => habit.id === habitId);
+  assert(writtenHabit?.title === 'Release Smoke Habit', `cycle ${cycle} read did not return the written habit`, writtenProfile.habits);
+
+  await expectStatus(`fixture core write action cycle ${cycle}`, '/api/sync/log', {
+    method: 'POST',
+    headers: authHeaders(token),
+    body: JSON.stringify({
+      log_id: `release-smoke-owned-log-${cycle}`,
+      habit_id: habitId,
+      status: 'completed',
+      logged_at: '2026-01-01T12:00:00.000Z',
+    }),
+  });
+
+  const completedProfile = await profile(token);
+  const completedHabit = completedProfile.habits?.find((habit) => habit.id === habitId);
+  assert(completedHabit?.current_duration === 1, `cycle ${cycle} started with stale progress`, completedHabit);
+  await resetFixture(token, `fixture reset after cycle ${cycle}`);
 }
 
 async function run() {
@@ -86,43 +129,13 @@ async function run() {
     return;
   }
 
-  await removeFixture(token);
-  await expectStatus('fixture habit write', '/api/sync/habit', {
-    method: 'POST',
-    headers: authHeaders(token),
-    body: JSON.stringify({
-      habit_id: habitId,
-      title: 'Release Smoke Habit',
-      description: 'Bounded fixture-owned release smoke data.',
-      target_duration: 3,
-      color_hex: 'FF9CAF88',
-      status: 'active',
-    }),
-  });
-
-  const writtenProfile = await profile(token);
-  const writtenHabit = writtenProfile.habits?.find((habit) => habit.id === habitId);
-  assert(writtenHabit?.title === 'Release Smoke Habit', 'fixture read did not return the written habit', writtenProfile.habits);
-
-  await expectStatus('fixture core write action', '/api/sync/log', {
-    method: 'POST',
-    headers: authHeaders(token),
-    body: JSON.stringify({
-      log_id: 'release-smoke-owned-log',
-      habit_id: habitId,
-      status: 'completed',
-      logged_at: '2026-01-01T12:00:00.000Z',
-    }),
-  });
-
-  const completedProfile = await profile(token);
-  const completedHabit = completedProfile.habits?.find((habit) => habit.id === habitId);
-  assert(completedHabit?.current_duration === 1, 'fixture progress read did not reflect the write', completedHabit);
-
-  await removeFixture(token);
-  const resetProfile = await profile(token);
-  assert(!resetProfile.habits?.some((habit) => habit.id === habitId), 'fixture reset left owned data behind', resetProfile.habits);
-  console.log('PASS bounded fixture reset and cleanup');
+  try {
+    await runCycle(token, 1);
+    await runCycle(token, 2);
+    console.log('PASS repeated fixture reset, recreate, progress, and cleanup');
+  } finally {
+    await resetFixture(token, 'final fixture cleanup');
+  }
 }
 
 run().catch((error) => {

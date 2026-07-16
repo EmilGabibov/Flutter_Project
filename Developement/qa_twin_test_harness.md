@@ -17,8 +17,9 @@ HABLE_RELEASE_SMOKE_ALLOW_MUTATION=1 \
 npm run smoke:release-fixture
 ```
 
-This fixture is local-only and resettable. It does not replace target UI
-evidence; use `scripts/release_smoke.sh --target all --env local` to produce a
+This fixture is local-only and resettable. It runs two consecutive
+create/log/delete/recreate cycles with the same fixture id to catch stale
+progress leakage. It does not replace target UI evidence; use `scripts/release_smoke.sh --target all --env local` to produce a
 sanitized report and leave any unavailable authenticated UI target as
 `BLOCKED`.
 

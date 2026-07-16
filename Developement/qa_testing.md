@@ -150,8 +150,8 @@ record.
 The release smoke is split into a bounded fixture-owned API pass and explicit
 target evidence. The fixture uses only the stable local `local-user-1` identity
 and the stable `release-smoke-owned-habit` row. It deletes that row before and
-after the pass, so reruns are idempotent and do not create accounts or leave
-habit data behind.
+after each pass, so two consecutive create/log/delete/recreate cycles are
+idempotent and do not create accounts or leave habit data behind.
 
 Run the local fixture against the local Worker/D1 twin:
 
@@ -164,7 +164,8 @@ npm run smoke:release-fixture
 ```
 
 The fixture proves authenticated login, a safe invalid-session error, profile
-read, one controlled habit write/log, progress readback, and cleanup. Never set
+read, two controlled habit write/log cycles with `current_duration = 1`, and
+cleanup. Never set
 `HABLE_RELEASE_SMOKE_ALLOW_MUTATION=1` for staging or production. For those
 environments, the report is read-only and records the mutation step as
 `BLOCKED`.

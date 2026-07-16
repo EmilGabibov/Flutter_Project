@@ -2175,6 +2175,7 @@ app.delete('/api/sync/habit/:habitId', async (c) => {
   }
 
   await c.env.DB.prepare('DELETE FROM habit_logs WHERE habit_id = ?').bind(habitId).run()
+  await c.env.DB.prepare('DELETE FROM habit_progress WHERE habit_id = ?').bind(habitId).run()
   await c.env.DB.prepare('DELETE FROM partnerships WHERE habit_id = ?').bind(habitId).run()
   await c.env.DB.prepare('DELETE FROM habit_invitations WHERE habit_id = ?').bind(habitId).run()
   await c.env.DB.prepare('DELETE FROM habits WHERE id = ?').bind(habitId).run()
