@@ -318,6 +318,67 @@ void main() {
     },
   );
 
+  test(
+    'flushPending posts next-day check-ins to the server after a date rollover',
+    () async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+
+      final postedLogs = <Map<String, dynamic>>[];
+      final syncService = SyncService(
+        db: db,
+        connectivity: ConnectivityService(),
+        storage: const FlutterSecureStorage(),
+        client: MockClient((request) async {
+          expect(request.url.path, '/api/sync/log');
+          postedLogs.add(jsonDecode(request.body) as Map<String, dynamic>);
+          return http.Response('{}', 200);
+        }),
+        apiBaseUrlOverride: 'http://offline.test',
+      );
+      addTearDown(syncService.dispose);
+
+      await db.enqueueSync(
+        SyncQueueCompanion.insert(
+          action: SyncAction.logHabit,
+          payload: jsonEncode({
+            'log_id': 'log-day-1',
+            'habit_id': 'habit-1',
+            'status': 'completed',
+            'logged_at': '2026-07-16T23:50:00.000Z',
+          }),
+        ),
+      );
+      await db.enqueueSync(
+        SyncQueueCompanion.insert(
+          action: SyncAction.logHabit,
+          payload: jsonEncode({
+            'log_id': 'log-day-2',
+            'habit_id': 'habit-1',
+            'status': 'completed',
+            'logged_at': '2026-07-17T23:50:00.000Z',
+          }),
+        ),
+      );
+
+      await syncService.flushPending();
+
+      expect(postedLogs, hasLength(2));
+      expect(
+        postedLogs.map((log) => log['log_id']),
+        containsAllInOrder(['log-day-1', 'log-day-2']),
+      );
+      expect(
+        postedLogs.map((log) => log['logged_at']),
+        containsAllInOrder([
+          '2026-07-16T23:50:00.000Z',
+          '2026-07-17T23:50:00.000Z',
+        ]),
+      );
+      expect(await db.getPendingSyncItems(), isEmpty);
+    },
+  );
+
   test('daily sync preserves a shared habit challenge start date', () async {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
