@@ -31,6 +31,7 @@ void main() {
                 SliverGrid(
                   gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                     maxCrossAxisExtent: 400,
+                    mainAxisExtent: 216,
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (context, index) => Card(child: Text(habits[index].title)),
@@ -46,5 +47,6 @@ void main() {
 
     expect(find.text('Drink Water'), findsOneWidget);
     expect(find.byType(SliverGrid), findsOneWidget);
+    expect(tester.getSize(find.byType(Card)).height, 216);
   });
 }
