@@ -5,6 +5,23 @@
 
 This guide provides instructions for testing the end-to-end friendship, habit invitation, shared-habit tracking, and nudging flow on a single Android device or emulator using two isolated instances of the Hable app.
 
+For the bounded release-readiness fixture (login, safe auth error, profile
+read, one owned write/log, readback, and cleanup), use the dedicated runner
+from the repository root instead of the multi-user flow below:
+
+```bash
+cd backend
+npm run db:setup
+HABLE_API_BASE_URL=http://127.0.0.1:8787 \
+HABLE_RELEASE_SMOKE_ALLOW_MUTATION=1 \
+npm run smoke:release-fixture
+```
+
+This fixture is local-only and resettable. It does not replace target UI
+evidence; use `scripts/release_smoke.sh --target all --env local` to produce a
+sanitized report and leave any unavailable authenticated UI target as
+`BLOCKED`.
+
 ## Prerequisites
 
 1. An Android device or emulator connected and accessible via ADB (`adb devices`).

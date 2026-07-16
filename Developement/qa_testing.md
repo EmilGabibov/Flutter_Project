@@ -119,7 +119,7 @@ compile never upgrades a runtime row to `PASS`.
 | [#171](https://github.com/EmilGabibov/HABLE_Project/issues/171) | `proceeded` after commit | macOS Debug/Profile/Release entitlements are distinct; Release is hardened/manual-signing and `verify_macos_distribution.sh` fails closed on missing team, nested signature, Gatekeeper, or staple evidence |
 | [#172](https://github.com/EmilGabibov/HABLE_Project/issues/172) | `proceeded` after commit | CI runs web/backend plus Android, Apple, and Windows compile gates; canonical web root and bounded provenance records are enforced; distribution remains secret-gated |
 | [#173](https://github.com/EmilGabibov/HABLE_Project/issues/173) | `raw` | Friend-profile regression test failure |
-| [#174](https://github.com/EmilGabibov/HABLE_Project/issues/174) | `raw` | Deterministic authenticated cross-platform smoke fixture |
+| [#174](https://github.com/EmilGabibov/HABLE_Project/issues/174) | `proceeded` after commit | Bounded authenticated fixture smoke, fail-closed target reports, and explicit PASS/BLOCKED evidence semantics |
 
 ### Evidence record for every rerun
 
@@ -140,6 +140,47 @@ all four targets compile from a clean checkout, every required flow row is
 `PASS` (or a documented intentional difference with its own passing expected
 behavior), and no verified path retains a crash, hang, blank state, infinite
 loading state, data-loss risk, or unrecoverable authentication failure.
+
+## 2. Deterministic Authenticated Release Smoke (Issue #174)
+
+The release smoke is split into a bounded fixture-owned API pass and explicit
+target evidence. The fixture uses only the stable local `local-user-1` identity
+and the stable `release-smoke-owned-habit` row. It deletes that row before and
+after the pass, so reruns are idempotent and do not create accounts or leave
+habit data behind.
+
+Run the local fixture against the local Worker/D1 twin:
+
+```bash
+cd backend
+npm run db:setup
+HABLE_API_BASE_URL=http://127.0.0.1:8787 \
+HABLE_RELEASE_SMOKE_ALLOW_MUTATION=1 \
+npm run smoke:release-fixture
+```
+
+The fixture proves authenticated login, a safe invalid-session error, profile
+read, one controlled habit write/log, progress readback, and cleanup. Never set
+`HABLE_RELEASE_SMOKE_ALLOW_MUTATION=1` for staging or production. For those
+environments, the report is read-only and records the mutation step as
+`BLOCKED`.
+
+Generate a sanitized per-target report with commit, app version, flavor,
+environment, Flutter version, timestamp, and exact blocker text:
+
+```bash
+scripts/release_smoke.sh --target all --env local
+scripts/release_smoke.sh --target android --env local --flavor primary --device <device-id>
+scripts/release_smoke.sh --target ios --env local --flavor primary
+```
+
+`PASS` means only the bounded fixture operation completed. `BLOCKED` is the
+correct result when a target lacks an authenticated UI fixture or the host
+cannot provide its runtime. Existing Android/iOS launch scripts may still
+write launch evidence, but that evidence must not be promoted to an
+authenticated navigation, offline/retry, logout, or relaunch pass. Stateful
+browser/device cases remain serialized and operator-owned until a resettable
+UI fixture is available.
 
 ## 0. Android Online Connectivity Preflight
 
