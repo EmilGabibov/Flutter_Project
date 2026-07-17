@@ -1,0 +1,631 @@
+{
+  "@@locale": "id",
+  "homeTabTitle": "Beranda",
+  "socialTabTitle": "Sosial",
+  "socialTabTooltip": "Social — friends & mitras",
+  "profileTabTitle": "Profil",
+  "profileTabTooltip": "Profil — history & settings",
+  "activityTabTitle": "Aktivitas",
+  "friendsTabTitle": "Teman",
+  "leaderboardTabTitle": "Papan Peringkat",
+  "authWelcomeTitle": "Selamat datang di\nHable.",
+  "authLoginSubtitle": "Masuk untuk melanjutkan perjalananmu.",
+  "authLoginButton": "Masuk",
+  "authJoinTitle": "Bergabung dengan Hable.",
+  "authJoinSubtitle": "Pilih nama pengguna dan kata sandi. You can activate cloud recovery from Profil later.",
+  "authSignUpButton": "Daftar",
+  "authResetTitle": "Atur Ulang Kata Sandi",
+  "authResetSubtitle": "Masukkan email untuk menerima PIN verifikasi.",
+  "authSendPinButton": "Kirim PIN",
+  "authVerifyTitle": "Verifikasi PIN",
+  "authVerifySubtitle": "Masukkan PIN yang dikirim ke emailmu dan kata sandi baru.",
+  "authResetSuccessMessage": "Kata sandi berhasil diatur ulang. Silakan masuk.",
+  "authUsernameLabel": "Nama Pengguna",
+  "authEmailLabel": "Email",
+  "authPinLabel": "PIN 6 digit",
+  "authPasswordLabel": "Kata Sandi",
+  "authNewPasswordLabel": "Kata Sandi Baru",
+  "authForgotPassword": "Lupa Kata Sandi?",
+  "authWorking": "Memproses...",
+  "authNeedAccount": "Belum punya akun? Daftar",
+  "authAlreadyHaveAccount": "Sudah punya akun? Masuk",
+  "authBackToLogin": "Kembali ke Masuk",
+  "authGdprFooter": "Hable mematuhi persyaratan perlindungan data Eropa, termasuk GDPR.",
+  "onboardingDayOneEyebrow": "Hari pertama",
+  "onboardingDayOneTitle": "Setiap hari adalah hari pertama.",
+  "onboardingDayOneBody": "Mulai dengan bacaan yang tenang, lalu satu tindakan yang disengaja. Hable menjaga langkah pertama tetap kecil agar mudah diulang.",
+  "onboardingMudEyebrow": "Lumpur",
+  "onboardingMudTitle": "Mulailah melewati lumpur.",
+  "onboardingMudBody": "Kebiasaan baru memerlukan tekanan stabil selama 1500 ms. Resistansi itu memang disengaja: usaha dulu, kestabilan kemudian.",
+  "onboardingCommitEyebrow": "Komitmen",
+  "onboardingCommitTitle": "Pilih komitmen pertamamu.",
+  "onboardingCommitBody": "Pilih kebiasaan standar atau tentukan jumlah harimu sendiri. The science-backed 21, 33, and 40 day targets stay close by.",
+  "onboardingPartnersEyebrow": "Mitra",
+  "onboardingPartnersTitle": "Ajak seorang mitra.",
+  "onboardingPartnersBody": "Kebiasaan bersama menampilkan progres mitra melalui cincin berwarna kebiasaan, sehingga dukungan hadir langsung di kartu kebiasaan.",
+  "onboardingRemindersEyebrow": "Pengingat",
+  "onboardingRemindersTitle": "Biarkan pengingat tetap lembut.",
+  "onboardingRemindersBody": "Hable akan bertanya sebelum menjadwalkan. Aktifkan pengingat hanya saat kamu menginginkan dorongan lembut, bukan tuntutan.",
+  "onboardingPrivacyEyebrow": "Privasi",
+  "onboardingPrivacyTitle": "Jaga refleksi tetap privat.",
+  "onboardingPrivacyBody": "Email verification waits in Pengaturan, and journal reflections stay private. Mitra melihat progres, bukan catatanmu.",
+  "onboardingTrackerEyebrow": "Pelacak",
+  "onboardingTrackerTitle": "Tidak ada tombol lewati pada cincin.",
+  "onboardingTrackerBody": "Pelacak utama dibuat untuk tindakan. Hari yang terlewat berakhir secara alami, while private reflection stays available when needed.",
+  "onboardingStartSetup": "Mulai penyiapan",
+  "onboardingNext": "Berikutnya",
+  "onboardingLogIn": "Masuk",
+  "habitSkipToday": "Lewati hari ini",
+  "habitSkippedToday": "Dilewati hari ini",
+  "habitCompletedToday": "Selesai hari ini",
+  "habitNotCompletedToday": "Not selesai hari ini",
+  "habitFollowing": "Mengikuti",
+  "habitContinuous": "Berkelanjutan",
+  "habitDayProgress": "Hari {day} dari {total}",
+  "@habitDayProgress": {
+    "placeholders": {
+      "day": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "habitNudgedBy": "Didorong oleh {name}",
+  "@habitNudgedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "habitNudgeQueued": "Dorongan diantrekan untuk {name}",
+  "@habitNudgeQueued": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsTitle": "Pengaturan",
+  "settingsAccountTitle": "Akun",
+  "settingsUserId": "ID Pengguna",
+  "settingsNoEmail": "Belum ada email tertaut",
+  "settingsLogOut": "Keluar",
+  "settingsCloudSync": "Sinkronisasi Cloud",
+  "settingsEnableCloudSync": "Aktifkan Sinkronisasi Cloud",
+  "settingsCloudSyncActive": "Sinkronisasi cloud aktif.",
+  "settingsDailyReminder": "Pengingat harian",
+  "settingsEnableDailyReminder": "Aktifkan Pengingat Harian",
+  "settingsRemindMeAt": "Ingatkan saya pada",
+  "settingsMudTuning": "Penyetelan Lumpur",
+  "settingsMudTuningDesc": "Sesuaikan resistansi dan rasa cincin penyelesaian kebiasaan.",
+  "settingsDuration": "Durasi",
+  "settingsFast": "Cepat",
+  "settingsSlow": "Lambat",
+  "settingsResistance": "Resistansi",
+  "settingsLight": "Ringan",
+  "settingsHeavy": "Berat",
+  "settingsHaptics": "Haptik",
+  "settingsLanguage": "Bahasa",
+  "settingsAccessibility": "Aksesibilitas",
+  "dashboardMyHabits": "My Kebiasaans",
+  "dashboardAddHabit": "Tambah Kebiasaan",
+  "dashboardNoHabits": "Belum ada kebiasaan. Ketuk + untuk memulai tantangan pertamamu.",
+  "appGateRestoredLocalSession": "Sesi lokal di macOS dipulihkan.",
+  "appGateUpdatingHable": "Memperbarui Hable...",
+  "appGateRestoringSession": "Memulihkan sesi...",
+  "appGatePreparingHabits": "Menyiapkan kebiasaanmu...",
+  "appGateLoadingProfileState": "Memuat status profil...",
+  "appStartupOpening": "Membuka Hable",
+  "skipSheetTitle": "Melewati \"{habitTitle}\"",
+  "@skipSheetTitle": {
+    "placeholders": {
+      "habitTitle": {
+        "type": "String"
+      }
+    }
+  },
+  "skipSheetBody": "This will add +2 hari to your journey. Tulis catatan jurnal singkat untuk melanjutkan.",
+  "skipSheetHint": "Mengapa kamu melewatkan hari ini?",
+  "skipSheetConfirm": "Konfirmasi Lewati",
+  "mudCompleteHabitLabel": "Selesaikan Kebiasaan",
+  "mudLongPressHint": "Tekan lama untuk menyelesaikan",
+  "mudDone": "Selesai!",
+  "mudHoldToComplete": "Tahan untuk Menyelesaikan",
+  "socialSyncNow": "Sinkronkan sekarang",
+  "socialFindFriends": "Cari teman",
+  "partnerSectionTitle": "Mitra",
+  "partnerTickerStateNotCompletedYet": "belum selesai",
+  "partnerTickerProfileSemantics": "{name}, {state}. Membuka profil.",
+  "@partnerTickerProfileSemantics": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "state": {
+        "type": "String"
+      }
+    }
+  },
+  "partnerNoPartnersYet": "Belum ada mitra pada kebiasaan ini.",
+  "partnerNoPartnersShort": "No mitras",
+  "partnerStackCollapsedSemantics": "Partner stack. {count} total. Long press to expand mitra states.",
+  "@partnerStackCollapsedSemantics": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "partnerExpandedSemantics": "Expanded mitra states. Ketuk untuk menciutkan. Each row shows completion, pending, or didorong state.",
+  "partnerTapToCollapse": "Ketuk untuk menciutkan",
+  "partnerStateCompleted": "selesai",
+  "partnerStateNudged": "didorong",
+  "partnerStateSupporter": "pendukung",
+  "partnerStatePending": "menunggu",
+  "partnerStateCompletedToday": "selesai hari ini",
+  "partnerStateSupporting": "mendukung",
+  "partnerStatusSemantics": "status {name}: {state}",
+  "@partnerStatusSemantics": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "state": {
+        "type": "String"
+      }
+    }
+  },
+  "partnerRoleOwner": "pemilik",
+  "partnerRolePartner": "mitra",
+  "partnerRoleSupporter": "pendukung",
+  "partnerProfileSemantics": "{name}, {role}, {state}. Membuka profil.",
+  "@partnerProfileSemantics": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "role": {
+        "type": "String"
+      },
+      "state": {
+        "type": "String"
+      }
+    }
+  },
+  "partnerNudgeSemantics": "Dorong {name} on this habit.",
+  "@partnerNudgeSemantics": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "partnerNudgeTooltip": "Dorong {name}",
+  "@partnerNudgeTooltip": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "habitFormChooseIconTitle": "Pilih ikon",
+  "habitFormChooseIconBody": "Kebiasaan khusus dapat menggunakan ikon ini bersama judulnya.",
+  "habitFormSaveFailed": "That habit did not stick yet. Silakan coba lagi.",
+  "habitFormPresetDescriptionFallback": "Beri nama perilaku dengan jelas agar kamu dapat memahaminya sekilas di masa depan.",
+  "habitFormCreateButton": "Buat kebiasaan",
+  "habitFormSaveChangesButton": "Simpan perubahan",
+  "habitFormCreateTitle": "Bangun kebiasaan yang layak diulang",
+  "habitFormEditTitle": "Sempurnakan kebiasaan ini",
+  "habitFormCreateBody": "Pilih nama, tentukan durasi tantangan, lalu mulai dengan rapi.",
+  "habitFormEditBody": "Sesuaikan judul, linimasa, dan warna tanpa mengatur ulang progresmu.",
+  "habitFormNameLabel": "Kebiasaan name",
+  "habitFormNameHint": "Halaman pagi, tanpa ponsel setelah pukul 10, jalan kaki setiap hari...",
+  "habitFormNameHelper": "Ketuk ikon di sebelah kiri untuk mempersonalisasi kebiasaan khusus.",
+  "habitFormNameErrorEmpty": "Beri kebiasaan ini nama yang jelas.",
+  "habitFormNameErrorShort": "Gunakan setidaknya 3 karakter.",
+  "habitFormPresetTitle": "Mulai dari pola yang terbukti",
+  "habitFormPresetBody": "Pilih templat untuk mengisi judul, durasi, warna, dan teks pengingat.",
+  "habitFormDescriptionTitle": "Deskripsi",
+  "habitFormDescriptionBody": "Use one or two lines to make the habit specific enough to repeat on rough hari.",
+  "habitFormDescriptionHelper": "Deskripsi ini dapat muncul di kartu kebiasaan utama.",
+  "habitFormDescriptionErrorLong": "Jaga deskripsi di bawah 160 karakter.",
+  "habitFormDurationTitle": "Durasi",
+  "habitFormDurationBody": "Default is 21 hari. Use anchors for the usual milestones or slide for any finite plan.",
+  "habitFormDurationChip": "{days} hari",
+  "@habitFormDurationChip": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "habitFormCustomDaysLabel": "Custom number of hari",
+  "habitFormDurationErrorInvalid": "Enter a number of hari.",
+  "habitFormDurationErrorMin": "Durasi harus setidaknya 1 hari.",
+  "habitFormColorTitle": "Warna cincin",
+  "habitFormColorBody": "Pilih warna yang akan digunakan kebiasaan ini pada kartu dan perayaannya.",
+  "habitFormPartnersTitle": "Undang mitra",
+  "habitFormPartnersBody": "Kebiasaan bersamas can start with friends who already follow you.",
+  "habitFormNoFriends": "Teman tidak ditemukan. Add friends from the Social tab first.",
+  "habitFormFriendsLoadFailed": "Hable tidak dapat memuat your friend list right now.",
+  "homeCreateHabitSemantics": "Buat kebiasaan baru",
+  "homeCreateHabitCta": "Kebiasaan",
+  "homeLoadFailed": "Hable tidak dapat memuat today's habits right now.",
+  "homeFriendFallback": "Teman",
+  "homeOpenDashboard": "Buka dasbor",
+  "homeOpenNotifications": "Buka notifikasi",
+  "homeNoHabits": "Belum ada kebiasaan aktif.\nStart one from Home.",
+  "homeAddHabit": "Tambah kebiasaan",
+  "homeGreetingMorning": "Selamat pagi",
+  "homeGreetingAfternoon": "Selamat siang",
+  "homeGreetingEvening": "Selamat malam",
+  "homeSuggestedHabits": "Kebiasaan yang Disarankan",
+  "profileBack": "Kembali",
+  "profileTitle": "Profil",
+  "profileOpenSettings": "Buka pengaturan",
+  "profileUserFallback": "Pengguna",
+  "profileUsernameFallback": "pengguna",
+  "profileLevelFallback": "Pemula",
+  "profileLifetimePoints": "{points} poin seumur hidup",
+  "@profileLifetimePoints": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "profileLifetimeScoreHint": "Skor seumur hidup comes from backend sync. Journey and history show per-check-in awards.",
+  "profileTrophyRoomTab": "Ruang Trofi",
+  "profileJourneyTab": "Perjalanan",
+  "profileAchievementsTitle": "Pencapaian",
+  "profileFirstBadgeHint": "Selesaikan kebiasaan untuk mendapatkan lencana pertamamu!",
+  "profileHabitDistributionTitle": "Kebiasaan Distribution",
+  "profileNoData": "Belum ada data",
+  "profileCompletedLegend": "Selesai",
+  "profileSkippedLegend": "Dilewati",
+  "profileOverdueLegend": "Terlambat",
+  "profileThirtyDayPointsTitle": "Poin yang Diperoleh dalam 30 Hari",
+  "profileThirtyDayPointsHint": "Per-check-in awards from local history. Skor seumur hidup updates separately from daily sync.",
+  "profileCalendarSubscriptionTitle": "Langganan Kalender",
+  "profileCalendarSubscriptionBody": "Tambahkan kebiasaanmu ke aplikasi kalender perangkat",
+  "profileManageHabitsTitle": "Kelola Kebiasaan",
+  "profileAddNew": "Tambah Baru",
+  "profileSectionActive": "Aktif",
+  "profileSectionHallOfFame": "Hall of Fame",
+  "profileSectionArchivedHistory": "Riwayat yang Diarsipkan",
+  "profileFriendProfileTitle": "Profil Teman",
+  "profileFriendLevel": "level {level}",
+  "@profileFriendLevel": {
+    "placeholders": {
+      "level": {
+        "type": "String"
+      }
+    }
+  },
+  "profileActiveHabitsTitle": "Active Kebiasaans",
+  "profileNoActiveHabits": "Tidak ada kebiasaan aktif.",
+  "profileFriendLoadFailed": "Gagal memuat profil teman.",
+  "dashboardTitle": "Dasbor Kebiasaan",
+  "dashboardAchievementUnlocked": "Kamu membuka lencana baru!",
+  "dashboardLoadFailed": "Hable tidak dapat memuat this habit dashboard right now.",
+  "dashboardEmptyState": "Belum ada kebiasaan aktif. Create one from Home to see it here.",
+  "dashboardSummaryTitle": "Ringkasan Dasbor",
+  "dashboardActiveHabitsLabel": "Kebiasaan aktif",
+  "dashboardChallengeHabitsLabel": "Kebiasaan tantangan",
+  "dashboardContinuousHabitsLabel": "Kebiasaan berkelanjutan",
+  "dashboardQuoteOfDayTitle": "Kutipan hari ini",
+  "dashboardQuoteLoading": "Memuat kutipan...",
+  "dashboardQuoteFallback": "Teruskan. Dasbor tersedia saat kamu membutuhkan tampilan lengkap.",
+  "notificationTitle": "Notifikasi",
+  "notificationMarkAllRead": "Tandai semua sudah dibaca",
+  "notificationEmptyTitle": "Belum ada notifikasi",
+  "notificationEmptyBody": "Permintaan pertemanan, undangan, dorongan, dan pembaruan pengingat akan muncul di sini.",
+  "notificationToday": "Hari ini",
+  "notificationYesterday": "Kemarin",
+  "notificationOlder": "Lebih lama",
+  "notificationLoadFailed": "Hable tidak dapat memuat your notifications right now.",
+  "notificationJustNow": "Baru saja",
+  "notificationMinutesAgo": "{minutes} m lalu",
+  "@notificationMinutesAgo": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationHoursAgo": "{hours} jam lalu",
+  "@notificationHoursAgo": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationDaysAgo": "{days} hari lalu",
+  "@notificationDaysAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsSessionTitle": "Sesi",
+  "settingsSessionBody": "Keluar of this device. Local reminder scheduling is canceled for this user.",
+  "settingsRecoverTitle": "Pulihkan Perangkat Ini",
+  "settingsRecoverBody": "Ini akan menghapus data Hable lokal di perangkat ini dan mengembalikanmu ke halaman masuk. Gunakan jika aplikasi macet atau menampilkan data cache lama.",
+  "settingsCancel": "Batal",
+  "settingsClearAndSignInAgain": "Hapus dan Masuk Lagi",
+  "settingsRecoverAction": "Perbarui / Pulihkan Aplikasi",
+  "settingsSignOut": "Keluar",
+  "commonAccept": "Terima",
+  "commonDecline": "Tolak",
+  "commonEdit": "Edit",
+  "commonDelete": "Hapus",
+  "commonRemove": "Hapus",
+  "commonRetry": "Coba lagi",
+  "commonYou": "Kamu",
+  "socialActivityUnread": "Belum dibaca",
+  "socialActivityEarlier": "Sebelumnya",
+  "socialSearchFailed": "Hable tidak dapat mencari teman saat ini. Silakan coba lagi.",
+  "socialFriendRequestSendFailed": "Hable tidak dapat mengirim permintaan pertemanan saat ini.",
+  "socialFriendRequestAcceptFailed": "Hable tidak dapat menerima permintaan itu saat ini.",
+  "socialFriendRequestDeclineFailed": "Hable tidak dapat menolak permintaan itu saat ini.",
+  "socialFriendRevokeFailed": "Hable tidak dapat memperbarui pertemanan itu saat ini.",
+  "socialFriendRequestAlreadyFriends": "Kamu sudah berteman dengan {username}.",
+  "@socialFriendRequestAlreadyFriends": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "socialFriendRequestIncomingExists": "{username} already sent you a request. Periksa Permintaan.",
+  "@socialFriendRequestIncomingExists": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "socialFriendRequestSent": "Permintaan pertemanan terkirim ke {username}.",
+  "@socialFriendRequestSent": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "socialFriendAccepted": "Kamu sekarang berteman dengan {username}!",
+  "@socialFriendAccepted": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "socialFriendDeclined": "Permintaan dari {username}.",
+  "@socialFriendDeclined": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "socialFriendRemoved": "Menghapus {username} from friends.",
+  "@socialFriendRemoved": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "socialFriendActionsUnfriend": "Hapus pertemanan",
+  "socialFriendActionsRemoveTitle": "Hapus teman?",
+  "socialFriendActionsRemoveBody": "Hapus {username} dari daftar temanmu?",
+  "@socialFriendActionsRemoveBody": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "socialNoFriendsTitle": "Belum ada teman",
+  "socialNoFriendsBody": "Ketuk ikon pencarian di atas to find and add friends.",
+  "socialFriendLongPressActions": "Tekan lama untuk melihat tindakan",
+  "socialFriendsLoadFailed": "Hable tidak dapat memuat your friends right now.",
+  "socialNotSignedIn": "Belum masuk",
+  "socialNoActivityTitle": "Belum ada aktivitas",
+  "socialNoActivityBody": "Dorongan, permintaan pertemanan, undangan, dan pesan dari teman akan muncul di sini.",
+  "socialLeaderboardEmpty": "Belum ada skor papan peringkat.",
+  "socialLeaderboardNoValidScores": "Tidak ada skor papan peringkat yang valid.",
+  "socialLeaderboardTitle": "Papan Peringkat Teman",
+  "socialLeaderboardSubtitle": "Teman yang diterima diurutkan berdasarkan skor seumur hidup",
+  "socialLeaderboardScopeFriends": "Teman",
+  "socialLeaderboardLoadTitle": "Papan peringkat tidak dapat dimuat",
+  "socialLeaderboardLoadFailed": "Hable tidak dapat memuat the leaderboard right now.",
+  "socialFriendRequestsTitle": "Permintaan Pertemanan",
+  "socialFriendRequestIncomingSubtitle": "Mengirimkan permintaan pertemanan kepadamu",
+  "socialFindFriendsTitle": "Cari Teman",
+  "socialFindFriendsSearchLabel": "Cari nama pengguna...",
+  "socialFindFriendsTypeMore": "Ketik setidaknya 2 karakter untuk mencari.",
+  "socialFindFriendsNoMatches": "Tidak ada hasil yang cocok.",
+  "socialRelationshipAcceptedFriend": "Teman yang diterima",
+  "socialRelationshipRequestSent": "Permintaan terkirim",
+  "socialRelationshipWaiting": "Menunggu jawabanmu",
+  "socialRelationshipNotConnected": "Belum terhubung",
+  "socialChipFriends": "Teman",
+  "socialChipRequested": "Diminta",
+  "socialChipRespondInFriends": "Tanggapi di Teman",
+  "socialSendFriendRequestTooltip": "Kirim permintaan pertemanan",
+  "habitCompletionProgressSemantics": "Progres penyelesaian {percent} persen.",
+  "@habitCompletionProgressSemantics": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "leaderboardRankingsTitle": "Peringkat",
+  "leaderboardShowMore": "Tampilkan {count} lagi",
+  "@leaderboardShowMore": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "leaderboardShowingAll": "Menampilkan semua {count}",
+  "@leaderboardShowingAll": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "leaderboardYou": "Kamu",
+  "leaderboardUnknownUser": "Tidak dikenal",
+  "leaderboardLifetime": "seumur hidup",
+  "leaderboardLifetimeScoreByline": "Skor seumur hidup",
+  "settingsNoVerifiedEmailYet": "Belum ada email terverifikasi",
+  "settingsCustomizeAvatar": "Sesuaikan avatar",
+  "settingsMudFeelTitle": "Rasa lumpur",
+  "settingsMudFeelBody": "Atur resistansi tahanan dan umpan balik haptik di perangkat ini dengan preset terbatas.",
+  "settingsMudPresetGentle": "Lembut",
+  "settingsMudPresetStandard": "Standar",
+  "settingsMudPresetIntense": "Intens",
+  "settingsMudHapticsTitle": "Haptik lumpur",
+  "settingsMudHapticsSoft": "Ketukan lembut saat menahan dan denyut penyelesaian ringan.",
+  "settingsMudHapticsStandard": "Ketukan tahanan seimbang dan umpan balik penyelesaian standar.",
+  "settingsMudHapticsStrong": "Umpan balik penyelesaian lebih kuat dengan ketukan tahanan yang lebih rapat.",
+  "settingsVerificationPinSent": "PIN verifikasi terkirim.",
+  "settingsCloudSyncActivated": "Sinkronisasi cloud diaktifkan.",
+  "settingsCloudSyncActiveTitle": "Sinkronisasi cloud aktif",
+  "settingsActivateCloudSyncTitle": "Aktifkan sinkronisasi cloud",
+  "settingsCloudSyncLinkedToEmail": "Pemulihan progres tertaut ke {email}.",
+  "@settingsCloudSyncLinkedToEmail": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsCloudSyncInactiveBody": "Tambahkan email terverifikasi saat kamu ingin progres cloud yang dapat dipulihkan dan dukungan pengaturan ulang kata sandi.",
+  "settingsChangeEmail": "Ubah email",
+  "settingsDailyRemindersTitle": "Pengingat harian",
+  "settingsDailyRemindersEmpty": "Aktifkan pengingat harian untuk kembali ke kebiasaanmu.",
+  "settingsDailyRemindersEnabled": "Hable akan mengingatkanmu setiap hari at these times.",
+  "settingsEnableInSystemSettings": "Aktifkan di Pengaturan Sistem",
+  "settingsAddTime": "Tambah Waktu",
+  "settingsStatusActive": "Aktif",
+  "settingsStatusSaved": "Tersimpan",
+  "settingsStatusOn": "Aktif",
+  "settingsStatusOff": "Nonaktif",
+  "settingsReminderUnsupported": "Penjadwalan pengingat tidak tersedia di platform ini.",
+  "settingsRemindersBlocked": "Notifikasi diblokir. Aktifkan di Pengaturan Sistem.",
+  "settingsRemoveReminderTooltip": "Hapus pengingat",
+  "settingsRemindersLoadFailed": "Hable tidak dapat memuat your reminders right now.",
+  "profileHabitFallbackTitle": "Kebiasaan",
+  "profileDaysLabel": "{days} hari",
+  "@profileDaysLabel": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "profileDaysLeft": "{days} hari tersisa",
+  "@profileDaysLeft": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "profileDayChallenge": "{days} hari tantangan",
+  "@profileDayChallenge": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "profileFriendHabitBody": "Semangati temanmu atau ikuti kebiasaan yang sama.",
+  "profileEncouragementQueued": "Semangat diantrekan untuk {title}.",
+  "@profileEncouragementQueued": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "profileEncourage": "Semangati",
+  "profileFollow": "Ikuti",
+  "profileAchievementFirstCheckIn": "Check-in pertama",
+  "profileAchievementTenStreak": "streak 10 hari",
+  "profileAchievementHundredStreak": "streak 100 hari",
+  "profileAchievementThousandStreak": "streak 1000 hari",
+  "profileAchievementFirstNudge": "Dorongan pertama",
+  "profileAchievementFirstSupporter": "First pendukung",
+  "profileSharedHabit": "Kebiasaan bersama",
+  "profileSoloHabit": "Kebiasaan pribadi",
+  "profileOpenHabitActions": "Buka tindakan kebiasaan",
+  "profileDeleteHabitTitle": "Hapus kebiasaan?",
+  "profileDeleteHabitBody": "Ini akan menghapus \"{title}\" secara permanen dan menghapusnya dari perangkat yang tersinkron.",
+  "@profileDeleteHabitBody": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "profileArchive": "Arsipkan",
+  "profileViewHistory": "Lihat Riwayat",
+  "profileRerun": "Jalankan lagi",
+  "profileRoleOwnerView": "Tampilan pemilik",
+  "profileRolePartnerView": "Tampilan mitra",
+  "profileRoleSupporterView": "Tampilan pendukung",
+  "profileHistoryIntro": "Riwayat tantangan yang diarsipkan dan penghargaan setiap check-in",
+  "profileNoHistoryYet": "Belum ada riwayat yang tercatat.",
+  "profilePointsAwarded": "+{points} poin",
+  "@profilePointsAwarded": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "profileUnableLoadHistory": "Tidak dapat memuat riwayat kebiasaan.",
+  "profileHistoryCompleted": "Selesai",
+  "profileHistorySkippedWithNote": "Dilewati: {note}",
+  "@profileHistorySkippedWithNote": {
+    "placeholders": {
+      "note": {
+        "type": "String"
+      }
+    }
+  },
+  "profileHistorySkipped": "Dilewati",
+  "profileCalendarUnknownError": "Kesalahan tidak dikenal",
+  "profileCalendarGenerateLink": "Buat Tautan Langganan",
+  "profileCalendarSubscriptionUrl": "URL Langganan",
+  "profileCalendarCopied": "URL umpan kalender disalin ke papan klip",
+  "profileCalendarCopyTooltip": "Salin URL langganan",
+  "profileCalendarPasteHint": "Tempel URL ini ke aplikasi kalender perangkatmu untuk berlangganan",
+  "profileCalendarRotateToken": "Putar Token",
+  "profileCalendarRotateHint": "Memutar token akan membatalkan tautan langganan lama",
+  "accessibilityReducedMotionTitle": "Gerakan Dikurangi",
+  "accessibilityReducedMotionBody": "Nonaktifkan animasi dan transisi",
+  "accessibilityHighContrastTitle": "Kontras Tinggi",
+  "accessibilityHighContrastBody": "Tingkatkan kontras warna agar lebih mudah dibaca",
+  "accessibilityLargerTextTitle": "Teks Lebih Besar",
+  "accessibilityLargerTextBody": "Tingkatkan skala teks global",
+  "webPushEnabled": "Pengingat web aktif untuk browser ini.",
+  "webPushUnavailable": "Pengingat web tidak tersedia atau izin ditolak.",
+  "webPushEnabling": "Mengaktifkan pengingat web...",
+  "webPushEnable": "Aktifkan pengingat web",
+  "socialJointCompletion": "Penyelesaian bersama untuk kebiasaan ini telah dicatat.",
+  "completionContinue": "Lanjutkan"
+}

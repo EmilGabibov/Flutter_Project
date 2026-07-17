@@ -54,6 +54,7 @@ class HableApp extends ConsumerWidget {
         Locale('ru', ''),
         Locale('ta', ''),
         Locale('fa', ''),
+        Locale('id', ''),
       ],
       navigatorObservers: [usageRouteObserver],
       home: const _HableStartup(),

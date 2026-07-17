@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hable/database/database.dart';
 import 'package:hable/models/daily_quote.dart';
+import 'package:hable/data/mascot_reminder_copy.dart';
 import 'package:hable/providers/auth_provider.dart';
 import 'package:hable/providers/database_provider.dart';
 import 'package:hable/providers/quote_provider.dart';
@@ -13,6 +14,28 @@ class _SignedOutAuthNotifier extends AuthNotifier {
 }
 
 void main() {
+  test(
+    'fresh-start quote pool is broad and stays within the display limit',
+    () {
+      final quotes = <String>{};
+
+      for (var day = 0; day < 365; day++) {
+        final quote = MascotReminderCopyHelper.quoteForContext(
+          const CopyPersonalizationContext(),
+          now: DateTime.utc(2026, 1, 1).add(Duration(days: day)),
+        );
+        quotes.add(quote.text);
+        expect(
+          quote.text.runes.length,
+          lessThanOrEqualTo(maxDailyQuoteTextLength),
+        );
+      }
+
+      expect(quotes.length, greaterThanOrEqualTo(40));
+      expect(quotes.any((quote) => quote.contains('Woodrow Wilson')), isTrue);
+    },
+  );
+
   test(
     'quote provider uses today\'s synced Drift quote without network work',
     () async {

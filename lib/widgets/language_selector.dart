@@ -19,6 +19,7 @@ class LanguageSelector extends ConsumerWidget {
       {'code': 'ru', 'name': 'Русский'},
       {'code': 'ta', 'name': 'தமிழ்'},
       {'code': 'fa', 'name': 'فارسی'},
+      {'code': 'id', 'name': 'Bahasa Indonesia'},
     ];
 
     if (compact) {

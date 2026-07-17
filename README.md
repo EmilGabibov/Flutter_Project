@@ -2,7 +2,34 @@
 
 Hable is an offline-first habit tracker for building consistent routines with a little more warmth and accountability. It combines a Flutter client, local Drift storage, background synchronization, and a Cloudflare Pages/Worker backend for accounts and social features.
 
-[![CI](https://github.com/EmilGabibov/Flutter_Project/actions/workflows/ci.yml/badge.svg)](https://github.com/EmilGabibov/Flutter_Project/actions/workflows/ci.yml)
+[![CI](https://github.com/EmilGabibov/HABLE_Project/actions/workflows/ci.yml/badge.svg)](https://github.com/EmilGabibov/HABLE_Project/actions/workflows/ci.yml)
+
+## Hable at a glance
+
+```mermaid
+flowchart TB
+    Person["Person builds a habit"] --> App["Flutter app"]
+    App --> Local["Local Drift / SQLite<br/>fast and usable offline"]
+    App --> Sync["Background sync"]
+    Sync --> API["Cloudflare Pages + Worker"]
+    API --> D1[("Cloudflare D1")]
+    API --> KV[("Cloudflare KV")]
+    API --> Social["Friends, shared habits,<br/>activity, and scoring"]
+    Local --> UI["Cached UI and reminders"]
+    D1 --> API
+    KV --> API
+
+    classDef client fill:#e5e9ff,stroke:#4f5fb8,color:#20284f;
+    classDef local fill:#dff4ee,stroke:#24745b,color:#153d31;
+    classDef cloud fill:#fff1c7,stroke:#a87800,color:#4c3900;
+    class Person,App,UI client;
+    class Local,Sync local;
+    class API,D1,KV,Social cloud;
+```
+
+Hable is local-first: the app can record and display habit activity without a
+network connection, while the backend remains authoritative for synchronized
+social state and scoring.
 
 ## What it includes
 
@@ -43,6 +70,12 @@ The client remains usable while offline. The backend is the authority for synchr
 | `e2e/` | Playwright browser and accessibility tests |
 | `Developement/` | Architecture, QA, release, and product documentation |
 | `.github/` | CI, issue templates, pull request guidance, and dependency automation |
+
+Local review artifacts, generated exports, UI dumps, and machine-specific
+files are ignored. The repository keeps `Developement/` published because it
+contains the architecture and issue-engineering contract. See
+[`Developement/issue_engineering.md`](Developement/issue_engineering.md) for a
+visual guide to the workflow.
 
 ## Getting started
 
@@ -110,6 +143,7 @@ The production web deployment is Pages-based. Review `backend/wrangler.toml` and
 - [Social and analytics contract](Developement/sys_social_and_analytics.md)
 - [QA guide](Developement/qa_testing.md)
 - [Release preparation checklist](Developement/Publishment/PreprationChecklist.md)
+- [Issue engineering workflow](Developement/issue_engineering.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security](SECURITY.md)
 

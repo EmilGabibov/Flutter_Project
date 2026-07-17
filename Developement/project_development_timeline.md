@@ -11,7 +11,7 @@ The development sequence reduced risk in the order investors typically care abou
 3. **Engagement layer** — friends, nudges, reminders, notifications, leaderboards, and history.
 4. **Reliability and presentation readiness** — multi-user QA, localization, release builds, deployment, and production smoke testing.
 
-**Current position:** The product is in the final online Android presentation-readiness phase. The core product and social contracts are implemented; the remaining work is a clean production-targeted demonstration against the deployed backend.
+**Current position:** The product is in the final online Android presentation-readiness phase. The core product and social contracts are implemented; the remaining work is a clean production-targeted demonstration against the deployed backend, while the live backlog is focused on Android connectivity/notifications and Android build compatibility warnings.
 
 > **Date basis:** Milestone dates are derived from the completion dates and timestamps recorded in the engineering and archived issue notes. The active presentation-readiness phase is dated from its current backlog status, not presented as completed.
 
@@ -114,6 +114,15 @@ The acceptance path is:
 6. Record device, build path, backend target, test-account policy, commands, result, and timestamp.
 
 **Presentation exit condition:** One clean primary Android build completes the main Hable experience against the deployed online backend without local development infrastructure.
+
+### Latest tasks - July 17, 2026
+
+The current open issue queue has two active tasks:
+
+- `#185` `bug: Android connectivity issue, and notification` - fix the Android login/connectivity path and make notifications respect the configured schedule while still delivering friend requests and nudges on Android and web.
+- `#184` `build: remove Android Gradle and plugin compatibility warnings` - remove the restricted Java/native-access warning, resolve the legacy Kotlin Gradle Plugin warnings, and make `flutter build apk --debug` report the expected artifact reliably.
+
+**Why these are the latest tasks:** they are the current open issues in the GitHub-first backlog and sit directly on the path to a clean production demo.
 
 ## What has been de-risked
 

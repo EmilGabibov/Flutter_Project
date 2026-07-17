@@ -7,10 +7,27 @@
 *.log
 *.pyc
 *.swp
+.DS_Store
+*.iml
+*.zip
+parsed_jules.txt
 .buildlog/
 .history
 graphify-out/
 node_modules/
+
+# Local investigation and generated review material
+ui_dumps/
+output/
+outputs/
+.playwright-cli/
+
+# Intentionally local-only folders
+# These directories are already tracked in the current repository because CI
+# and release workflows use them. Keep these rules for future local files.
+/scripts/
+/test/
+/integration_test/
 
 .tmp.driveupload
 .tmp.drivedownload
@@ -131,3 +148,9 @@ backend/.wrangler/
 !.env.example
 node_modules/
 .wrangler
+
+# Keep the project documentation and issue-engineering contract published.
+!/Developement/
+!/Developement/**
+Developement/.DS_Store
+Developement/**/.DS_Store

@@ -53,16 +53,22 @@ class MascotReminderCopyHelper {
     final seed = date.year * 1000 + date.month * 100 + date.day;
 
     if (context.hasRecentSkip) {
-      return DailyQuote(text: _recentSkipQuotes[seed % _recentSkipQuotes.length]);
+      return DailyQuote(
+        text: _recentSkipQuotes[seed % _recentSkipQuotes.length],
+      );
     }
     if (context.hasSocialMomentum) {
-      return DailyQuote(text: _socialMomentumQuotes[seed % _socialMomentumQuotes.length]);
+      return DailyQuote(
+        text: _socialMomentumQuotes[seed % _socialMomentumQuotes.length],
+      );
     }
     if (context.longestStreak >= 7) {
       return DailyQuote(text: _streakQuotes[seed % _streakQuotes.length]);
     }
     if (!context.hasActiveHabits) {
-      return DailyQuote(text: _freshStartQuotes[seed % _freshStartQuotes.length]);
+      return DailyQuote(
+        text: _freshStartQuotes[seed % _freshStartQuotes.length],
+      );
     }
 
     return fallbackQuoteForSeed(seed);
@@ -143,10 +149,10 @@ class MascotReminderCopyHelper {
   ];
 
   static const _recentSkipQuotes = [
-    'If I find 10,000 ways something won\'t work, I haven\'t failed. I am not discouraged, because every wrong attempt discarded is another step forward. - Thomas Edison',
+    'I have not failed. I\'ve just found 10,000 ways that won\'t work. - Thomas Edison',
     'If we all did the things we are capable of doing, we would literally astound ourselves. - Thomas Edison',
     'Genius is one per cent inspiration, ninety-nine per cent perspiration. - Thomas Edison',
-    'I am not bound to win, but I am bound to be true. I am not bound to succeed, but I am bound to live by the light that I have. I must stand with anybody that stands right, and stand with him while he is right, and part with him when he goes wrong. - Abraham Lincoln',
+    'I am bound to be true, and to live by the light that I have. - Abraham Lincoln',
     'To improve is to change; to be perfect is to change often. - Winston Churchill',
     'It is no use saying, \'We are doing our best.\' You have got to succeed in doing what is necessary. - Winston Churchill',
     'If you\'re going through hell, keep going. - Winston Churchill',
@@ -154,12 +160,12 @@ class MascotReminderCopyHelper {
     'If you\'re changing the world, you\'re working on important things. You\'re excited to get up in the morning. - Larry Page',
     'In times of change, learners inherit the earth, while the learned find themselves beautifully equipped to deal with a world that no longer exists. - Eric Hoffer',
     'Whether you think you can or you think you can\'t, you are right. - Henry Ford',
-    'The one thing that you have that nobody else has is you. Your voice, your mind, your story, your vision. So write and draw and build and play and dance and live as only you can. - Neil Gaiman',
+    'The one thing nobody else has is you: your voice, your mind, your story, and your vision. Live as only you can. - Neil Gaiman',
     'The biggest room in the world is room for improvement. - Helmut Schmidt',
     'In the middle of every difficulty lies opportunity. - Albert Einstein',
-    'Every great dream begins with a dreamer. Always remember, you have within you the strength, the patience, and the passion to reach for the stars to change the world. - Harriet Tubman',
-    'I think people who are creative are the luckiest people on earth. I know that there are no shortcuts, but you must keep your faith in something Greater than you and keep doing what you love. Do what you love, and you will find the way to get it out to the world. - Judy Collins',
-    'If you\'re trying to achieve, there will be roadblocks. I\'ve had them; everybody has had them. But obstacles don\'t have to stop you. If you run into a wall, don\'t turn around and give up. Figure out how to climb it, go through it, or work around it. - Michael Jordan',
+    'Every great dream begins with a dreamer. You have the strength, patience, and passion to reach for the stars and change the world. - Harriet Tubman',
+    'Creative people are the luckiest people on earth. Do what you love, and you will find the way to get it out to the world. - Judy Collins',
+    'Obstacles don\'t have to stop you. Figure out how to climb the wall, go through it, or work around it. - Michael Jordan',
     'It always seems impossible until it\'s done. - Nelson Mandela',
   ];
 
@@ -181,7 +187,7 @@ class MascotReminderCopyHelper {
     'The more man meditates upon good thoughts, the better will be his world and the world at large. - Confucius',
     'Keep your eyes on the stars and your feet on the ground. - Theodore Roosevelt',
     'By failing to prepare, you are preparing to fail. - Benjamin Franklin',
-    'Learning is the beginning of wealth. Learning is the beginning of health. Learning is the beginning of spirituality. Searching and learning is where the miracle process all begins. - Jim Rohn',
+    'Learning is the beginning of wealth, health, and spirituality. Searching and learning is where the miracle process begins. - Jim Rohn',
   ];
 
   static const _streakQuotes = [
@@ -191,7 +197,7 @@ class MascotReminderCopyHelper {
     'Life is 10% what happens to you and 90% how you react to it. - Chuck Swindoll',
     'Quality is not an act; it is a habit. - Aristotle',
     'Difficulties are meant to rouse, not discourage. The human spirit is to grow strong by conflict. - William Ellery Channing',
-    'Beginning today, treat everyone you meet as if they were going to be dead by midnight. Extend to them all the care, kindness and understanding you can muster, and do it with no thought of any reward. Your life will never be the same again. - Og Mandino',
+    'Treat everyone you meet with care, kindness, and understanding, expecting no reward. Your life will never be the same. - Og Mandino',
     'Go for it now. The future is promised to no one. - Wayne Dyer',
     'Mountains cannot be surmounted except by winding paths. - Johann Wolfgang von Goethe',
     'The will to win, the desire to succeed, the urge to reach your full potential... these are the keys that will unlock the door to personal excellence. - Confucius',
@@ -207,12 +213,12 @@ class MascotReminderCopyHelper {
 
   static const _freshStartQuotes = [
     'I know not age, nor weariness nor defeat. - Rose Kennedy',
-    'Do not wait; the time will never be \'just right.\' Start where you stand, and work with whatever tools you may have at your command, and better tools will be found as you go along. - George Herbert',
+    'Do not wait; the time will never be \'just right.\' Start where you stand, and better tools will be found as you go along. - George Herbert',
     'Believe in yourself! Have faith in your abilities! Without a humble but reasonable confidence in your own powers you cannot be successful or happy. - Norman Vincent Peale',
     'Set your goals high, and don\'t stop till you get there. - Bo Jackson',
-    'Do the one thing you think you cannot do. Fail at it. Try again. Do better the second time. The only people who never tumble are those who never mount the high wire. This is your moment. Own it. - Oprah Winfrey',
+    'Do the one thing you think you cannot do. Fail, try again, and do better the second time. This is your moment. Own it. - Oprah Winfrey',
     'There is only one corner of the universe you can be certain of improving, and that\'s your own self. - Aldous Huxley',
-    'You are not here merely to make a living. You are here in order to enable the world to live more amply, with greater vision, with a finer spirit of hope and achievement. You are here to enrich the world, and you impoverish yourself if you forget the errand. - Woodrow Wilson',
+    'You are here to enrich the world, and you impoverish yourself if you forget the errand. - Woodrow Wilson',
     'Knowing is not enough; we must apply! - Johann Wolfgang von Goethe',
     'One who gains strength by overcoming obstacles possesses the only strength which can overcome adversity. - Albert Schweitzer',
     'The best way to predict your future is to create it. - Peter Drucker',
@@ -223,7 +229,32 @@ class MascotReminderCopyHelper {
     'Always do your best. What you plant now, you will harvest later. - Og Mandino',
     'To accomplish great things, we must not only act, but also dream; not only plan, but also believe. - Anatole France',
     'Believe deep down in your heart that you\'re destined to do great things. - Joe Paterno',
-    'Be Impeccable with Your Word. Speak with integrity. Say only what you mean. Avoid using the word to speak against yourself or to gossip about others. Use the power of your word in the direction of truth and love. - Don Miguel Ruiz',
+    'Be impeccable with your word. Speak with integrity. Say only what you mean. Use your words in the direction of truth and love. - Don Miguel Ruiz',
+    'The future depends on what you do today. - Mahatma Gandhi',
+    'Act as if what you do makes a difference. It does. - William James',
+    'Great things are done by a series of small things brought together. - Vincent van Gogh',
+    'Success is the sum of small efforts, repeated day in and day out. - Robert Collier',
+    'You do not have to be great to start, but you have to start to be great. - Zig Ziglar',
+    'The only limit to tomorrow is our doubts of today. - Franklin D. Roosevelt',
+    'Start by doing what is necessary; then do what is possible; and suddenly you are doing the impossible. - Francis of Assisi',
+    'It is never too late to be what you might have been. - George Eliot',
+    'Everything you\'ve ever wanted is on the other side of fear. - George Addair',
+    'Success is not final, failure is not fatal: it is the courage to continue that counts. - Winston Churchill',
+    'The way to get started is to quit talking and begin doing. - Walt Disney',
+    'Don\'t count the days; make the days count. - Muhammad Ali',
+    'A small beginning is still a beginning.',
+    'Your pace is still progress. Keep going.',
+    'Consistency turns intention into change.',
+    'You can begin again without becoming someone new.',
+    'The next step does not need to be perfect; it only needs to be yours.',
+    'Give today one honest effort. That is enough to move forward.',
+    'Progress grows wherever you return with patience.',
+    'You are capable of more than you know, and worthy of the effort.',
+    'A quiet start can still become a strong day.',
+    'Hope is a powerful place to start.',
+    'One brave step can change the direction of a day.',
+    'You do not need a perfect plan to make a meaningful start.',
+    'Begin with what is in front of you, then let momentum teach you the rest.',
   ];
 }
 
