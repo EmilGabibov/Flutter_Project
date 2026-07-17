@@ -6,10 +6,15 @@ if [[ $# -ne 2 ]]; then
   exit 2
 fi
 
-ANDROID_BUILD_TOOLS="${ANDROID_BUILD_TOOLS:-${ANDROID_SDK_ROOT:-}/build-tools/36.1.0}"
+ANDROID_SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
+if [[ -z "$ANDROID_SDK" && -f android/local.properties ]]; then
+  ANDROID_SDK="$(sed -n 's/^sdk\.dir=//p' android/local.properties | head -n 1)"
+fi
+
+ANDROID_BUILD_TOOLS="${ANDROID_BUILD_TOOLS:-${ANDROID_SDK:+$ANDROID_SDK/build-tools/36.1.0}}"
 APKSIGNER="${APKSIGNER:-$ANDROID_BUILD_TOOLS/apksigner}"
-APKANALYZER="${APKANALYZER:-$(command -v apkanalyzer || true)}"
 AAPT="${AAPT:-$ANDROID_BUILD_TOOLS/aapt}"
+APKANALYZER="${APKANALYZER:-$(command -v apkanalyzer || true)}"
 
 if [[ ! -x "$APKSIGNER" ]]; then
   echo "apksigner not found; set APKSIGNER or ANDROID_BUILD_TOOLS." >&2
@@ -25,16 +30,16 @@ verify_artifact() {
   local expected_application_id="$2"
   local certificate application_id
 
-  certificate="$($APKSIGNER verify --print-certs "$artifact")"
+  certificate="$("$APKSIGNER" -J-enable-native-access=ALL-UNNAMED verify --print-certs "$artifact")"
   if grep -q "CN=Android Debug" <<<"$certificate"; then
     echo "Debug certificate found in production artifact: $artifact" >&2
     exit 1
   fi
 
-  if [[ -n "$APKANALYZER" && -x "$APKANALYZER" ]]; then
-    application_id="$($APKANALYZER manifest application-id "$artifact")"
+  if [[ -x "$AAPT" ]]; then
+    application_id="$("$AAPT" dump badging "$artifact" | sed -n "s/^package: name='\([^']*\)'.*/\1/p" | head -n 1)"
   else
-    application_id="$($AAPT dump badging "$artifact" | sed -n "s/^package: name='\([^']*\)'.*/\1/p" | head -n 1)"
+    application_id="$("$APKANALYZER" manifest application-id "$artifact")"
   fi
   if [[ "$application_id" != "$expected_application_id" ]]; then
     echo "Unexpected application id for $artifact: $application_id" >&2
