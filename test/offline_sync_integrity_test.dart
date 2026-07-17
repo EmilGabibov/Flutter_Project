@@ -91,6 +91,61 @@ void main() {
   );
 
   test(
+    'daily sync stores one idempotent notification per friend request and nudge',
+    () async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+
+      const userId = 'user-1';
+      await db.insertUser(
+        UsersCompanion.insert(userId: userId, username: 'Alice'),
+      );
+      final payload = _dailySyncPayload(
+        friendRequests: [
+          {
+            'id': 'request-1',
+            'requester_id': 'friend-1',
+            'requester_username': 'Bob',
+            'created_at': '2026-07-17T08:00:00.000Z',
+          },
+        ],
+        nudges: [
+          {
+            'senderId': 'friend-2',
+            'habitId': 'habit-1',
+            'timestamp': '2026-07-17T08:05:00.000Z',
+          },
+        ],
+      );
+
+      final syncService = SyncService(
+        db: db,
+        connectivity: ConnectivityService(),
+        storage: const FlutterSecureStorage(),
+        client: MockClient(
+          (request) async => http.Response(jsonEncode(payload), 200),
+        ),
+        apiBaseUrlOverride: 'http://offline.test',
+      );
+      addTearDown(syncService.dispose);
+
+      await syncService.pullDailySync(userId);
+      await syncService.pullDailySync(userId);
+
+      final notifications = await db.getUnreadNotificationsForUser(userId);
+      expect(notifications, hasLength(2));
+      expect(notifications.map((event) => event.notificationId).toSet(), {
+        'friend_request:request-1',
+        'nudge:friend-2:habit-1',
+      });
+      expect(notifications.map((event) => event.type).toSet(), {
+        NotificationEventType.friendRequest,
+        NotificationEventType.nudge,
+      });
+    },
+  );
+
+  test(
     'a stale daily sync does not resurrect a locally resolved habit invitation',
     () async {
       final db = AppDatabase(NativeDatabase.memory());
