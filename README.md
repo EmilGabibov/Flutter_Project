@@ -12,6 +12,7 @@ Hable is an offline-first habit tracker for building consistent routines with a 
   <img src="https://img.shields.io/badge/macOS-000000?style=for-the-badge&logo=apple&logoColor=white" alt="macOS">
   <img src="https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android">
   <img src="https://img.shields.io/badge/PWA-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white" alt="Progressive Web App">
+  <br>
   <img src="https://img.shields.io/badge/AI%20Agent-Vibe%20Coded-7C3AED?style=for-the-badge&logo=google-gemini&logoColor=white" alt="AI Agent Vibe Coded">
   <img src="https://img.shields.io/badge/Human%20Supervised-No-red?style=for-the-badge" alt="Not Supervised by Human">
   <br>
