@@ -8,6 +8,7 @@
 *.pyc
 *.swp
 .DS_Store
+.idea/
 *.iml
 *.zip
 parsed_jules.txt
@@ -21,6 +22,16 @@ ui_dumps/
 output/
 outputs/
 .playwright-cli/
+e2e/playwright-report/
+
+# One-off local maintenance helpers
+apply_more_translations.py
+apply_translations.py
+fix_constants.py
+fix_locale_errors.py
+generate_translations.py
+rebuild_all.sh
+scripts/extracted_splits.json
 
 # Intentionally local-only folders
 # These directories are already tracked in the current repository because CI
