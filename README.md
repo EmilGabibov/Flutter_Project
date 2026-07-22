@@ -8,22 +8,6 @@
 
 Hable is an offline-first habit tracker for building consistent routines with a little more warmth and accountability. It combines a Flutter client, local Drift storage, background synchronization, and a Cloudflare Pages/Worker backend for accounts and social features.
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Flutter-44D1FD?style=for-the-badge&logo=flutter&logoColor=white" alt="Flutter">
-  <img src="https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white" alt="Dart">
-  <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript">
-  <img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white" alt="HTML5">
-  <br>
-  <img src="https://img.shields.io/badge/Cloudflare-F38020?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Cloudflare">
-  <img src="https://img.shields.io/badge/macOS-000000?style=for-the-badge&logo=apple&logoColor=white" alt="macOS">
-  <img src="https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android">
-  <img src="https://img.shields.io/badge/PWA-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white" alt="Progressive Web App">
-  <br>
-  <img src="https://img.shields.io/badge/AI%20Agent-Vibe%20Coded-7C3AED?style=for-the-badge&logo=google-gemini&logoColor=white" alt="AI Agent Vibe Coded">
-  <img src="https://img.shields.io/badge/Human%20Supervised-No-red?style=for-the-badge" alt="Not Supervised by Human">
-  <br>
-</p>
-
 [![CI](https://github.com/EmilGabibov/HABLE_Project/actions/workflows/ci.yml/badge.svg)](https://github.com/EmilGabibov/HABLE_Project/actions/workflows/ci.yml)
 [![Website](https://img.shields.io/badge/website-hable.pages.dev-0f766e?logo=cloudflare&logoColor=white)](https://hable.pages.dev)
 [![Android](https://img.shields.io/badge/available-Android-3ddc84?logo=android&logoColor=white)](#availability)
